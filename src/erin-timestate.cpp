@@ -1,5 +1,5 @@
-/* Copyright (c) 2024 Big Ladder Software LLC. All rights reserved.
- * See the LICENSE.txt file for additional terms and conditions. */
+// Copyright (c) 2020 - 2024 Big Ladder Software, LLC.
+// See the LICENSE.txt file for additional terms and conditions.
 #include "erin/timestate.h"
 #include "erin/utils.h"
 #include <assert.h>
@@ -10,17 +10,17 @@ namespace erin
 
 std::ostream& operator<<(std::ostream& os, const TimeState& ts)
 {
-    os << "TimeState(time=" << TimeInSecondsToHours(static_cast<uint64_t>(ts.time))
+    os << "TimeState(time=" << time_in_seconds_to_hours(static_cast<uint64_t>(ts.time))
        << " h, state=" << ts.state << ", failureModeCauses={";
     bool first = true;
-    for (auto const& x : ts.failureModeCauses)
+    for (auto const& x : ts.failure_mode_causes)
     {
         os << (first ? "" : ",") << x;
         first = false;
     }
     os << "}, fragilityModeCauses={";
     first = true;
-    for (auto const& x : ts.fragilityModeCauses)
+    for (auto const& x : ts.fragility_mode_causes)
     {
         os << (first ? "" : ",") << x;
         first = false;
@@ -34,13 +34,13 @@ bool operator==(TimeState const& a, TimeState const& b)
     bool result = true;
     result = result && a.time == b.time;
     result = result && a.state == b.state;
-    result = result && a.failureModeCauses.size() == b.failureModeCauses.size();
-    result = result && a.fragilityModeCauses.size() == b.fragilityModeCauses.size();
+    result = result && a.failure_mode_causes.size() == b.failure_mode_causes.size();
+    result = result && a.fragility_mode_causes.size() == b.fragility_mode_causes.size();
     if (result)
     {
-        for (auto const& aFm : a.failureModeCauses)
+        for (auto const& aFm : a.failure_mode_causes)
         {
-            result = result && b.failureModeCauses.contains(aFm);
+            result = result && b.failure_mode_causes.contains(aFm);
             if (!result)
             {
                 break;
@@ -49,9 +49,9 @@ bool operator==(TimeState const& a, TimeState const& b)
     }
     if (result)
     {
-        for (auto const& aFm : a.fragilityModeCauses)
+        for (auto const& aFm : a.fragility_mode_causes)
         {
-            result = result && b.fragilityModeCauses.contains(aFm);
+            result = result && b.fragility_mode_causes.contains(aFm);
             if (!result)
             {
                 break;
@@ -63,8 +63,7 @@ bool operator==(TimeState const& a, TimeState const& b)
 
 bool operator!=(TimeState const& a, TimeState const& b) { return !(a == b); }
 
-std::vector<TimeState> TimeState_Combine(std::vector<TimeState> const& a,
-                                         std::vector<TimeState> const& b)
+std::vector<TimeState> combine(std::vector<TimeState> const& a, std::vector<TimeState> const& b)
 {
     std::vector<TimeState> result;
     if (a.size() == 0 && b.size() > 0)
@@ -72,7 +71,7 @@ std::vector<TimeState> TimeState_Combine(std::vector<TimeState> const& a,
         result.reserve(b.size());
         for (size_t i = 0; i < b.size(); ++i)
         {
-            result.push_back(TimeState_Copy(b.at(i)));
+            result.push_back(copy(b.at(i)));
         }
         return result;
     }
@@ -81,7 +80,7 @@ std::vector<TimeState> TimeState_Combine(std::vector<TimeState> const& a,
         result.reserve(a.size());
         for (size_t i = 0; i < a.size(); ++i)
         {
-            result.push_back(TimeState_Copy(a.at(i)));
+            result.push_back(copy(a.at(i)));
         }
         return result;
     }
@@ -131,22 +130,22 @@ std::vector<TimeState> TimeState_Combine(std::vector<TimeState> const& a,
         }
         if (time >= nextA.time && !nextA.state)
         {
-            for (auto const& fmA : nextA.failureModeCauses)
+            for (auto const& fmA : nextA.failure_mode_causes)
             {
                 failureModes.insert(fmA);
             }
-            for (auto const& fmA : nextA.fragilityModeCauses)
+            for (auto const& fmA : nextA.fragility_mode_causes)
             {
                 fragilityModes.insert(fmA);
             }
         }
         if (time >= nextB.time && !nextB.state)
         {
-            for (auto const& fmB : nextB.failureModeCauses)
+            for (auto const& fmB : nextB.failure_mode_causes)
             {
                 failureModes.insert(fmB);
             }
-            for (auto const& fmB : nextB.fragilityModeCauses)
+            for (auto const& fmB : nextB.fragility_mode_causes)
             {
                 fragilityModes.insert(fmB);
             }
@@ -154,8 +153,8 @@ std::vector<TimeState> TimeState_Combine(std::vector<TimeState> const& a,
         result.push_back({
             .time = time,
             .state = state,
-            .failureModeCauses = std::move(failureModes),
-            .fragilityModeCauses = std::move(fragilityModes),
+            .failure_mode_causes = std::move(failureModes),
+            .fragility_mode_causes = std::move(fragilityModes),
         });
         // increment to the lowest time (ta or tb) ahead of t
         bool aCanInc = (aIdx + 1) < a.size();
@@ -211,10 +210,8 @@ std::vector<TimeState> TimeState_Combine(std::vector<TimeState> const& a,
     return result;
 }
 
-std::vector<TimeState> TimeState_Clip(std::vector<TimeState> const& input,
-                                      double startTime_s,
-                                      double endTime_s,
-                                      bool rezeroTime)
+std::vector<TimeState>
+clip(std::vector<TimeState> const& input, double startTime_s, double endTime_s, bool rezeroTime)
 {
     assert(startTime_s <= endTime_s);
     std::vector<TimeState> result;
@@ -236,11 +233,11 @@ std::vector<TimeState> TimeState_Clip(std::vector<TimeState> const& input,
         {
             if (result.size() == 0 && ts.time > startTime_s && foundFirst)
             {
-                TimeState firstTs = TimeState_Copy(input[firstIdx]);
+                TimeState firstTs = copy(input[firstIdx]);
                 firstTs.time = rezeroTime ? 0.0 : startTime_s;
                 result.push_back(std::move(firstTs));
             }
-            TimeState newTs = TimeState_Copy(input[i]);
+            TimeState newTs = copy(input[i]);
             if (rezeroTime)
             {
                 newTs.time = newTs.time - startTime_s;
@@ -251,7 +248,7 @@ std::vector<TimeState> TimeState_Clip(std::vector<TimeState> const& input,
     return result;
 }
 
-std::vector<TimeState> TimeState_Translate(std::vector<TimeState> const& input, double dt_s)
+std::vector<TimeState> translate(std::vector<TimeState> const& input, double dt_s)
 {
     if (dt_s == 0.0)
     {
@@ -261,30 +258,30 @@ std::vector<TimeState> TimeState_Translate(std::vector<TimeState> const& input, 
     result.reserve(input.size());
     for (auto const& ts : input)
     {
-        TimeState newTs = TimeState_Copy(ts);
+        TimeState newTs = copy(ts);
         newTs.time -= dt_s;
         result.push_back(std::move(newTs));
     }
     return result;
 }
 
-TimeState TimeState_Copy(TimeState const& ts)
+TimeState copy(TimeState const& ts)
 {
     TimeState result;
     result.time = ts.time;
     result.state = ts.state;
-    for (auto x : ts.failureModeCauses)
+    for (auto x : ts.failure_mode_causes)
     {
-        result.failureModeCauses.insert(x);
+        result.failure_mode_causes.insert(x);
     }
-    for (auto x : ts.fragilityModeCauses)
+    for (auto x : ts.fragility_mode_causes)
     {
-        result.fragilityModeCauses.insert(x);
+        result.fragility_mode_causes.insert(x);
     }
     return result;
 }
 
-double TimeState_CalcAvailability_s(std::vector<TimeState> const& sch, double endTime_s)
+double calculate_availability_s(std::vector<TimeState> const& sch, double endTime_s)
 {
     double result = endTime_s;
     for (size_t i = 0; i < sch.size(); ++i)
@@ -309,7 +306,7 @@ double TimeState_CalcAvailability_s(std::vector<TimeState> const& sch, double en
     return result;
 }
 
-TimeState TimeState_GetActiveTimeState(std::vector<TimeState> const& tss, double time_s)
+TimeState get_active_time_state(std::vector<TimeState> const& tss, double time_s)
 {
     TimeState result {time_s, true, {}, {}};
     for (auto const& ts : tss)
@@ -330,12 +327,12 @@ TimeState TimeState_GetActiveTimeState(std::vector<TimeState> const& tss, double
     return result;
 }
 
-void TimeState_CountAndTimeFailureEvents(std::vector<TimeState> const& tss,
-                                         double finalTime_s,
-                                         std::map<size_t, size_t>& eventCountsByFailureModeId,
-                                         std::map<size_t, size_t>& eventCountsByFragilityModeId,
-                                         std::map<size_t, double>& timeByFailureModeId_s,
-                                         std::map<size_t, double>& timeByFragilityModeId_s)
+void count_and_time_failure_events(std::vector<TimeState> const& tss,
+                                   double finalTime_s,
+                                   std::map<size_t, size_t>& eventCountsByFailureModeId,
+                                   std::map<size_t, size_t>& eventCountsByFragilityModeId,
+                                   std::map<size_t, double>& timeByFailureModeId_s,
+                                   std::map<size_t, double>& timeByFragilityModeId_s)
 {
     for (size_t i = 0; i < tss.size(); ++i)
     {
@@ -343,7 +340,7 @@ void TimeState_CountAndTimeFailureEvents(std::vector<TimeState> const& tss,
         if (i == 0 && !ts.state)
         {
             // count initial failures
-            for (auto failModeId : ts.failureModeCauses)
+            for (auto failModeId : ts.failure_mode_causes)
             {
                 if (eventCountsByFailureModeId.contains(failModeId))
                 {
@@ -354,7 +351,7 @@ void TimeState_CountAndTimeFailureEvents(std::vector<TimeState> const& tss,
                     eventCountsByFailureModeId[failModeId] = 1;
                 }
             }
-            for (auto fragModeId : ts.fragilityModeCauses)
+            for (auto fragModeId : ts.fragility_mode_causes)
             {
                 if (eventCountsByFragilityModeId.contains(fragModeId))
                 {
@@ -376,7 +373,7 @@ void TimeState_CountAndTimeFailureEvents(std::vector<TimeState> const& tss,
         }
         if (!ts.state)
         {
-            for (auto failModeId : ts.failureModeCauses)
+            for (auto failModeId : ts.failure_mode_causes)
             {
                 if (timeByFailureModeId_s.contains(failModeId))
                 {
@@ -387,7 +384,7 @@ void TimeState_CountAndTimeFailureEvents(std::vector<TimeState> const& tss,
                     timeByFailureModeId_s[failModeId] = dt;
                 }
             }
-            for (auto fragModeId : ts.fragilityModeCauses)
+            for (auto fragModeId : ts.fragility_mode_causes)
             {
                 if (timeByFragilityModeId_s.contains(fragModeId))
                 {
@@ -401,7 +398,7 @@ void TimeState_CountAndTimeFailureEvents(std::vector<TimeState> const& tss,
         }
         if (ts.state && !nextTs.state)
         {
-            for (auto failModeId : nextTs.failureModeCauses)
+            for (auto failModeId : nextTs.failure_mode_causes)
             {
                 if (eventCountsByFailureModeId.contains(failModeId))
                 {
@@ -412,7 +409,7 @@ void TimeState_CountAndTimeFailureEvents(std::vector<TimeState> const& tss,
                     eventCountsByFailureModeId[failModeId] = 1;
                 }
             }
-            for (auto fragModeId : nextTs.fragilityModeCauses)
+            for (auto fragModeId : nextTs.fragility_mode_causes)
             {
                 if (eventCountsByFragilityModeId.contains(fragModeId))
                 {
@@ -427,7 +424,7 @@ void TimeState_CountAndTimeFailureEvents(std::vector<TimeState> const& tss,
     }
 }
 
-void TimeState_Print(std::vector<TimeState> const& tss)
+void print(std::vector<TimeState> const& tss)
 {
     for (TimeState const& ts : tss)
     {
@@ -435,7 +432,7 @@ void TimeState_Print(std::vector<TimeState> const& tss)
     }
 }
 
-std::string TimeState_ToString(TimeState const& ts)
+std::string to_string(TimeState const& ts)
 {
     std::ostringstream oss;
     oss << ts;

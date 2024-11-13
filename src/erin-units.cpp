@@ -1,5 +1,5 @@
-/* Copyright (c) 2024 Big Ladder Software LLC. All rights reserved.
- * See the LICENSE.txt file for additional terms and conditions. */
+// Copyright (c) 2020 - 2024 Big Ladder Software, LLC.
+// See the LICENSE.txt file for additional terms and conditions.
 #include "erin/units.h"
 #include "erin/utils.h"
 #include <exception>
@@ -8,7 +8,7 @@
 
 namespace erin
 {
-std::optional<PowerUnit> TagToPowerUnit(std::string const& tag)
+std::optional<PowerUnit> tag_to_power_unit(std::string const& tag)
 {
     if (tag == "W")
     {
@@ -25,7 +25,7 @@ std::optional<PowerUnit> TagToPowerUnit(std::string const& tag)
     return {};
 }
 
-std::string PowerUnitToString(PowerUnit unit)
+std::string power_unit_to_string(PowerUnit unit)
 {
     std::string result;
     switch (unit)
@@ -47,7 +47,7 @@ std::string PowerUnitToString(PowerUnit unit)
     break;
     default:
     {
-        WriteErrorMessage("units", "unhandled power unit");
+        write_error_message("units", "unhandled power unit");
         std::exit(1);
     }
     break;
@@ -55,7 +55,7 @@ std::string PowerUnitToString(PowerUnit unit)
     return result;
 }
 
-double Power_ToWatt(double value, PowerUnit unit)
+double power_to_watts(double value, PowerUnit unit)
 {
     double result = 0.0;
     switch (unit)
@@ -85,7 +85,7 @@ double Power_ToWatt(double value, PowerUnit unit)
     return result;
 }
 
-std::optional<EnergyUnit> TagToEnergyUnit(std::string const& tag)
+std::optional<EnergyUnit> tag_to_energy_unit(std::string const& tag)
 {
     if (tag == "J")
     {
@@ -114,7 +114,7 @@ std::optional<EnergyUnit> TagToEnergyUnit(std::string const& tag)
     return {};
 }
 
-std::string EnergyUnitToString(EnergyUnit unit)
+std::string energy_unit_to_string(EnergyUnit unit)
 {
     std::string result;
     switch (unit)
@@ -151,7 +151,7 @@ std::string EnergyUnitToString(EnergyUnit unit)
     break;
     default:
     {
-        WriteErrorMessage("units", "unhandled energy unit");
+        write_error_message("units", "unhandled energy unit");
         std::exit(1);
     }
     break;
@@ -159,7 +159,7 @@ std::string EnergyUnitToString(EnergyUnit unit)
     return result;
 }
 
-double Energy_ToJoules(double value, EnergyUnit unit)
+double energy_to_joules(double value, EnergyUnit unit)
 {
     double result = 0.0;
     switch (unit)
@@ -196,7 +196,7 @@ double Energy_ToJoules(double value, EnergyUnit unit)
     break;
     default:
     {
-        WriteErrorMessage("units", "unhandled energy unit");
+        write_error_message("units", "unhandled energy unit");
         std::exit(1);
     }
     break;
@@ -204,67 +204,67 @@ double Energy_ToJoules(double value, EnergyUnit unit)
     return result;
 }
 
-std::optional<TimeUnit> TagToTimeUnit(std::string const& tag)
+std::optional<TimeUnit> tag_to_time_unit(std::string const& tag)
 {
 
     if (tag == "s" || tag == "sec" || tag == "secs" || tag == "second" || tag == "seconds")
     {
-        return TimeUnit::Second;
+        return TimeUnit::second;
     }
     if (tag == "min" || tag == "mins" || tag == "minute" || tag == "minutes")
     {
-        return TimeUnit::Minute;
+        return TimeUnit::minute;
     }
     if (tag == "h" || tag == "hr" || tag == "hrs" || tag == "hour" || tag == "hours")
     {
-        return TimeUnit::Hour;
+        return TimeUnit::hour;
     }
     if (tag == "d" || tag == "ds" || tag == "day" || tag == "days")
     {
-        return TimeUnit::Day;
+        return TimeUnit::day;
     }
     if (tag == "week" || tag == "weeks")
     {
-        return TimeUnit::Week;
+        return TimeUnit::week;
     }
     if (tag == "yr" || tag == "y" || tag == "yrs" || tag == "ys" || tag == "year" || tag == "years")
     {
-        return TimeUnit::Year;
+        return TimeUnit::year;
     }
     return {};
 }
 
-std::string TimeUnitToTag(TimeUnit unit)
+std::string time_unit_to_tag(TimeUnit unit)
 {
     std::string result;
     switch (unit)
     {
-    case (TimeUnit::Second):
+    case (TimeUnit::second):
     {
         result = "s";
     }
     break;
-    case (TimeUnit::Minute):
+    case (TimeUnit::minute):
     {
         result = "min";
     }
     break;
-    case (TimeUnit::Hour):
+    case (TimeUnit::hour):
     {
         result = "h";
     }
     break;
-    case (TimeUnit::Day):
+    case (TimeUnit::day):
     {
         result = "d";
     }
     break;
-    case (TimeUnit::Week):
+    case (TimeUnit::week):
     {
         result = "week";
     }
     break;
-    case (TimeUnit::Year):
+    case (TimeUnit::year):
     {
         result = "yr";
     }
@@ -272,8 +272,8 @@ std::string TimeUnitToTag(TimeUnit unit)
     default:
     {
         std::ostringstream oss {};
-        oss << "unhandled TimeType '" << unit << "'" << std::endl;
-        WriteErrorMessage("units", oss.str());
+        oss << "unhandled TimeType '" << time_unit_to_tag(unit) << "'" << std::endl;
+        write_error_message("units", oss.str());
         std::exit(1);
     }
     break;
@@ -281,47 +281,47 @@ std::string TimeUnitToTag(TimeUnit unit)
     return result;
 }
 
-double Time_ToSeconds(double t, TimeUnit unit)
+double time_to_seconds(double t, TimeUnit unit)
 {
     switch (unit)
     {
-    case (TimeUnit::Second):
+    case (TimeUnit::second):
     {
         return t;
     }
     break;
-    case (TimeUnit::Minute):
+    case (TimeUnit::minute):
     {
         return t * static_cast<double>(seconds_per_minute);
     }
     break;
-    case (TimeUnit::Hour):
+    case (TimeUnit::hour):
     {
         return t * static_cast<double>(seconds_per_hour);
     }
     break;
-    case (TimeUnit::Day):
+    case (TimeUnit::day):
     {
         return t * static_cast<double>(seconds_per_day);
     }
     break;
-    case (TimeUnit::Week):
+    case (TimeUnit::week):
     {
         return t * static_cast<double>(seconds_per_week);
     }
     break;
-    case (TimeUnit::Year):
+    case (TimeUnit::year):
     {
         return t * static_cast<double>(seconds_per_year);
     }
     break;
     }
     std::ostringstream oss {};
-    oss << "unhandled time unit '" << TimeUnitToTag(unit) << "'" << std::endl;
+    oss << "unhandled time unit '" << time_unit_to_tag(unit) << "'" << std::endl;
     throw new std::invalid_argument {oss.str()};
 }
 
-std::string SecondsToPrettyString(double time_s)
+std::string seconds_to_pretty_string(double time_s)
 {
     size_t years = static_cast<size_t>(time_s) / seconds_per_year;
     size_t hours = static_cast<size_t>(time_s - seconds_per_year * years) / seconds_per_hour;
@@ -335,33 +335,33 @@ std::string SecondsToPrettyString(double time_s)
     return oss.str();
 }
 
-double TimeInSecondsToDesiredUnit(double time_s, TimeUnit unit)
+double time_in_seconds_to_desired_unit(double time_s, TimeUnit unit)
 {
-    if (unit == TimeUnit::Second)
+    if (unit == TimeUnit::second)
     {
         return time_s;
     }
-    if (unit == TimeUnit::Minute)
+    if (unit == TimeUnit::minute)
     {
         return time_s / static_cast<double>(seconds_per_minute);
     }
-    if (unit == TimeUnit::Hour)
+    if (unit == TimeUnit::hour)
     {
         return time_s / static_cast<double>(seconds_per_hour);
     }
-    if (unit == TimeUnit::Day)
+    if (unit == TimeUnit::day)
     {
         return time_s / static_cast<double>(seconds_per_day);
     }
-    if (unit == TimeUnit::Week)
+    if (unit == TimeUnit::week)
     {
         return time_s / static_cast<double>(seconds_per_week);
     }
-    if (unit == TimeUnit::Year)
+    if (unit == TimeUnit::year)
     {
         return time_s / static_cast<double>(seconds_per_year);
     }
-    WriteErrorMessage("WriteResultsToEventFile", "unhandled time unit");
+    write_error_message("WriteResultsToEventFile", "unhandled time unit");
     std::exit(1);
 }
 

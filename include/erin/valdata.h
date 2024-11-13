@@ -1,5 +1,5 @@
-/* Copyright (c) 2020-2024 Big Ladder Software LLC. All rights reserved.
- * See the LICENSE.txt file for additional terms and conditions. */
+// Copyright (c) 2020 - 2024 Big Ladder Software, LLC.
+// See the LICENSE.txt file for additional terms and conditions.
 #ifndef ERIN_VALDATA_H
 #define ERIN_VALDATA_H
 #include <string>
@@ -14,8 +14,8 @@ namespace erin
 
 struct TagWithDeprication
 {
-    std::string Tag;
-    bool IsDeprecated = false;
+    std::string tag;
+    bool is_deprecated = false;
 };
 
 // TODO: add "types" from the user-manual:
@@ -28,29 +28,28 @@ struct TagWithDeprication
 // - etc.
 enum class InputType
 {
-    Any,
-    // TODO: rename below to String
-    AnyString,
-    EnumString,
-    Number,  // float or integer
-    Integer, // only integer; will also parse 3.0 as 3, though
-    Bool,
-    ArrayOfDouble,
-    ArrayOfString,
-    ArrayOfTuple3OfString,
-    ArrayOfTuple2OfNumber,
-    MapFromStringToString,
+    any,
+    string,
+    enum_string,
+    number,  // float or integer
+    integer, // only integer; will also parse 3.0 as 3, though
+    boolean,
+    array_of_double,
+    array_of_string,
+    array_of_tuple3_of_string,
+    array_of_tuple2_of_number,
+    map_from_string_to_string,
 };
 
 struct PairsVector
 {
-    std::vector<double> Firsts;
-    std::vector<double> Seconds;
+    std::vector<double> firsts;
+    std::vector<double> seconds;
 };
 
 struct InputValue
 {
-    InputType Type;
+    InputType input_type;
     std::variant<bool,
                  std::string,
                  double,
@@ -62,34 +61,34 @@ struct InputValue
                  // TODO: consider std::vector<std::array<double,2>> instead
                  std::vector<std::vector<double>>,
                  std::unordered_map<std::string, std::string>>
-        Value;
+        value;
 };
 
 enum class InputSection
 {
-    SimulationInfo,
-    Loads_01Explicit,
-    Loads_02FileBased,
-    Components_ConstantLoad,
-    Components_Load,
-    Components_Source,
-    Components_UncontrolledSource,
-    Components_ConstEffConverter,
-    Components_VariableEffConverter,
-    Components_Mux,
-    Components_Store,
-    Components_PassThrough,
-    Components_VariableEffMover,
-    Components_Mover,
-    Components_Switch,
-    Dist_Fixed,
-    Dist_Weibull,
-    Dist_Uniform,
-    Dist_Normal,
-    Dist_01QuantileTableFromFile,
-    Dist_02QuantileTableExplicit,
-    Network,
-    Scenarios,
+    simulation_info,
+    loads_01explicit,
+    loads_02file_based,
+    components_constant_load,
+    components_load,
+    components_source,
+    components_uncontrolled_source,
+    components_const_eff_converter,
+    components_variable_eff_converter,
+    components_mux,
+    components_store,
+    components_pass_through,
+    components_variable_eff_mover,
+    components_mover,
+    components_switch,
+    dist_fixed,
+    dist_weibull,
+    dist_uniform,
+    dist_normal,
+    dist_01quantile_table_from_file,
+    dist_02quantile_table_explicit,
+    network,
+    scenarios,
 };
 
 // TODO: add ability to write out all of these to markdown
@@ -102,63 +101,62 @@ enum class InputSection
 // TODO: need also to have a "table validator" function somewhere...
 struct FieldInfo
 {
-    std::string FieldName;
-    InputType Type;
-    bool IsRequired;
-    bool InformIfMissing = false;
-    std::string Default;
-    std::unordered_set<std::string> EnumValues;
-    std::vector<TagWithDeprication> Aliases;
-    std::unordered_set<InputSection> Sections;
+    std::string field_name;
+    InputType input_type;
+    bool is_required;
+    bool inform_if_missing = false;
+    std::string default_value;
+    std::unordered_set<std::string> enum_values;
+    std::vector<TagWithDeprication> aliases;
+    std::unordered_set<InputSection> sections;
 };
 
 struct ValidationInfo
 {
-    // TODO: rename as FieldToType
-    std::unordered_map<std::string, InputType> TypeMap;
-    std::unordered_set<std::string> RequiredFields;
-    std::unordered_set<std::string> OptionalFields;
-    std::unordered_map<std::string, std::unordered_set<std::string>> EnumMap;
-    std::unordered_map<std::string, std::string> Defaults;
-    std::unordered_map<std::string, std::vector<TagWithDeprication>> Aliases;
-    std::unordered_set<std::string> InformIfMissing;
+    std::unordered_map<std::string, InputType> field_to_type;
+    std::unordered_set<std::string> required_fields;
+    std::unordered_set<std::string> optional_fields;
+    std::unordered_map<std::string, std::unordered_set<std::string>> enum_map;
+    std::unordered_map<std::string, std::string> default_values;
+    std::unordered_map<std::string, std::vector<TagWithDeprication>> aliases;
+    std::unordered_set<std::string> inform_if_missing;
 };
 
 struct ComponentValidationMap
 {
-    ValidationInfo ConstantLoad;
-    ValidationInfo ScheduleBasedLoad;
-    ValidationInfo ConstantSource;
-    ValidationInfo ScheduleBasedSource;
-    ValidationInfo ConstantEfficiencyConverter;
-    ValidationInfo VariableEfficiencyConverter;
-    ValidationInfo Mux;
-    ValidationInfo Store;
-    ValidationInfo PassThrough;
-    ValidationInfo Mover;
-    ValidationInfo VariableEfficiencyMover;
-    ValidationInfo Switch;
+    ValidationInfo constant_load;
+    ValidationInfo schedule_based_load;
+    ValidationInfo constant_source;
+    ValidationInfo schedule_based_source;
+    ValidationInfo constant_efficiency_converter;
+    ValidationInfo variable_efficiency_converter;
+    ValidationInfo mux;
+    ValidationInfo store;
+    ValidationInfo pass_through;
+    ValidationInfo mover;
+    ValidationInfo variable_efficiency_mover;
+    ValidationInfo transfer_switch;
 };
 
 struct DistributionValidationMap
 {
-    ValidationInfo Fixed;
-    ValidationInfo Uniform;
-    ValidationInfo Normal;
-    ValidationInfo QuantileTableFromFile;
-    ValidationInfo QuantileTableExplicit;
-    ValidationInfo Weibull;
+    ValidationInfo fixed;
+    ValidationInfo uniform;
+    ValidationInfo normal;
+    ValidationInfo quantile_table_from_file;
+    ValidationInfo quantile_table_explicit;
+    ValidationInfo weibull;
 };
 
 struct InputValidationMap
 {
-    ComponentValidationMap Comp;
-    ValidationInfo Load_01Explicit;
-    ValidationInfo Load_02FileBased;
-    DistributionValidationMap Dist;
-    ValidationInfo SimulationInfo;
-    ValidationInfo Network;
-    ValidationInfo Scenario;
+    ComponentValidationMap component;
+    ValidationInfo load_explicit;
+    ValidationInfo load_file_based;
+    DistributionValidationMap distribution;
+    ValidationInfo simulation_info;
+    ValidationInfo network;
+    ValidationInfo scenario;
 };
 
 } // namespace erin

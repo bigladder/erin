@@ -1,5 +1,5 @@
-/* Copyright (c) 2020-2024 Big Ladder Software LLC. All rights reserved.
- * See the LICENSE.txt file for additional terms and conditions. */
+// Copyright (c) 2020 - 2024 Big Ladder Software, LLC.
+// See the LICENSE.txt file for additional terms and conditions.
 #include "erin/graph.h"
 #include "erin/erin.h"
 #include <stdint.h>
@@ -155,8 +155,8 @@ std::string network_to_dot(std::vector<Connection> const& network,
     }
     for (auto const& connection : network)
     {
-        std::string from_tag = componentTagById[connection.FromId];
-        if (from_tag.empty() && connection.From == ComponentType::EnvironmentSourceType)
+        std::string from_tag = componentTagById[connection.from_component_id];
+        if (from_tag.empty() && connection.from == ComponentType::environment_source_type)
         {
             from_tag = "ENV" + std::to_string(env_count);
             ++env_count;
@@ -164,10 +164,10 @@ std::string network_to_dot(std::vector<Connection> const& network,
         ComponentAndPort c1 = {
             .component_id = std::move(from_tag),
             .port_type = PortType::Outflow,
-            .port_number = connection.FromPort,
+            .port_number = connection.from_port,
         };
-        std::string to_tag = componentTagById[connection.ToId];
-        if (to_tag.empty() && connection.To == ComponentType::WasteSinkType)
+        std::string to_tag = componentTagById[connection.to_component_id];
+        if (to_tag.empty() && connection.to == ComponentType::waste_sink_type)
         {
             to_tag = "WASTE" + std::to_string(waste_count);
             ++waste_count;
@@ -175,7 +175,7 @@ std::string network_to_dot(std::vector<Connection> const& network,
         ComponentAndPort c2 = {
             .component_id = std::move(to_tag),
             .port_type = PortType::Inflow,
-            .port_number = connection.ToPort,
+            .port_number = connection.to_port,
         };
         record_port_number(c1, ports);
         record_port_number(c2, ports);

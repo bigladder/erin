@@ -1,18 +1,19 @@
-/* Copyright (c) 2020-2024 Big Ladder Software LLC. All rights reserved.
- * See the LICENSE file for additional terms and conditions. */
-#include "erin/distribution.h"
-#include "erin/utils.h"
-#include "erin/validation.h"
-#include "erin/toml.h"
-#include "erin/units.h"
-#include "erin/csv.h"
+// Copyright (c) 2020 - 2024 Big Ladder Software, LLC.
+// See the LICENSE.txt file for additional terms and conditions.
 #include <algorithm>
 #include <cmath>
 #include <functional>
-#include <stdexcept>
-#include <random>
 #include <iostream>
+#include <random>
+#include <stdexcept>
 #include <unordered_map>
+
+#include "erin/csv.h"
+#include "erin/distribution.h"
+#include "erin/toml.h"
+#include "erin/units.h"
+#include "erin/utils.h"
+#include "erin/validation.h"
 
 namespace erin
 {
@@ -496,7 +497,7 @@ double DistributionSystem::next_time_advance(size_t dist_id, double fraction) co
     break;
     default:
     {
-        WriteErrorMessage("distribution", "unhandled cumulative density function");
+        write_error_message("distribution", "unhandled cumulative density function");
         std::exit(1);
     }
     }
@@ -518,7 +519,7 @@ void DistributionSystem::print_distributions() const
         case DistType::Fixed:
         {
             double v = fixed_dist.value[dist.subtype_id[i]];
-            std::cout << "-- value: " << TimeInSecondsToHours(static_cast<uint64_t>(v)) << " h"
+            std::cout << "-- value: " << time_in_seconds_to_hours(static_cast<uint64_t>(v)) << " h"
                       << std::endl;
         }
         break;
@@ -526,10 +527,10 @@ void DistributionSystem::print_distributions() const
         {
             double avg = normal_dist.average[dist.subtype_id[i]];
             double sd = normal_dist.stddev[dist.subtype_id[i]];
-            std::cout << "-- average: " << TimeInSecondsToHours(static_cast<uint64_t>(avg)) << " h"
-                      << std::endl;
+            std::cout << "-- average: " << time_in_seconds_to_hours(static_cast<uint64_t>(avg))
+                      << " h" << std::endl;
             std::cout << "-- standard deviation: "
-                      << TimeInSecondsToHours(static_cast<uint64_t>(sd)) << " h" << std::endl;
+                      << time_in_seconds_to_hours(static_cast<uint64_t>(sd)) << " h" << std::endl;
         }
         break;
         case DistType::QuantileTable:
@@ -541,7 +542,7 @@ void DistributionSystem::print_distributions() const
                 double t = quantile_table_dist.times[qIdx];
                 double v = quantile_table_dist.variates[qIdx];
                 std::cout << "-- [" << qIdx - q0
-                          << "] time: " << TimeInSecondsToHours(static_cast<uint64_t>(t))
+                          << "] time: " << time_in_seconds_to_hours(static_cast<uint64_t>(t))
                           << " h => variate: " << v << std::endl;
             }
         }
@@ -550,9 +551,9 @@ void DistributionSystem::print_distributions() const
         {
             double lb = uniform_dist.lower_bound[dist.subtype_id[i]];
             double ub = uniform_dist.upper_bound[dist.subtype_id[i]];
-            std::cout << "-- lower bound: " << TimeInSecondsToHours(static_cast<uint64_t>(lb))
+            std::cout << "-- lower bound: " << time_in_seconds_to_hours(static_cast<uint64_t>(lb))
                       << " h" << std::endl;
-            std::cout << "-- upper bound: " << TimeInSecondsToHours(static_cast<uint64_t>(ub))
+            std::cout << "-- upper bound: " << time_in_seconds_to_hours(static_cast<uint64_t>(ub))
                       << " h" << std::endl;
         }
         break;
@@ -563,8 +564,8 @@ void DistributionSystem::print_distributions() const
             double loc = weibull_dist.location_params[dist.subtype_id[i]];
             std::cout << "-- shape parameter: " << shape << std::endl;
             std::cout << "-- scale parameter: " << scale << std::endl;
-            std::cout << "-- location: " << TimeInSecondsToHours(static_cast<uint64_t>(loc)) << " h"
-                      << std::endl;
+            std::cout << "-- location: " << time_in_seconds_to_hours(static_cast<uint64_t>(loc))
+                      << " h" << std::endl;
         }
         break;
         default:
@@ -593,15 +594,15 @@ Result ParseDistributions(DistributionSystem& ds,
             toml::table distTable = it->second.as_table();
             if (!distTable.contains("type"))
             {
-                Log_Error(log, fullTableName, "missing required field 'type'");
-                return Result::Failure;
+                Log_error(log, fullTableName, "missing required field 'type'");
+                return Result::failure;
             }
             std::string distTypeTag = distTable.at("type").as_string();
             std::optional<DistType> maybeDistType = tag_to_dist_type(distTypeTag);
             if (!maybeDistType.has_value())
             {
-                Log_Error(log, fullTableName, "unhandled distribution type '" + distTypeTag + "'");
-                return Result::Failure;
+                Log_error(log, fullTableName, "unhandled distribution type '" + distTypeTag + "'");
+                return Result::failure;
             }
             DistType distType = maybeDistType.value();
             std::vector<std::string> errors;
@@ -611,46 +612,46 @@ Result ParseDistributions(DistributionSystem& ds,
             {
             case DistType::Fixed:
             {
-                inputs = TOMLTable_ParseWithValidation(
-                    distTable, dvm.Fixed, fullTableName, errors, warnings);
+                inputs = TOMLTable_parse_with_validation(
+                    distTable, dvm.fixed, fullTableName, errors, warnings);
             }
             break;
             case DistType::Normal:
             {
-                inputs = TOMLTable_ParseWithValidation(
-                    distTable, dvm.Normal, fullTableName, errors, warnings);
+                inputs = TOMLTable_parse_with_validation(
+                    distTable, dvm.normal, fullTableName, errors, warnings);
             }
             break;
             case DistType::QuantileTable:
             {
                 if (distTable.contains("csv_file"))
                 {
-                    inputs = TOMLTable_ParseWithValidation(
-                        distTable, dvm.QuantileTableFromFile, fullTableName, errors, warnings);
+                    inputs = TOMLTable_parse_with_validation(
+                        distTable, dvm.quantile_table_from_file, fullTableName, errors, warnings);
                 }
                 else
                 {
-                    inputs = TOMLTable_ParseWithValidation(
-                        distTable, dvm.QuantileTableExplicit, fullTableName, errors, warnings);
+                    inputs = TOMLTable_parse_with_validation(
+                        distTable, dvm.quantile_table_explicit, fullTableName, errors, warnings);
                 }
             }
             break;
             case DistType::Uniform:
             {
-                inputs = TOMLTable_ParseWithValidation(
-                    distTable, dvm.Uniform, fullTableName, errors, warnings);
+                inputs = TOMLTable_parse_with_validation(
+                    distTable, dvm.uniform, fullTableName, errors, warnings);
             }
             break;
             case DistType::Weibull:
             {
-                inputs = TOMLTable_ParseWithValidation(
-                    distTable, dvm.Weibull, fullTableName, errors, warnings);
+                inputs = TOMLTable_parse_with_validation(
+                    distTable, dvm.weibull, fullTableName, errors, warnings);
             }
             break;
             default:
             {
-                Log_Error(log, fullTableName, "unhandled dist type");
-                return Result::Failure;
+                Log_error(log, fullTableName, "unhandled dist type");
+                return Result::failure;
             }
             break;
             }
@@ -658,24 +659,24 @@ Result ParseDistributions(DistributionSystem& ds,
             {
                 for (std::string const& err : errors)
                 {
-                    Log_Error(log, err);
+                    Log_error(log, err);
                 }
-                return Result::Failure;
+                return Result::failure;
             }
             for (std::string const& w : warnings)
             {
-                Log_Warning(log, w);
+                Log_warning(log, w);
             }
             // TODO: pull default time from SimulationInfo
-            TimeUnit timeUnit = TimeUnit::Second;
+            TimeUnit timeUnit = TimeUnit::second;
             if (inputs.contains("time_unit"))
             {
-                std::string timeUnitStr = std::get<std::string>(inputs.at("time_unit").Value);
-                std::optional<TimeUnit> maybeTimeUnit = TagToTimeUnit(timeUnitStr);
+                std::string timeUnitStr = std::get<std::string>(inputs.at("time_unit").value);
+                std::optional<TimeUnit> maybeTimeUnit = tag_to_time_unit(timeUnitStr);
                 if (!maybeTimeUnit.has_value())
                 {
-                    Log_Error(log, fullTableName, "unhandled time unit '" + timeUnitStr + "'");
-                    return Result::Failure;
+                    Log_error(log, fullTableName, "unhandled time unit '" + timeUnitStr + "'");
+                    return Result::failure;
                 }
                 timeUnit = maybeTimeUnit.value();
             }
@@ -683,16 +684,16 @@ Result ParseDistributions(DistributionSystem& ds,
             {
             case (DistType::Fixed):
             {
-                double value = std::get<double>(inputs.at("value").Value);
-                ds.add_fixed(distTag, Time_ToSeconds(value, timeUnit));
+                double value = std::get<double>(inputs.at("value").value);
+                ds.add_fixed(distTag, time_to_seconds(value, timeUnit));
             }
             break;
             case DistType::Normal:
             {
-                double mean = std::get<double>(inputs.at("mean").Value);
-                double sd = std::get<double>(inputs.at("standard_deviation").Value);
+                double mean = std::get<double>(inputs.at("mean").value);
+                double sd = std::get<double>(inputs.at("standard_deviation").value);
                 ds.add_normal(
-                    distTag, Time_ToSeconds(mean, timeUnit), Time_ToSeconds(sd, timeUnit));
+                    distTag, time_to_seconds(mean, timeUnit), time_to_seconds(sd, timeUnit));
             }
             break;
             case DistType::QuantileTable:
@@ -703,13 +704,13 @@ Result ParseDistributions(DistributionSystem& ds,
                 {
                     std::vector<std::vector<double>> vt_pairs =
                         std::get<std::vector<std::vector<double>>>(
-                            inputs.at("variate_time_pairs").Value);
+                            inputs.at("variate_time_pairs").value);
                     xs.reserve(vt_pairs.size());
                     times_s.reserve(vt_pairs.size());
                     for (std::vector<double> const& vt : vt_pairs)
                     {
                         xs.push_back(vt[0]);
-                        times_s.push_back(Time_ToSeconds(vt[1], timeUnit));
+                        times_s.push_back(time_to_seconds(vt[1], timeUnit));
                     }
                 }
                 else if (inputs.contains("csv_file"))
@@ -717,23 +718,24 @@ Result ParseDistributions(DistributionSystem& ds,
                     // TODO: move csv_file read into separate function
                     // std::optional<std::vector<std::array<double,2>>>
                     // ReadCsvToArrayOfTwoTuples(std::string csvFile);
-                    std::string csvFileName = std::get<std::string>(inputs.at("csv_file").Value);
+                    std::string csvFileName = std::get<std::string>(inputs.at("csv_file").value);
                     std::ifstream inputDataFile;
                     inputDataFile.open(csvFileName);
                     if (!inputDataFile.good())
                     {
-                        WriteErrorMessage(fullTableName,
-                                          "unable to load input csv file '" + csvFileName + "'");
+                        write_error_message(fullTableName,
+                                            "unable to load input csv file '" + csvFileName + "'");
                         return {};
                     }
                     auto header = read_row(inputDataFile);
                     if (header.size() == 2)
                     {
                         std::string const& timeUnitStr = header[1];
-                        std::optional<TimeUnit> maybeTimeUnit = TagToTimeUnit(timeUnitStr);
+                        std::optional<TimeUnit> maybeTimeUnit = tag_to_time_unit(timeUnitStr);
                         if (!maybeTimeUnit.has_value())
                         {
-                            WriteErrorMessage(fullTableName, "unhandled time unit: " + timeUnitStr);
+                            write_error_message(fullTableName,
+                                                "unhandled time unit: " + timeUnitStr);
                             return {};
                         }
                         TimeUnit timeUnitForRead = maybeTimeUnit.value();
@@ -748,37 +750,37 @@ Result ParseDistributions(DistributionSystem& ds,
                             ++rowIdx;
                             if (pair.size() != 2)
                             {
-                                WriteErrorMessage(fullTableName,
-                                                  "csv file '" + csvFileName +
-                                                      "'"
-                                                      " row: " +
-                                                      std::to_string(rowIdx) +
-                                                      "; must have 2 columns; "
-                                                      "found: " +
-                                                      std::to_string(pair.size()));
-                                return Result::Failure;
+                                write_error_message(fullTableName,
+                                                    "csv file '" + csvFileName +
+                                                        "'"
+                                                        " row: " +
+                                                        std::to_string(rowIdx) +
+                                                        "; must have 2 columns; "
+                                                        "found: " +
+                                                        std::to_string(pair.size()));
+                                return Result::failure;
                             }
                             xs.push_back(std::stod(pair[0]));
-                            times_s.push_back(Time_ToSeconds(std::stod(pair[1]), timeUnitForRead));
+                            times_s.push_back(time_to_seconds(std::stod(pair[1]), timeUnitForRead));
                         }
                         inputDataFile.close();
                     }
                     else
                     {
-                        Log_Error(log,
+                        Log_error(log,
                                   fullTableName,
                                   "csv file '" + csvFileName +
                                       "'"
                                       " -- header must have 2 columns: "
                                       "variate "
                                       "and time unit");
-                        return Result::Failure;
+                        return Result::failure;
                     }
                 }
                 else
                 {
-                    Log_Error(log, fullTableName, "need one of 'variate_time_pairs' or 'csv_file'");
-                    return Result::Failure;
+                    Log_error(log, fullTableName, "need one of 'variate_time_pairs' or 'csv_file'");
+                    return Result::failure;
                 }
                 ds.add_quantile_table(distTag, xs, times_s);
             }
@@ -786,37 +788,37 @@ Result ParseDistributions(DistributionSystem& ds,
             case DistType::Uniform:
             {
                 double lower_bound_s =
-                    Time_ToSeconds(std::get<double>(inputs.at("lower_bound").Value), timeUnit);
+                    time_to_seconds(std::get<double>(inputs.at("lower_bound").value), timeUnit);
                 double upper_bound_s =
-                    Time_ToSeconds(std::get<double>(inputs.at("upper_bound").Value), timeUnit);
+                    time_to_seconds(std::get<double>(inputs.at("upper_bound").value), timeUnit);
                 ds.add_uniform(distTag, lower_bound_s, upper_bound_s);
             }
             break;
             case DistType::Weibull:
             {
-                double shape = std::get<double>(inputs.at("shape").Value);
-                double scale = std::get<double>(inputs.at("scale").Value);
+                double shape = std::get<double>(inputs.at("shape").value);
+                double scale = std::get<double>(inputs.at("scale").value);
                 double location = 0.0;
                 if (inputs.contains("location"))
                 {
-                    location = std::get<double>(inputs.at("location").Value);
+                    location = std::get<double>(inputs.at("location").value);
                 }
                 ds.add_weibull(distTag,
                                shape,
-                               Time_ToSeconds(scale, timeUnit),
-                               Time_ToSeconds(location, timeUnit));
+                               time_to_seconds(scale, timeUnit),
+                               time_to_seconds(location, timeUnit));
             }
             break;
             default:
             {
-                Log_Error(log, "distribution", "unhandled distribution type: " + distTypeTag);
+                Log_error(log, "distribution", "unhandled distribution type: " + distTypeTag);
                 std::exit(1);
             }
             break;
             }
         }
     }
-    return Result::Success;
+    return Result::success;
 }
 
 } // namespace erin

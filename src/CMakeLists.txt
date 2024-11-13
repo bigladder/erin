@@ -1,27 +1,28 @@
-# Copyright (c) 2020 - 2024 Big Ladder Software LLC. All rights reserved.
+# Copyright (c) 2020 - 2024 Big Ladder Software, LLC.
 # See the LICENSE.txt file for additional terms and conditions.
 # NOTE: THIS FILE IS AUTO-GENERATED. DO NOT EDIT.
 # Main library
 set(library_sources
+    ${PROJECT_SOURCE_DIR}/src/erin-component.cpp
+    ${PROJECT_SOURCE_DIR}/src/erin-csv.cpp
+    ${PROJECT_SOURCE_DIR}/src/erin-distribution.cpp
+    ${PROJECT_SOURCE_DIR}/src/erin-graph.cpp
+    ${PROJECT_SOURCE_DIR}/src/erin-load.cpp
+    ${PROJECT_SOURCE_DIR}/src/erin-logging.cpp
+    ${PROJECT_SOURCE_DIR}/src/erin-lookup-table.cpp
+    ${PROJECT_SOURCE_DIR}/src/erin-random.cpp
+    ${PROJECT_SOURCE_DIR}/src/erin-reliability.cpp
+    ${PROJECT_SOURCE_DIR}/src/erin-scenario.cpp
+    ${PROJECT_SOURCE_DIR}/src/erin-simulation-info.cpp
+    ${PROJECT_SOURCE_DIR}/src/erin-simulation.cpp
+    ${PROJECT_SOURCE_DIR}/src/erin-time-and-amount.cpp
+    ${PROJECT_SOURCE_DIR}/src/erin-timestate.cpp
+    ${PROJECT_SOURCE_DIR}/src/erin-toml.cpp
+    ${PROJECT_SOURCE_DIR}/src/erin-units.cpp
+    ${PROJECT_SOURCE_DIR}/src/erin-utils.cpp
+    ${PROJECT_SOURCE_DIR}/src/erin-validation.cpp
     ${PROJECT_SOURCE_DIR}/src/erin.cpp
-    ${PROJECT_SOURCE_DIR}/src/erin_component.cpp
-    ${PROJECT_SOURCE_DIR}/src/erin_csv.cpp
-    ${PROJECT_SOURCE_DIR}/src/erin_distribution.cpp
-    ${PROJECT_SOURCE_DIR}/src/erin_graph.cpp
-    ${PROJECT_SOURCE_DIR}/src/erin_load.cpp
-    ${PROJECT_SOURCE_DIR}/src/erin_logging.cpp
-    ${PROJECT_SOURCE_DIR}/src/erin_lookup_table.cpp
-    ${PROJECT_SOURCE_DIR}/src/erin_random.cpp
-    ${PROJECT_SOURCE_DIR}/src/erin_reliability.cpp
-    ${PROJECT_SOURCE_DIR}/src/erin_scenario.cpp
-    ${PROJECT_SOURCE_DIR}/src/erin_simulation.cpp
-    ${PROJECT_SOURCE_DIR}/src/erin_simulation_info.cpp
-    ${PROJECT_SOURCE_DIR}/src/erin_time_and_amount.cpp
-    ${PROJECT_SOURCE_DIR}/src/erin_timestate.cpp
-    ${PROJECT_SOURCE_DIR}/src/erin_toml.cpp
-    ${PROJECT_SOURCE_DIR}/src/erin_units.cpp
-    ${PROJECT_SOURCE_DIR}/src/erin_utils.cpp
-    ${PROJECT_SOURCE_DIR}/src/erin_validation.cpp
+    ${PROJECT_SOURCE_DIR}/include/erin/all.h
     ${PROJECT_SOURCE_DIR}/include/erin/component.h
     ${PROJECT_SOURCE_DIR}/include/erin/const.h
     ${PROJECT_SOURCE_DIR}/include/erin/csv.h
@@ -35,8 +36,8 @@ set(library_sources
     ${PROJECT_SOURCE_DIR}/include/erin/reliability.h
     ${PROJECT_SOURCE_DIR}/include/erin/result.h
     ${PROJECT_SOURCE_DIR}/include/erin/scenario.h
+    ${PROJECT_SOURCE_DIR}/include/erin/simulation-info.h
     ${PROJECT_SOURCE_DIR}/include/erin/simulation.h
-    ${PROJECT_SOURCE_DIR}/include/erin/simulation_info.h
     ${PROJECT_SOURCE_DIR}/include/erin/time_and_amount.h
     ${PROJECT_SOURCE_DIR}/include/erin/timestate.h
     ${PROJECT_SOURCE_DIR}/include/erin/toml.h
@@ -44,7 +45,6 @@ set(library_sources
     ${PROJECT_SOURCE_DIR}/include/erin/utils.h
     ${PROJECT_SOURCE_DIR}/include/erin/valdata.h
     ${PROJECT_SOURCE_DIR}/include/erin/validation.h
-    ${PROJECT_SOURCE_DIR}/include/erin/version.h
     ${PROJECT_BINARY_DIR}/include/${PROJECT_NAME}/version.h
 )
 

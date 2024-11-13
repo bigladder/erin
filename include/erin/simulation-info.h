@@ -1,19 +1,23 @@
-/* Copyright (c) 2024 Big Ladder Software LLC. All rights reserved.
- * See the LICENSE.txt file for additional terms and conditions. */
+// Copyright (c) 2020 - 2024 Big Ladder Software, LLC.
+// See the LICENSE.txt file for additional terms and conditions.
 #ifndef ERIN_SIMULATION_INFO_H
 #define ERIN_SIMULATION_INFO_H
-#include "erin/valdata.h"
-#include "erin/units.h"
-#include "erin/random.h"
-#include "../vendor/toml11/toml.hpp"
+
+#include <optional>
 #include <ostream>
 #include <string>
-#include <optional>
 #include <unordered_map>
 #include <vector>
 
+#include "../vendor/toml11/toml.hpp"
+
+#include "erin/random.h"
+#include "erin/units.h"
+#include "erin/valdata.h"
+
 namespace erin
 {
+
 // TODO: consider what we're asking for in SimulationInfo. I think we
 // should do the following: get rid of rate and quantity unit. TimeUnit
 // is needed as it corresponds with max_time. Otherwise, more thought is
@@ -25,28 +29,28 @@ namespace erin
 // uint32_t...
 struct SimulationInfo
 {
-    std::string InputFormatVersion = "";
-    PowerUnit RateUnit;
+    std::string input_format_version = "";
+    PowerUnit rate_unit;
     // TODO: remove QuantityUnit; not in user guide; or does this set
     // defaults? if keep, use EnergyUnit
-    std::string QuantityUnit;
-    TimeUnit TheTimeUnit;
-    // TODO: change to MaxTime_s
-    double MaxTime;
-    RandomType TypeOfRandom;
-    int unsigned Seed = 0;
-    std::vector<double> Series;
-    double FixedValue = 0.0;
+    std::string quantity_unit;
+    TimeUnit time_unit;
+    double max_time_s;
+    RandomType type_of_random;
+    int unsigned seed = 0;
+    std::vector<double> series;
+    double fixed_value = 0.0;
 };
 
 std::optional<SimulationInfo>
-ParseSimulationInfo(std::unordered_map<std::string, InputValue> const& table);
+parse_simulation_info(std::unordered_map<std::string, InputValue> const& table);
 
 bool operator==(SimulationInfo const& a, SimulationInfo const& b);
 
 bool operator!=(SimulationInfo const& a, SimulationInfo const& b);
 
 std::ostream& operator<<(std::ostream& os, SimulationInfo const& s);
+
 } // namespace erin
 
 #endif

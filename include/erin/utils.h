@@ -1,18 +1,21 @@
-/* Copyright (c) 2024 Big Ladder Software LLC. All rights reserved.
- * See the LICENSE.txt file for additional terms and conditions. */
+// Copyright (c) 2020 - 2024 Big Ladder Software, LLC.
+// See the LICENSE.txt file for additional terms and conditions.
 #ifndef ERIN_UTILS_H
 #define ERIN_UTILS_H
-#include "erin/const.h"
-#include <string>
+
 #include <cstdlib>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
-#include <vector>
 #include <stdint.h>
+#include <string>
+#include <vector>
+
+#include "erin/const.h"
 
 namespace erin
 {
+
 // Clojure program to calculate the below:
 // > (def days-per-month [31 28 31 30 31 30 31 31 30 31 30 31])
 // > (count days-per-month) ;=> 12
@@ -43,6 +46,7 @@ std::vector<flow_t> const days_per_month {// January
                                           30,
                                           // December
                                           31};
+
 std::vector<flow_t> const day_of_year_to_month {// January is doy <= 31 days
                                                 31,
                                                 // February (non-leap year) is doy <= 59
@@ -67,6 +71,7 @@ std::vector<flow_t> const day_of_year_to_month {// January is doy <= 31 days
                                                 334,
                                                 // December
                                                 365};
+
 flow_t const num_months {12};
 int const max_month_idx = 11;
 int const min_month_idx = 0;
@@ -93,27 +98,29 @@ struct Months_days_elapsed
     flow_t days;
 };
 
-Months_days_elapsed DayOfYearToMonthsDaysElapsed(uint64_t day_of_year);
+Months_days_elapsed day_of_year_to_months_days_elapsed(uint64_t day_of_year);
 
-std::string TimeToISO8601Period(uint64_t time_seconds);
+std::string time_to_ISO8601_period(uint64_t time_seconds);
 
-double TimeInSecondsToHours(uint64_t time_seconds);
+double time_in_seconds_to_hours(uint64_t time_seconds);
 
-void WriteTaggedCategoryMessage(std::string const& category,
-                                std::string const& tag,
-                                std::string const& message);
+void write_tagged_category_message(std::string const& category,
+                                   std::string const& tag,
+                                   std::string const& message);
 
-void WriteWarningMessage(std::string const& tag, std::string const& message);
+void write_warning_message(std::string const& tag, std::string const& message);
 
-void WriteErrorMessage(std::string const& tag, std::string const& message);
+void write_error_message(std::string const& tag, std::string const& message);
 
-std::string WriteTaggedCategoryToString(std::string const& category,
-                                        std::string const& tag,
-                                        std::string const& message);
+std::string write_tagged_category_to_string(std::string const& category,
+                                            std::string const& tag,
+                                            std::string const& message);
 
-std::string WriteWarningToString(std::string const& tag, std::string const& message);
+std::string write_warning_to_string(std::string const& tag, std::string const& message);
 
-std::string WriteErrorToString(std::string const& tag, std::string const& msg);
+std::string write_error_to_string(std::string const& tag, std::string const& msg);
+
+std::string double_to_string(double value, unsigned int precision);
 
 } // namespace erin
 

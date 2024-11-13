@@ -1,9 +1,10 @@
+// Copyright (c) 2020 - 2024 Big Ladder Software, LLC.
+// See the LICENSE.txt file for additional terms and conditions.
 #include "erin/lookup_table.h"
 
 namespace erin
 {
-double
-LookupTable_LookupStairStep(std::vector<double> const& xs, std::vector<double> const& ys, double x)
+double lookup_stair_step(std::vector<double> const& xs, std::vector<double> const& ys, double x)
 {
     assert(xs.size() == ys.size());
     assert(xs.size() > 0);
@@ -27,8 +28,7 @@ LookupTable_LookupStairStep(std::vector<double> const& xs, std::vector<double> c
     return ys[maxIdx];
 }
 
-double
-LookupTable_LookupInterp(std::vector<double> const& xs, std::vector<double> const& ys, double x)
+double lookup_linear_interp(std::vector<double> const& xs, std::vector<double> const& ys, double x)
 {
     assert(xs.size() == ys.size());
     assert(xs.size() > 0);

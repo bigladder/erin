@@ -1,70 +1,64 @@
-/* Copyright (c) 2024 Big Ladder Software LLC. All rights reserved.
- * See the LICENSE.txt file for additional terms and conditions. */
+// Copyright (c) 2020 - 2024 Big Ladder Software, LLC.
+// See the LICENSE.txt file for additional terms and conditions.
 #ifndef ERIN_H
 #define ERIN_H
 
-#include "erin/const.h"
-#include "erin/timestate.h"
-#include "erin/distribution.h"
-#include "erin/reliability.h"
-#include "erin/time_and_amount.h"
-#include "erin/units.h"
-#include "erin/result.h"
-#include "erin/lookup_table.h"
-#include "erin/logging.h"
-#include "../vendor/toml11/toml.hpp"
+#include <cassert>
+#include <functional>
 #include <iostream>
 #include <limits>
-#include <stdlib.h>
-#include <stdint.h>
-#include <string>
-#include <cassert>
-#include <stdexcept>
-#include <vector>
-#include <optional>
-#include <set>
 #include <map>
+#include <optional>
 #include <ostream>
-#include <functional>
+#include <set>
+#include <stdexcept>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
+
+#include "../vendor/toml11/toml.hpp"
+
+#include "erin/const.h"
+#include "erin/distribution.h"
+#include "erin/logging.h"
+#include "erin/lookup_table.h"
+#include "erin/reliability.h"
+#include "erin/result.h"
+#include "erin/time_and_amount.h"
+#include "erin/timestate.h"
+#include "erin/units.h"
 
 namespace erin
 {
 // DATA
-double const infinity = -1.0;
-
-size_t const constEffConvOutflowPort = 0;
-size_t const constEffConvLossflowPort = 1;
-size_t const constEffConvWasteflowPort = 2;
-
-constexpr size_t const wasteflowId = 0;
-
 // NOTE: the maximum allowed flow
 constexpr flow_t const max_flow_W = std::numeric_limits<flow_t>::max();
 
 enum class FlowDirection
 {
-    Inflow = 0,
-    Outflow = 1,
+    inflow = 0,
+    outflow = 1,
 };
 
 enum class ComponentType
 {
-    ConstantLoadType,
-    ScheduleBasedLoadType,
-    ConstantSourceType,
-    ScheduleBasedSourceType,
-    ConstantEfficiencyConverterType,
-    VariableEfficiencyConverterType,
-    MuxType,
-    StoreType,
-    PassThroughType,
-    MoverType,
-    VariableEfficiencyMoverType,
-    WasteSinkType,
-    EnvironmentSourceType,
-    SwitchType,
+    constant_load_type,
+    schedule_based_load_type,
+    constant_source_type,
+    schedule_based_source_type,
+    constant_efficiency_converter_type,
+    variable_efficiency_converter_type,
+    mux_type,
+    store_type,
+    pass_through_type,
+    mover_type,
+    variable_efficiency_mover_type,
+    waste_sink_type,
+    environment_source_type,
+    switch_type,
 };
 
 // Holds the various flow types encountered
@@ -77,13 +71,13 @@ enum class ComponentType
 // Watt, for example. For Mass, it might be kg/s (or g/s?).
 struct FlowDict
 {
-    std::vector<std::string> Type;
+    std::vector<std::string> flow_type;
 };
 
 struct LoadDict
 {
-    std::vector<std::string> Tags;
-    std::vector<std::vector<TimeAndAmount>> Loads;
+    std::vector<std::string> tags;
+    std::vector<std::vector<TimeAndAmount>> loads;
 };
 
 // TODO: enable this in the future. Idea is to return
@@ -100,196 +94,193 @@ struct LoadDict
 // NOTE: arrays in struct below indexed by size_t which we call ComponentId
 struct ComponentDict
 {
-    // The index into the component vector for the given component subtype
-    std::vector<size_t> Idx;
-    std::vector<ComponentType> CompType;
-    std::vector<std::string> Tag;
-    std::vector<double> InitialAges_s;
+    std::vector<size_t> subtype_index;
+    std::vector<ComponentType> component_type;
+    std::vector<std::string> tag;
+    std::vector<double> initial_age_s;
     // Component's inflow type by inport; result indexes FlowDict
-    std::vector<std::vector<size_t>> InflowType;
+    std::vector<std::vector<size_t>> inflow_type;
     // Component's outflow type by outport; result indexes FlowDict
-    std::vector<std::vector<size_t>> OutflowType;
+    std::vector<std::vector<size_t>> outflow_type;
     // if true, all connected inflows should be reported in event log
-    std::vector<bool> Report;
+    std::vector<bool> report;
 };
 
 struct FlowSummary
 {
-    double Time = 0.0;
-    flow_t Inflow = 0;
-    flow_t OutflowRequest = 0;
-    flow_t OutflowAchieved = 0;
-    flow_t StorageDischarge = 0;
-    flow_t StorageCharge = 0;
-    flow_t Wasteflow = 0;
-    flow_t EnvInflow = 0;
+    double time_s = 0.0;
+    flow_t inflow_W = 0;
+    flow_t outflow_request_W = 0;
+    flow_t outflow_achieved_W = 0;
+    flow_t storage_discharge_W = 0;
+    flow_t storage_charge_W = 0;
+    flow_t wasteflow_W = 0;
+    flow_t env_inflow_W = 0;
 };
 
 struct StatsByFlowType
 {
-    size_t FlowTypeId;
-    double Uptime_s = 0.0;
-    double TotalRequest_kJ = 0.0;
-    double TotalAchieved_kJ = 0.0;
+    size_t flow_type_id;
+    double uptime_s = 0.0;
+    double total_request_kJ = 0.0;
+    double total_achieved_kJ = 0.0;
 };
 
 struct StatsByLoadAndFlowType
 {
     // indexes ComponentMap
-    size_t ComponentId;
-    StatsByFlowType Stats;
+    size_t component_id;
+    StatsByFlowType stats;
 };
 
 struct LoadNotServedForComp
 {
-    size_t ComponentId;
-    size_t FlowTypeId;
-    double LoadNotServed_kJ = 0.0;
+    size_t component_id;
+    size_t flow_type_id;
+    double load_not_served_kJ = 0.0;
 };
 
 struct ScenarioOccurrenceStats
 {
     // Id of the scenario; indexes into Simulation.ScenarioMap
-    // TODO: rename to ScenarioId;
-    size_t Id = 0;
+    size_t scenario_id = 0;
     // The occurrence of this scenario; 1st occurrence is 1, 2nd is 2, etc.
-    size_t OccurrenceNumber;
-    double Duration_s = 0.0;
-    double Inflow_kJ = 0.0;
-    double OutflowRequest_kJ = 0.0;
-    double OutflowAchieved_kJ = 0.0;
-    double StorageDischarge_kJ = 0.0;
-    double StorageCharge_kJ = 0.0;
-    double Wasteflow_kJ = 0.0;
-    double InFromEnv_kJ = 0.0;
-    double LoadNotServed_kJ = 0.0;
-    // TODO: net change in storage finalStored_kJ - initialStored_kJ
-    double ChangeInStorage_kJ = 0.0;
-    double Uptime_s = 0.0;
-    double Downtime_s = 0.0;
-    double MaxSEDT_s = 0.0;
-    double Availability_s = 0.0;
-    std::map<size_t, double> AvailabilityByCompId_s;
+    size_t occurrence_number;
+    double duration_s = 0.0;
+    double inflow_kJ = 0.0;
+    double outflow_request_kJ = 0.0;
+    double outflow_achieved_kJ = 0.0;
+    double storage_discharge_kJ = 0.0;
+    double storage_charge_kJ = 0.0;
+    double wasteflow_kJ = 0.0;
+    double in_from_env_kJ = 0.0;
+    double load_not_served_kJ = 0.0;
+    // net change in storage finalStored_kJ - initialStored_kJ
+    double change_in_storage_kJ = 0.0;
+    double uptime_s = 0.0;
+    double downtime_s = 0.0;
+    double max_SEDT_s = 0.0;
+    double availability_s = 0.0;
+    std::map<size_t, double> availability_by_comp_id_s;
     // Event Counts
-    std::map<size_t, size_t> EventCountByFailureModeId;
-    std::map<size_t, std::map<size_t, size_t>> EventCountByCompIdByFailureModeId;
-    std::map<size_t, size_t> EventCountByFragilityModeId;
-    std::map<size_t, std::map<size_t, size_t>> EventCountByCompIdByFragilityModeId;
+    std::map<size_t, size_t> event_count_by_failure_mode_id;
+    std::map<size_t, std::map<size_t, size_t>> event_count_by_comp_id_by_failure_mode_id;
+    std::map<size_t, size_t> event_count_by_fragility_mode_id;
+    std::map<size_t, std::map<size_t, size_t>> event_count_by_comp_id_by_fragility_mode_id;
     // Failure/Fragility Times
-    std::map<size_t, double> TimeByFailureModeId_s;
-    std::map<size_t, std::map<size_t, double>> TimeByCompIdByFailureModeId_s;
-    std::map<size_t, double> TimeByFragilityModeId_s;
-    std::map<size_t, std::map<size_t, double>> TimeByCompIdByFragilityModeId_s;
+    std::map<size_t, double> time_by_failure_mode_id_s;
+    std::map<size_t, std::map<size_t, double>> time_by_comp_id_by_failure_mode_id_s;
+    std::map<size_t, double> time_by_fragility_mode_id_s;
+    std::map<size_t, std::map<size_t, double>> time_by_comp_id_by_fragility_mode_id_s;
     // Characteristics by Flow Type
     // NOTE: sorted in alphabetical order by flow type name
-    std::vector<StatsByFlowType> FlowTypeStats;
+    std::vector<StatsByFlowType> flow_type_stats;
     // NOTE: sorted in alphabetical order by [componentTag, flowType]
-    std::vector<StatsByLoadAndFlowType> LoadAndFlowTypeStats;
+    std::vector<StatsByLoadAndFlowType> load_and_flow_type_stats;
     // NOTE: sorted in alphabetical order by [componentTag, flowType]
-    std::vector<LoadNotServedForComp> LoadNotServedForComponents;
+    std::vector<LoadNotServedForComp> load_not_served_for_components;
 };
 
 struct ConstantLoad
 {
-    flow_t Load_W;
-    size_t InflowConn;
+    flow_t load_W;
+    size_t inflow_connection_id;
 };
 
 struct ScheduleBasedLoad
 {
-    std::vector<TimeAndAmount> TimesAndLoads;
-    size_t InflowConn;
-    std::map<size_t, size_t> ScenarioIdToLoadId;
+    std::vector<TimeAndAmount> times_and_loads;
+    size_t inflow_connection_id;
+    std::map<size_t, size_t> scenario_id_to_load_id;
 };
 
 struct ScheduleBasedReliability
 {
-    std::vector<TimeState> TimeStates;
-    size_t ComponentId;
+    std::vector<TimeState> time_states;
+    size_t component_id;
 };
 
 struct ConstantSource
 {
-    flow_t Available_W;
-    size_t OutflowConn;
+    flow_t available_W;
+    size_t outflow_connection_id;
 };
 
 struct ScheduleBasedSource
 {
-    std::vector<TimeAndAmount> TimeAndAvails;
-    size_t OutflowConn;
-    size_t WasteflowConn;
-    std::map<size_t, size_t> ScenarioIdToSourceId;
-    flow_t MaxOutflow_W = max_flow_W;
+    std::vector<TimeAndAmount> time_and_availables;
+    size_t outflow_connection_id;
+    size_t wasteflow_connection_id;
+    std::map<size_t, size_t> scenario_id_to_source_id;
+    flow_t max_outflow_W = max_flow_W;
 };
 
 struct ConstantEfficiencyConverter
 {
     // NOTE: efficiency is a fraction in range (0.0, 1.0]
-    double Efficiency;
-    size_t InflowConn;
-    size_t OutflowConn;
-    std::optional<size_t> LossflowConn;
-    size_t WasteflowConn;
-    flow_t MaxOutflow_W = max_flow_W;
-    flow_t MaxLossflow_W = max_flow_W;
+    double efficiency;
+    size_t inflow_connection_id;
+    size_t outflow_connection_id;
+    std::optional<size_t> lossflow_connection_id;
+    size_t wasteflow_connection_id;
+    flow_t max_outflow_W = max_flow_W;
+    flow_t max_lossflow_W = max_flow_W;
 };
 
 struct VariableEfficiencyConverter
 {
-    size_t InflowConn;
-    size_t OutflowConn;
-    std::optional<size_t> LossflowConn;
-    size_t WasteflowConn;
-    flow_t MaxOutflow_W = max_flow_W;
-    flow_t MaxLossflow_W = max_flow_W;
-    std::vector<double> OutflowsForEfficiency_W;
-    std::vector<double> InflowsForEfficiency_W;
+    size_t inflow_connection_id;
+    size_t outflow_connection_id;
+    std::optional<size_t> lossflow_connection_id;
+    size_t wasteflow_connection_id;
+    flow_t max_outflow_W = max_flow_W;
+    flow_t max_lossflow_W = max_flow_W;
+    std::vector<double> outflows_for_efficiency_W;
+    std::vector<double> inflows_for_efficiency_W;
     // Efficiencies corresponding to the outflows and inflows
-    std::vector<double> Efficiencies;
+    std::vector<double> efficiencies;
 };
 
 struct Mover
 {
     // Coefficient of Performance
     double COP;
-    size_t InflowConn;
-    size_t OutflowConn;
-    size_t InFromEnvConn;
-    size_t WasteflowConn;
-    flow_t MaxOutflow_W = max_flow_W;
+    size_t inflow_connection_id;
+    size_t outflow_connection_id;
+    size_t in_from_env_connection_id;
+    size_t wasteflow_connection_id;
+    flow_t max_outflow_W = max_flow_W;
 };
 
 struct VariableEfficiencyMover
 {
-    size_t InflowConn;
-    size_t OutflowConn;
-    size_t InFromEnvConn;
-    size_t WasteflowConn;
-    flow_t MaxOutflow_W = max_flow_W;
-    std::vector<double> OutflowsForCop_W;
-    std::vector<double> InflowsForCop_W;
+    size_t inflow_connection_id;
+    size_t outflow_connection_id;
+    size_t in_from_env_connection_id;
+    size_t wasteflow_connection_id;
+    flow_t max_outflow_W = max_flow_W;
+    std::vector<double> outflows_for_COP_W;
+    std::vector<double> inflows_for_COP_W;
     // Coefficient of Performances -- indexed by above two vectors
     std::vector<double> COPs;
 };
 
 struct Connection
 {
-    ComponentType From = ComponentType::ConstantSourceType;
+    ComponentType from = ComponentType::constant_source_type;
     // index into the specific component type's array
-    size_t FromIdx = 0;
-    size_t FromPort = 0;
+    size_t from_subtype_index = 0;
+    size_t from_port = 0;
     // index into ComponentDict
-    size_t FromId = 0;
-    ComponentType To = ComponentType::ConstantLoadType;
+    size_t from_component_id = 0;
+    ComponentType to = ComponentType::constant_load_type;
     // index into the specific component type's array
-    size_t ToIdx = 0;
-    size_t ToPort = 0;
+    size_t to_subtype_index = 0;
+    size_t to_port = 0;
     // index into ComponentDict
-    size_t ToId = 0;
-    size_t FlowTypeId = 0;
-
-    size_t resultId = 0;
+    size_t to_component_id = 0;
+    size_t flow_type_id = 0;
+    size_t result_id = 0;
 };
 
 template <typename T>
@@ -298,6 +289,7 @@ struct ID
     ID(T id_in) : id(id_in) {}
     T id;
 };
+
 struct ComponentID : ID<size_t>
 {
     ComponentID(size_t id_in = 0) : ID(id_in) {}
@@ -342,85 +334,82 @@ struct NodeID : std::variant<ComponentID, GroupID>
 
 struct NodeConnection
 {
-    size_t ConnectionId = 0;
-    ComponentType From = ComponentType::ConstantSourceType;
-    ComponentType To = ComponentType::ConstantLoadType;
+    size_t connection_id = 0;
+    ComponentType from = ComponentType::constant_source_type;
+    ComponentType to = ComponentType::constant_load_type;
     // index into the specific component type's array
-    size_t FromIdx = 0;
-    size_t FromPort = 0;
+    size_t from_subtype_index = 0;
+    size_t from_port = 0;
     // index into ComponentDict
-    NodeID FromId;
+    NodeID from_component_id;
     // index into the specific component type's array
-    size_t ToIdx = 0;
-    size_t ToPort = 0;
+    size_t to_subtype_index = 0;
+    size_t to_port = 0;
     // index into ComponentDict
-    NodeID ToId;
-    size_t FlowTypeId = 0;
+    NodeID to_component_id;
+    size_t flow_type_id = 0;
 
-    std::vector<size_t> origConnId = {};
+    std::vector<size_t> original_connection_id = {};
 
-    bool operator==(NodeConnection const& nodeConn) const
+    bool operator==(NodeConnection const& node_connection) const
     {
-        bool fromSame = (nodeConn.FromId == FromId) && (nodeConn.FromPort == FromPort);
-        bool toSame = (nodeConn.ToId == ToId) && (nodeConn.ToPort == ToPort);
-        return fromSame && toSame;
+        bool from_is_same = (node_connection.from_component_id == from_component_id) &&
+                            (node_connection.from_port == from_port);
+        bool to_is_same = (node_connection.to_component_id == to_component_id) &&
+                          (node_connection.to_port == to_port);
+        return from_is_same && to_is_same;
     }
 };
 
 struct Mux
 {
-    size_t NumInports;
-    size_t NumOutports;
-    std::vector<size_t> InflowConns;
-    std::vector<size_t> OutflowConns;
-    std::vector<flow_t> MaxOutflows_W;
+    size_t number_of_inports;
+    size_t number_of_outports;
+    std::vector<size_t> inflow_connection_ids;
+    std::vector<size_t> outflow_connection_ids;
+    std::vector<flow_t> max_outflows_W;
 };
 
 struct Store
 {
-    flow_t Capacity_J;
-    flow_t MaxChargeRate_W;
-    flow_t MaxDischargeRate_W;
+    flow_t capacity_J;
+    flow_t max_charge_rate_W;
+    flow_t max_discharge_rate_W;
     // amount at or below which we request charge
-    flow_t ChargeAmount_J;
-    flow_t InitialStorage_J;
-    std::optional<size_t> InflowConn = {};
-    size_t OutflowConn;
-    std::optional<size_t> WasteflowConn = {};
-    double RoundTripEfficiency = 1.0;
-    flow_t MaxOutflow_W = max_flow_W;
+    flow_t charge_amount_J;
+    flow_t initial_storage_J;
+    std::optional<size_t> inflow_connection_id = {};
+    size_t outflow_connection_id;
+    std::optional<size_t> wasteflow_connection_id = {};
+    double roundtrip_efficiency = 1.0;
+    flow_t max_outflow_W = max_flow_W;
 };
 
 struct PassThrough
 {
-    size_t InflowConn = 0;
-    size_t OutflowConn = 0;
-    flow_t MaxOutflow_W = max_flow_W;
+    size_t inflow_connection_id = 0;
+    size_t outflow_connection_id = 0;
+    flow_t max_outflow_W = max_flow_W;
 };
 
 // TODO[mok]: need to rethink this. This adds a branch with an add.
 // Probably a horrible performance issue. Use double but convert to
 // unsigned int when finalize flows?
-inline flow_t UtilSafeAdd(flow_t a, flow_t b)
-{
-    return (b > (max_flow_W - a)) ? max_flow_W : a + b;
-}
+inline flow_t safe_add(flow_t a, flow_t b) { return (b > (max_flow_W - a)) ? max_flow_W : a + b; }
 
 struct Flow
 {
-    flow_t Requested_W = 0;
-    flow_t Available_W = 0;
-    flow_t Actual_W = 0;
+    flow_t requested_W = 0;
+    flow_t available_W = 0;
+    flow_t actual_W = 0;
 
-    // TODO: fix the below. This will break if available is at max size for
-    // unsigned int
     Flow operator+(Flow const& flow) const
     {
-        Flow newFlow;
-        newFlow.Requested_W = Requested_W + flow.Requested_W;
-        newFlow.Available_W = UtilSafeAdd(Available_W, flow.Available_W);
-        newFlow.Actual_W = Actual_W + flow.Actual_W;
-        return newFlow;
+        return Flow {
+            .requested_W = requested_W + flow.requested_W,
+            .available_W = safe_add(available_W, flow.available_W),
+            .actual_W = actual_W + flow.actual_W,
+        };
     }
 
     Flow operator+=(Flow const& flow) { return *this = *this + flow; }
@@ -429,9 +418,9 @@ struct Flow
 struct TimeAndFlows
 {
     // TODO: change to Time_s
-    double Time = 0.0;
-    std::vector<Flow> Flows;
-    std::vector<flow_t> StorageAmounts_J;
+    double time_s = 0.0;
+    std::vector<Flow> flows;
+    std::vector<flow_t> storage_amounts_J;
 };
 
 typedef std::unordered_map<std::string, std::set<std::size_t>> GroupToComponentMap;
@@ -440,233 +429,172 @@ typedef std::unordered_map<std::size_t, std::string> ComponentToGroupMap;
 
 struct Switch
 {
-    size_t InflowConnPrimary;
-    size_t InflowConnSecondary;
-    size_t OutflowConn;
-    flow_t MaxOutflow_W;
+    size_t inflow_connection_id_primary;
+    size_t inflow_connection_id_secondary;
+    size_t outflow_connection_id;
+    flow_t max_outflow_W;
 };
 
 struct Model
 {
-    ComponentDict ComponentMap;
-    std::vector<ConstantSource> ConstSources;
-    std::vector<ScheduleBasedSource> ScheduledSrcs;
-    std::vector<ConstantLoad> ConstLoads;
-    std::vector<ScheduleBasedLoad> ScheduledLoads;
-    std::vector<ConstantEfficiencyConverter> ConstEffConvs;
-    std::vector<VariableEfficiencyConverter> VarEffConvs;
-    std::vector<Mux> Muxes;
-    std::vector<Store> Stores;
-    std::vector<PassThrough> PassThroughs;
-    std::vector<Mover> Movers;
-    std::vector<VariableEfficiencyMover> VarEffMovers;
-    std::vector<Switch> Switches;
-    std::vector<Connection> Connections;
-    std::vector<ScheduleBasedReliability> Reliabilities;
-    DistributionSystem DistSys {};
-    ReliabilityCoordinator Rel {};
-    std::function<double()> RandFn;
-    double FinalTime = 0.0;
-    GroupToComponentMap GroupToComponents;
-    ComponentToGroupMap ComponentToGroup;
-    std::unordered_map<std::string, size_t> nGroupPortsTo, nGroupPortsFrom;
+    ComponentDict component;
+    std::vector<ConstantSource> constant_source;
+    std::vector<ScheduleBasedSource> scheduled_source;
+    std::vector<ConstantLoad> constant_load;
+    std::vector<ScheduleBasedLoad> scheduled_load;
+    std::vector<ConstantEfficiencyConverter> constant_efficiency_converter;
+    std::vector<VariableEfficiencyConverter> variable_efficiency_converter;
+    std::vector<Mux> mux;
+    std::vector<Store> store;
+    std::vector<PassThrough> pass_through;
+    std::vector<Mover> mover;
+    std::vector<VariableEfficiencyMover> variable_efficiency_mover;
+    std::vector<Switch> transfer_switch;
+    std::vector<Connection> connection;
+    std::vector<ScheduleBasedReliability> reliability;
+    DistributionSystem dist_sys {};
+    ReliabilityCoordinator rel_coord {};
+    std::function<double()> random_function;
+    double final_time_s = 0.0;
+    GroupToComponentMap group_to_component;
+    ComponentToGroupMap component_to_group;
+    std::unordered_map<std::string, size_t> number_of_group_ports_to;
+    std::unordered_map<std::string, size_t> number_of_group_ports_from;
 };
 
 struct ComponentIdAndWasteConnection
 {
-    size_t Id;
-    Connection WasteConnection;
+    size_t id;
+    Connection waste_connection_id;
 };
 
 struct ComponentIdAndWasteAndEnvironmentConnection
 {
-    size_t Id;
-    Connection WasteConn;
-    Connection EnvConn;
+    size_t id;
+    Connection waste_connection_id;
+    Connection environment_connection_id;
 };
 
 enum class SwitchState
 {
-    Primary = 0,
-    Secondary = 1,
+    primary = 0,
+    secondary = 1,
 };
 
 struct SimulationState
 {
-    std::set<size_t> ActiveConnectionsBack {};
-    std::set<size_t> ActiveConnectionsFront {};
+    std::set<size_t> active_connections_back {};
+    std::set<size_t> active_connections_front {};
     // a set of component id that are unavailable
-    std::set<size_t> UnavailableComponents {};
-    std::vector<flow_t> StorageAmounts_J {};
-    std::vector<double> StorageNextEventTimes {};
-    std::vector<Flow> Flows {};
-    std::vector<size_t> ScheduleBasedLoadIdx {};
-    std::vector<size_t> ScheduleBasedSourceIdx {};
-    std::vector<SwitchState> SwitchStates {};
+    std::set<size_t> unavailable_components {};
+    std::vector<flow_t> storage_amounts_J {};
+    std::vector<double> storage_next_event_times {};
+    std::vector<Flow> flows {};
+    std::vector<size_t> schedule_based_load_index {};
+    std::vector<size_t> schedule_based_source_index {};
+    std::vector<SwitchState> switch_states {};
 };
 
 struct TagAndPort
 {
-    std::string Tag;
-    size_t Port;
+    std::string tag;
+    size_t port;
 };
 
 enum class FragilityResult
 {
-    IsFailed,
-    HasSurvived,
+    is_failed,
+    has_survived,
 };
 
 enum class FragilityCurveType
 {
-    Linear,
-    Tabular,
+    linear,
+    tabular,
 };
 
 struct LinearFragilityCurve
 {
     // indexes IntensityDict
-    size_t VulnerabilityId = 0;
-    double LowerBound = 0.0;
-    double UpperBound = 1.0;
+    size_t vulnerability_id = 0;
+    double lower_bound = 0.0;
+    double upper_bound = 1.0;
 };
 
 struct TabularFragilityCurve
 {
-    size_t VulnerabilityId = 0;
-    std::vector<double> Intensities;
-    std::vector<double> FailureFractions;
+    size_t vulnerability_id = 0;
+    std::vector<double> intensity;
+    std::vector<double> failure_fraction;
 };
 
 struct IntensityDict
 {
-    std::vector<std::string> Tags {};
+    std::vector<std::string> tag {};
 };
 
 struct ScenarioIntensityDict
 {
-    std::vector<size_t> ScenarioIds;
-    std::vector<size_t> IntensityIds;
-    std::vector<double> IntensityLevels;
+    std::vector<size_t> scenario_id;
+    std::vector<size_t> intensity_id;
+    std::vector<double> intensity_level;
 };
 
 struct FragilityCurveDict
 {
-    std::vector<std::string> Tags {};
-    std::vector<FragilityCurveType> CurveTypes {};
-    std::vector<size_t> CurveId {};
+    std::vector<std::string> tag {};
+    std::vector<FragilityCurveType> curve_type {};
+    std::vector<size_t> curve_id {};
 };
 
 // TODO: should we call these "tables" instead of dict?
 // more remeniscent of databases...
 struct ComponentFragilityModeDict
 {
-    std::vector<size_t> ComponentIds;
-    std::vector<size_t> FragilityModeIds;
+    std::vector<size_t> component_id;
+    std::vector<size_t> fragility_mode_id;
 };
 
 struct FragilityModeDict
 {
-    std::vector<std::string> Tags {};
-    std::vector<size_t> FragilityCurveId {};
-    std::vector<std::optional<size_t>> RepairDistIds {};
+    std::vector<std::string> tag {};
+    std::vector<size_t> fragility_curve_id {};
+    std::vector<std::optional<size_t>> repair_distribution_id {};
 };
 
 struct ComponentFailureModeDict
 {
     // index into ComponentDict
-    std::vector<size_t> ComponentIds;
+    std::vector<size_t> component_id;
     // index into FailureModeDict
-    std::vector<size_t> FailureModeIds;
+    std::vector<size_t> failure_mode_id;
 };
 
 struct FailureModeDict
 {
-    std::vector<std::string> Tags;
-    std::vector<size_t> FailureDistIds;
-    std::vector<size_t> RepairDistIds;
+    std::vector<std::string> tag;
+    std::vector<size_t> failure_distribution_id;
+    std::vector<size_t> repair_distribution_id;
 };
 
 // FUNCTIONS
-void AddConnectionIssue(std::vector<std::string>& issues,
-                        std::string componentTag,
-                        size_t compId,
-                        size_t compPort,
-                        size_t compSubtypeIdx,
-                        ComponentType compType,
-                        Connection const& conn,
-                        size_t connIdx,
-                        FlowDirection flowDirection);
+std::vector<std::string> check_network(Model const& m);
 
-std::vector<std::string> Model_CheckNetwork(Model const& m);
+// NOTE: INTERNAL
+std::vector<TimeAndAmount>
+convert_to_time_and_amounts(std::vector<std::vector<double>> const& input,
+                            double timeToSeconds = 1.0,
+                            double rateToWatts = 1.0);
 
-inline flow_t UtilSafeAdd(flow_t a, flow_t b);
+std::optional<FragilityCurveType> tag_to_fragility_curve_type(std::string const& tag);
 
-std::vector<TimeAndAmount> ConvertToTimeAndAmounts(std::vector<std::vector<double>> const& input,
-                                                   double timeToSeconds = 1.0,
-                                                   double rateToWatts = 1.0);
+std::string fragility_curve_type_to_tag(FragilityCurveType fctype);
 
-std::optional<FragilityCurveType> TagToFragilityCurveType(std::string const& tag);
+std::optional<size_t> get_intensity_id_by_tag(IntensityDict intensity_dict, std::string const& tag);
 
-std::string FragilityCurveTypeToTag(FragilityCurveType fctype);
+SwitchState get_switch_state(SimulationState const& ss, size_t const& switch_index);
 
-std::optional<size_t> GetIntensityIdByTag(IntensityDict intenseDict, std::string const& tag);
-
-size_t Component_AddComponentReturningId(ComponentDict& c, ComponentType ct, size_t idx);
-
-size_t Component_AddComponentReturningId(ComponentDict& c,
-                                         ComponentType ct,
-                                         size_t idx,
-                                         std::vector<size_t> inflowType,
-                                         std::vector<size_t> outflowType,
-                                         std::string const& tag,
-                                         double initialAge_s,
-                                         bool report = true);
-
-void Helper_AddIfNotAdded(std::vector<size_t>& items, size_t item);
-
-SwitchState SimulationState_GetSwitchState(SimulationState const& ss, size_t const& switchIdx);
-
-void SimulationState_SetSwitchState(SimulationState& ss,
-                                    size_t const& switchIdx,
-                                    SwitchState newState);
-
-void SimulationState_AddActiveConnectionBack(SimulationState& ss, size_t connIdx);
-
-void SimulationState_AddActiveConnectionForward(SimulationState& ss, size_t connIdx);
-
-size_t CountActiveConnections(SimulationState const& ss);
-
-void ActivateConnectionsForConstantLoads(Model const& m, SimulationState& ss);
-
-void ActivateConnectionsForConstantSources(Model const& m, SimulationState& ss);
-
-void ActivateConnectionsForScheduleBasedLoads(Model const& m, SimulationState& ss, double t);
-
-void ActivateConnectionsForScheduleBasedSources(Model const& m, SimulationState& ss, double t);
-
-void ActivateConnectionsForStores(Model& m, SimulationState& ss, double t);
-
-void ActivateConnectionsForReliability(Model& m, SimulationState& ss, double time, bool verbose);
-
-double GetNextTime(double nextTime, size_t count, std::function<double(size_t)> f);
-
-double EarliestNextEvent(Model const& m, SimulationState const& ss, double t);
-
-std::optional<size_t>
-FindOutflowConnection(Model const& m, ComponentType ct, size_t compId, size_t outflowPort);
-
-void UpdateConstantEfficiencyLossflowAndWasteflow(Model const& m,
-                                                  SimulationState& ss,
-                                                  size_t compIdx);
-
-void UpdateVariableEfficiencyLossflowAndWasteflow(Model const& m,
-                                                  SimulationState& ss,
-                                                  size_t compIdx);
-
-void RunMuxPostFinalization(Model const& m, SimulationState& ss, size_t compIdx);
-
-void RunActiveConnections(Model& m, SimulationState& ss, double t);
+void set_switch_state(SimulationState& ss, size_t const& switch_index, SwitchState new_state);
 
 void RunConnectionsPostFinalization(Model& model, SimulationState& ss, double t);
 
@@ -788,7 +716,6 @@ ComponentIdAndWasteConnection Model_AddStoreWithWasteflow(Model& m,
                                                           double roundtripEfficiency,
                                                           std::string const& tag);
 
-// TODO: remove this version?
 ComponentIdAndWasteConnection
 Model_AddConstantEfficiencyConverter(Model& m, flow_t eff_numerator, flow_t eff_denominator);
 

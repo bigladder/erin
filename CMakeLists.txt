@@ -1,4 +1,4 @@
-# Copyright (c) 2020 - 2024 Big Ladder Software LLC. All rights reserved.
+# Copyright (c) 2020 - 2024 Big Ladder Software, LLC.
 # See the LICENSE.txt file for additional terms and conditions.
 # NOTE: THIS FILE IS AUTO-GENERATED. DO NOT EDIT.
 cmake_minimum_required(VERSION 3.10) # required for gtest_discover_tests
@@ -12,10 +12,6 @@ project(erin
 # NOTE: Required for some dependencies to build (e.g., toml11).
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
-configure_file(
-    ${PROJECT_SOURCE_DIR}/include/erin/version.h.in
-    ${PROJECT_BINARY_DIR}/include/erin/version.h
-)
 
 # Set a default build type if none was specified
 if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -41,7 +37,13 @@ if (NOT ${PROJECT_NAME}_STATIC_LIB)
 endif ()
 
 include(build-options-interface)
-message(STATUS "Building ${PROJECT_NAME} ${PROJECT_VERSION}")
+include(get-git-hash)
+message(STATUS "Building ${PROJECT_NAME} ${PROJECT_VERSION} (${PROJECT_GIT_HASH})")
+configure_file(
+    ${PROJECT_SOURCE_DIR}/include/erin/version.h.in
+    ${PROJECT_BINARY_DIR}/include/erin/version.h
+)
+
 
 # Set up testing/coverage
 if (${PROJECT_NAME}_BUILD_TESTING)

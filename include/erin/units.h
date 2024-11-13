@@ -1,5 +1,5 @@
-/* Copyright (c) 2024 Big Ladder Software LLC. All rights reserved.
- * See the LICENSE.txt file for additional terms and conditions. */
+// Copyright (c) 2020 - 2024 Big Ladder Software, LLC.
+// See the LICENSE.txt file for additional terms and conditions.
 #ifndef ERIN_UNITS_H
 #define ERIN_UNITS_H
 #include <string>
@@ -7,23 +7,24 @@
 
 namespace erin
 {
-enum PowerUnit
+
+enum class PowerUnit
 {
     Watt,
     KiloWatt,
     MegaWatt,
 };
 
-std::optional<PowerUnit> TagToPowerUnit(std::string const& tag);
+std::optional<PowerUnit> tag_to_power_unit(std::string const& tag);
 
-std::string PowerUnitToString(PowerUnit unit);
+std::string power_unit_to_string(PowerUnit unit);
 
-double Power_ToWatt(double value, PowerUnit unit);
+double power_to_watts(double value, PowerUnit unit);
 
 constexpr double W_per_kW = 1'000.0;
 constexpr double J_per_kJ = 1'000.0;
 
-enum EnergyUnit
+enum class EnergyUnit
 {
     Joule,
     KiloJoule,
@@ -33,31 +34,31 @@ enum EnergyUnit
     MegaWattHour,
 };
 
-std::optional<EnergyUnit> TagToEnergyUnit(std::string const& tag);
+std::optional<EnergyUnit> tag_to_energy_unit(std::string const& tag);
 
-std::string EnergyUnitToString(EnergyUnit unit);
+std::string energy_unit_to_string(EnergyUnit unit);
 
-double Energy_ToJoules(double value, EnergyUnit unit);
+double energy_to_joules(double value, EnergyUnit unit);
 
-enum TimeUnit
+enum class TimeUnit
 {
-    Second,
-    Minute,
-    Hour,
-    Day,
-    Week,
-    Year,
+    second,
+    minute,
+    hour,
+    day,
+    week,
+    year,
 };
 
-std::optional<TimeUnit> TagToTimeUnit(std::string const& tag);
+std::optional<TimeUnit> tag_to_time_unit(std::string const& tag);
 
-std::string TimeUnitToTag(TimeUnit unit);
+std::string time_unit_to_tag(TimeUnit unit);
 
-double Time_ToSeconds(double t, TimeUnit unit);
+double time_to_seconds(double t, TimeUnit unit);
 
-std::string SecondsToPrettyString(double time_s);
+std::string seconds_to_pretty_string(double time_s);
 
-double TimeInSecondsToDesiredUnit(double time_s, TimeUnit unit);
+double time_in_seconds_to_desired_unit(double time_s, TimeUnit unit);
 
 } // namespace erin
 

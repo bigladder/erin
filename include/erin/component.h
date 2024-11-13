@@ -1,28 +1,30 @@
-/* Copyright (c) 2024 Big Ladder Software LLC. All rights reserved.
- * See the LICENSE.txt file for additional terms and conditions. */
+// Copyright (c) 2020 - 2024 Big Ladder Software, LLC.
+// See the LICENSE.txt file for additional terms and conditions.
 #ifndef ERIN_COMPONENT_H
 #define ERIN_COMPONENT_H
-#include "erin/erin.h"
-#include "erin/simulation.h"
-#include "erin/result.h"
-#include "../vendor/toml11/toml.hpp"
-#include "erin/validation.h"
 #include <unordered_set>
+
+#include "../vendor/toml11/toml.hpp"
+
+#include "erin/erin.h"
+#include "erin/result.h"
+#include "erin/simulation.h"
+#include "erin/validation.h"
 
 namespace erin
 {
 
-Result ParseSingleComponent(Simulation& s,
-                            toml::table const& table,
-                            std::string const& tag,
-                            ComponentValidationMap const& compValids,
-                            Log const& log);
+Result parse_single_component(Simulation& s,
+                              toml::table const& table,
+                              std::string const& tag,
+                              ComponentValidationMap const& comp_validation_info,
+                              Log const& log);
 
-Result ParseComponents(Simulation& s,
-                       toml::table const& table,
-                       ComponentValidationMap const& compValids,
-                       std::unordered_set<std::string> const& componentTagsInUse,
-                       Log const& log);
+Result parse_components(Simulation& s,
+                        toml::table const& table,
+                        ComponentValidationMap const& comp_validation_info,
+                        std::unordered_set<std::string> const& component_tags_in_use,
+                        Log const& log);
 
 } // namespace erin
 

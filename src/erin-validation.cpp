@@ -406,7 +406,7 @@ InputValidationMap setup_global_validation_info()
             .input_type = InputType::integer,
             .is_required = false,
             .inform_if_missing = false,
-            .default_value = "17",
+            .default_value = "",
             .enum_values = valid_time_units,
             .aliases = {},
             .sections =

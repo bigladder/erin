@@ -194,7 +194,8 @@ void run(Simulation& s,
          double time_step_h = -1.0,
          bool aggregate_groups = true,
          bool save_reliability_curves = false,
-         bool verbose = false);
+         bool verbose = false,
+         bool show_seed = false);
 
 bool is_failure_name_unique(Simulation& s, std::string const& name);
 

@@ -6,6 +6,7 @@ rate_unit = "kW"
 quantity_unit = "kJ"
 time_unit = "hours"
 max_time = 8760
+random_seed = 17
 
 # Distributions
 [dist.immediately]

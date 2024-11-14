@@ -106,6 +106,9 @@ CLI::App* add_run(CLI::App& app)
     static bool verbose = false;
     subcommand->add_flag("-v,--verbose", verbose, "Verbose output");
 
+    static bool show_seed = false;
+    subcommand->add_flag("-k,--show_seed", show_seed, "Show random seed used for simulation");
+
     static bool no_aggregate_groups = false;
     subcommand->add_flag("-n,--no-group", no_aggregate_groups, "Suppress group aggregation");
 
@@ -164,7 +167,8 @@ CLI::App* add_run(CLI::App& app)
             time_step_h,
             aggregate_groups,
             save_reliability_curves,
-            verbose);
+            verbose,
+            show_seed);
         return EXIT_SUCCESS;
     };
 

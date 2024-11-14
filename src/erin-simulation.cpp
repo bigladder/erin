@@ -2763,7 +2763,8 @@ void run(Simulation& s,
          double time_step_h /*-1.0*/,
          bool aggregateGroups,
          bool saveReliabilityCurves,
-         bool verbose)
+         bool verbose,
+         bool show_seed)
 {
     // TODO: wrap into input options struct and pass in
     bool const checkNetwork = false;
@@ -2793,6 +2794,11 @@ void run(Simulation& s,
     {
         fixedRandom.fixed_value = s.info.fixed_value;
         s.the_model.random_function = fixedRandom;
+        if (show_seed)
+        {
+            std::cout << std::endl << "RANDOM_TYPE: fixed" << std::endl;
+            std::cout << "RANDOM_SEED: " << s.info.fixed_value << "\n";
+        }
     }
     break;
     case (RandomType::fixed_series):
@@ -2800,18 +2806,47 @@ void run(Simulation& s,
         fixedSeries.index = 0;
         fixedSeries.series = s.info.series;
         s.the_model.random_function = fixedSeries;
+        if (show_seed)
+        {
+            std::cout << std::endl << "RANDOM_TYPE: fixed_series" << std::endl;
+            std::cout << "RANDOM_SEED: ";
+            bool is_first = true;
+            for (auto fixed_series_value : s.info.series)
+            {
+                if (is_first)
+                {
+                    is_first = false;
+                }
+                else
+                {
+                    std::cout << ", ";
+                }
+                std::cout << fixed_series_value;
+            }
+            std::cout << std::endl;
+        }
     }
     break;
     case (RandomType::random_from_seed):
     {
         fullRandom = create_random_with_seed(s.info.seed);
         s.the_model.random_function = fullRandom;
+        if (show_seed)
+        {
+            std::cout << std::endl << "RANDOM_TYPE: random_from_seed" << std::endl;
+            std::cout << "RANDOM_SEED: " << s.info.seed << std::endl;
+        }
     }
     break;
     case (RandomType::random_from_clock):
     {
         fullRandom = create_random();
         s.the_model.random_function = fullRandom;
+        if (show_seed)
+        {
+            std::cout << std::endl << "RANDOM_TYPE: random_from_clock" << std::endl;
+            std::cout << "RANDOM_SEED: " << fullRandom.seed << std::endl;
+        }
     }
     break;
     default:

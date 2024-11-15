@@ -123,14 +123,13 @@ void add_connection_issue(std::vector<std::string>& issues,
     issues.push_back(oss.str());
 }
 
-std::vector<std::pair<size_t, size_t>>
-connections_to_edges(std::vector<Connection> const& conns)
+std::vector<std::pair<size_t, size_t>> connections_to_edges(std::vector<Connection> const& conns)
 {
     std::vector<std::pair<size_t, size_t>> result(conns.size());
     for (size_t conn_idx = 0; conn_idx < conns.size(); ++conn_idx)
     {
         auto const& c = conns[conn_idx];
-        std::pair<size_t, size_t> edge = { c.from_component_id, c.to_component_id };
+        std::pair<size_t, size_t> edge = {c.from_component_id, c.to_component_id};
         result[conn_idx] = std::move(edge);
     }
     return result;
@@ -986,8 +985,7 @@ std::vector<std::string> check_network(Model const& m)
             }
         }
     }
-    std::vector<std::pair<size_t, size_t>> edges =
-        connections_to_edges(m.connection);
+    std::vector<std::pair<size_t, size_t>> edges = connections_to_edges(m.connection);
     std::vector<std::vector<std::string>> sccs =
         find_strongly_connected_components(m.component.tag, edges);
     if (sccs.size() > 0)

@@ -12,11 +12,9 @@ namespace erin
 {
 
 std::vector<std::vector<std::string>>
-find_strongly_connected_components(
-  std::vector<std::string> const& nodes,
-  std::vector<std::pair<size_t, size_t>> const& edges,
-  size_t minimum_component_size = 2
-);
+find_strongly_connected_components(std::vector<std::string> const& nodes,
+                                   std::vector<std::pair<size_t, size_t>> const& edges,
+                                   size_t minimum_component_size = 2);
 
 } // namespace erin
 

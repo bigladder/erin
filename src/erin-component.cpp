@@ -122,7 +122,7 @@ Result parse_single_component(Simulation& s,
     break;
     default:
     {
-        write_error_message(fullTableName, "unhandled component type: " + ToString(ct));
+        write_error_message(fullTableName, "unhandled component type: " + to_string(ct));
         std::exit(1);
     }
     break;
@@ -730,7 +730,7 @@ Result parse_single_component(Simulation& s,
     break;
     default:
     {
-        write_error_message(fullTableName, "unhandled component type: " + ToString(ct));
+        write_error_message(fullTableName, "unhandled component type: " + to_string(ct));
         std::exit(1);
     }
     }

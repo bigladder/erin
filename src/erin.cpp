@@ -95,13 +95,13 @@ void add_connection_issue(std::vector<std::string>& issues,
     oss << "- ACCORDING TO THE COMPONENT:\n";
     oss << "  - component id:            " << compId << "\n";
     oss << "  - component " << direction << " port:  " << compPort << "\n";
-    oss << "  - component type:          " << ToString(compType) << "\n";
+    oss << "  - component type:          " << to_string(compType) << "\n";
     oss << "  - component tag:           " << componentTag << "\n";
     oss << "  - component subtype index: " << compSubtypeIdx << "\n";
     oss << "- ACCORDING TO THE " << direction << " CONNECTION:\n";
     oss << "  - connection id:  " << connIdx << "\n";
     oss << "  - component type: "
-        << ToString(flowDirection == FlowDirection::outflow ? conn.from : conn.to) << "\n";
+        << to_string(flowDirection == FlowDirection::outflow ? conn.from : conn.to) << "\n";
     oss << "  - component id:   "
         << (flowDirection == FlowDirection::outflow ? conn.from_component_id : conn.to_component_id)
         << "\n";
@@ -761,40 +761,40 @@ std::vector<std::string> check_network(Model const& m)
             }
             if (comp.inflow_connection_id.has_value())
             {
-                size_t inflowConnIdx = comp.inflow_connection_id.value();
-                Connection const& inflowConn = m.connection[inflowConnIdx];
-                size_t inflowPort = 0;
-                if ((inflowConn.to != component_type) ||
-                    (inflowConn.to_component_id != component_id) ||
-                    (inflowConn.to_subtype_index != idx) || (inflowConn.to_port != inflowPort))
+                size_t inflow_conn_idx = comp.inflow_connection_id.value();
+                Connection const& inflow_conn = m.connection[inflow_conn_idx];
+                size_t inflow_port = 0;
+                if ((inflow_conn.to != component_type) ||
+                    (inflow_conn.to_component_id != component_id) ||
+                    (inflow_conn.to_subtype_index != idx) || (inflow_conn.to_port != inflow_port))
                 {
                     add_connection_issue(issues,
                                          tag,
                                          component_id,
-                                         inflowPort,
+                                         inflow_port,
                                          idx,
                                          component_type,
-                                         inflowConn,
-                                         inflowConnIdx,
+                                         inflow_conn,
+                                         inflow_conn_idx,
                                          FlowDirection::inflow);
                 }
             }
             if (comp.wasteflow_connection_id.has_value())
             {
-                size_t wfConnIdx = comp.wasteflow_connection_id.value();
-                Connection const& wfConn = m.connection[wfConnIdx];
-                size_t wfPort = 1;
-                if ((wfConn.from != component_type) || (wfConn.from_component_id != component_id) ||
-                    (wfConn.from_subtype_index != idx) || (wfConn.from_port != wfPort))
+                size_t wf_conn_idx = comp.wasteflow_connection_id.value();
+                Connection const& wf_conn = m.connection[wf_conn_idx];
+                size_t wf_port = 1;
+                if ((wf_conn.from != component_type) || (wf_conn.from_component_id != component_id) ||
+                    (wf_conn.from_subtype_index != idx) || (wf_conn.from_port != wf_port))
                 {
                     add_connection_issue(issues,
                                          tag,
                                          component_id,
-                                         wfPort,
+                                         wf_port,
                                          idx,
                                          component_type,
-                                         wfConn,
-                                         wfConnIdx,
+                                         wf_conn,
+                                         wf_conn_idx,
                                          FlowDirection::outflow);
                 }
             }
@@ -807,163 +807,163 @@ std::vector<std::string> check_network(Model const& m)
         break;
         default:
         {
-            std::cout << "unhandled component type: " + ToString(component_type) << std::endl;
+            std::cout << "unhandled component type: " + to_string(component_type) << std::endl;
             std::exit(1);
         }
         break;
         }
     }
-    for (size_t connIdx = 0; connIdx < m.connection.size(); ++connIdx)
+    for (size_t conn_idx = 0; conn_idx < m.connection.size(); ++conn_idx)
     {
-        Connection const& conn = m.connection[connIdx];
+        Connection const& conn = m.connection[conn_idx];
         // asser that component port links back to connection
-        ComponentType fromType = conn.from;
-        ComponentType toType = conn.to;
-        if (fromType == ComponentType::mux_type)
+        ComponentType from_type = conn.from;
+        ComponentType to_type = conn.to;
+        if (from_type == ComponentType::mux_type)
         {
-            auto const& fromMux = m.mux[conn.from_subtype_index];
-            if (conn.from_port >= fromMux.outflow_connection_ids.size())
+            auto const& from_mux = m.mux[conn.from_subtype_index];
+            if (conn.from_port >= from_mux.outflow_connection_ids.size())
             {
                 std::ostringstream oss;
                 oss << "mux outflow connection inconsistent\n";
                 oss << "conn.FromId: " << conn.from_component_id << "\n";
                 oss << "conn.FromPort: " << conn.from_port << "\n";
-                oss << "mux num outflow connections: " << fromMux.number_of_outports << "\n";
+                oss << "mux num outflow connections: " << from_mux.number_of_outports << "\n";
                 oss << "mux num outflow connections from count: "
-                    << fromMux.outflow_connection_ids.size() << "\n";
+                    << from_mux.outflow_connection_ids.size() << "\n";
                 issues.push_back(oss.str());
             }
-            else if (fromMux.outflow_connection_ids[conn.from_port] != connIdx)
+            else if (from_mux.outflow_connection_ids[conn.from_port] != conn_idx)
             {
                 std::ostringstream oss;
                 oss << "mux outflow connection inconsistent\n";
-                oss << "connId: " << connIdx << "\n";
+                oss << "connId: " << conn_idx << "\n";
                 oss << "conn.FromId: " << conn.from_component_id << "\n";
                 oss << "conn.FromPort: " << conn.from_port << "\n";
                 oss << "fromMux.OutflowConns[conn.FromPort]: "
-                    << fromMux.outflow_connection_ids[conn.from_port] << "\n";
+                    << from_mux.outflow_connection_ids[conn.from_port] << "\n";
                 issues.push_back(oss.str());
             }
-            if (fromMux.number_of_outports != fromMux.outflow_connection_ids.size())
+            if (from_mux.number_of_outports != from_mux.outflow_connection_ids.size())
             {
                 std::ostringstream oss;
                 oss << "mux num outflows inconsistent\n";
-                oss << "mux num outflow connections: " << fromMux.number_of_outports << "\n";
+                oss << "mux num outflow connections: " << from_mux.number_of_outports << "\n";
                 oss << "mux num outflow connections from count: "
-                    << fromMux.outflow_connection_ids.size() << "\n";
+                    << from_mux.outflow_connection_ids.size() << "\n";
                 issues.push_back(oss.str());
             }
-            if (mux_comp_id_to_outflow_conns[conn.from_component_id].contains(connIdx))
+            if (mux_comp_id_to_outflow_conns[conn.from_component_id].contains(conn_idx))
             {
                 std::ostringstream oss;
                 oss << "mux has multiple instances of the same outflow "
                        "connection\n";
-                oss << "connIdx: " << connIdx << "\n";
+                oss << "connIdx: " << conn_idx << "\n";
                 issues.push_back(oss.str());
             }
-            mux_comp_id_to_outflow_conns[conn.from_component_id].insert(connIdx);
+            mux_comp_id_to_outflow_conns[conn.from_component_id].insert(conn_idx);
         }
-        if (toType == ComponentType::mux_type)
+        if (to_type == ComponentType::mux_type)
         {
-            auto const& toMux = m.mux[conn.to_subtype_index];
-            if (conn.to_port >= toMux.inflow_connection_ids.size())
+            auto const& to_mux = m.mux[conn.to_subtype_index];
+            if (conn.to_port >= to_mux.inflow_connection_ids.size())
             {
                 std::ostringstream oss;
                 oss << "mux inflow connection inconsistent\n";
                 oss << "conn.ToId: " << conn.to_component_id << "\n";
                 oss << "conn.ToPort: " << conn.to_port << "\n";
-                oss << "mux num inflow connections: " << toMux.number_of_inports << "\n";
+                oss << "mux num inflow connections: " << to_mux.number_of_inports << "\n";
                 oss << "mux num inflow connections from count: "
-                    << toMux.inflow_connection_ids.size() << "\n";
+                    << to_mux.inflow_connection_ids.size() << "\n";
                 issues.push_back(oss.str());
             }
-            else if (toMux.inflow_connection_ids[conn.to_port] != connIdx)
+            else if (to_mux.inflow_connection_ids[conn.to_port] != conn_idx)
             {
                 std::ostringstream oss;
                 oss << "mux inflow connection inconsistent\n";
-                oss << "connId: " << connIdx << "\n";
+                oss << "connId: " << conn_idx << "\n";
                 oss << "conn.ToId: " << conn.to_component_id << "\n";
                 oss << "conn.FromPort: " << conn.to_port << "\n";
                 oss << "toMux.InflowConns[conn.FromPort]: "
-                    << toMux.outflow_connection_ids[conn.to_port] << "\n";
+                    << to_mux.outflow_connection_ids[conn.to_port] << "\n";
                 issues.push_back(oss.str());
             }
-            if (toMux.number_of_inports != toMux.inflow_connection_ids.size())
+            if (to_mux.number_of_inports != to_mux.inflow_connection_ids.size())
             {
                 std::ostringstream oss;
                 oss << "mux num inflows inconsistent\n";
-                oss << "mux num inflow connections: " << toMux.number_of_inports << "\n";
+                oss << "mux num inflow connections: " << to_mux.number_of_inports << "\n";
                 oss << "mux num inflow connections from count: "
-                    << toMux.inflow_connection_ids.size() << "\n";
+                    << to_mux.inflow_connection_ids.size() << "\n";
                 issues.push_back(oss.str());
             }
-            if (mux_comp_id_to_inflow_conns[conn.to_component_id].contains(connIdx))
+            if (mux_comp_id_to_inflow_conns[conn.to_component_id].contains(conn_idx))
             {
                 std::ostringstream oss;
                 oss << "mux has multiple instances of the same inflow "
                        "connection\n";
-                oss << "connIdx: " << connIdx << "\n";
+                oss << "connIdx: " << conn_idx << "\n";
                 issues.push_back(oss.str());
             }
-            mux_comp_id_to_inflow_conns[conn.to_component_id].insert(connIdx);
+            mux_comp_id_to_inflow_conns[conn.to_component_id].insert(conn_idx);
         }
-        std::string outflowCompPort;
+        std::string outflow_comp_port;
         {
             std::ostringstream oss;
             oss << conn.from_component_id << ":" << conn.from_port;
-            outflowCompPort = oss.str();
+            outflow_comp_port = oss.str();
         };
-        if (connected_outflow_ports.contains(outflowCompPort))
+        if (connected_outflow_ports.contains(outflow_comp_port))
         {
             std::ostringstream oss;
             oss << "Port multiply connected: "
-                << "- outflowCompPort: " << outflowCompPort << "\n"
+                << "- outflowCompPort: " << outflow_comp_port << "\n"
                 << "- compId: " << conn.from_component_id << "\n"
                 << "- outflowPort: " << conn.from_port << "\n"
                 << "- tag: " << m.component.tag[conn.from_component_id] << "\n"
-                << "- type: " << ToString(m.component.component_type[conn.from_component_id])
+                << "- type: " << to_string(m.component.component_type[conn.from_component_id])
                 << "\n";
             issues.push_back(oss.str());
         }
-        connected_outflow_ports.insert(outflowCompPort);
-        std::string inflowCompPort;
+        connected_outflow_ports.insert(outflow_comp_port);
+        std::string inflow_comp_port;
         {
             std::ostringstream oss;
             oss << conn.to_component_id << ":" << conn.to_port;
-            inflowCompPort = oss.str();
+            inflow_comp_port = oss.str();
         };
-        if (connected_inflow_ports.contains(inflowCompPort))
+        if (connected_inflow_ports.contains(inflow_comp_port))
         {
             std::ostringstream oss;
             oss << "Port multiply connected: "
-                << "- inflowCompPort: " << inflowCompPort << "\n"
+                << "- inflowCompPort: " << inflow_comp_port << "\n"
                 << "- compId: " << conn.to_component_id << "\n"
                 << "- outflowPort: " << conn.to_port << "\n"
                 << "- tag: " << m.component.tag[conn.to_component_id] << "\n"
-                << "- type: " << ToString(m.component.component_type[conn.to_component_id]) << "\n";
+                << "- type: " << to_string(m.component.component_type[conn.to_component_id]) << "\n";
             issues.push_back(oss.str());
         }
-        connected_inflow_ports.insert(inflowCompPort);
+        connected_inflow_ports.insert(inflow_comp_port);
     }
-    for (size_t compId = 0; compId < m.component.component_type.size(); ++compId)
+    for (size_t comp_id = 0; comp_id < m.component.component_type.size(); ++comp_id)
     {
-        if (m.component.component_type[compId] == ComponentType::mux_type)
+        if (m.component.component_type[comp_id] == ComponentType::mux_type)
         {
-            Mux const& mux = m.mux[m.component.subtype_index[compId]];
-            if (mux.number_of_inports != mux_comp_id_to_inflow_conns[compId].size())
+            Mux const& mux = m.mux[m.component.subtype_index[comp_id]];
+            if (mux.number_of_inports != mux_comp_id_to_inflow_conns[comp_id].size())
             {
                 std::ostringstream oss;
                 oss << "mux specifies " << mux.number_of_inports
                     << " inports but the number of connections are "
-                    << mux_comp_id_to_inflow_conns[compId].size() << "\n";
+                    << mux_comp_id_to_inflow_conns[comp_id].size() << "\n";
                 issues.push_back(oss.str());
             }
-            if (mux.number_of_outports != mux_comp_id_to_outflow_conns[compId].size())
+            if (mux.number_of_outports != mux_comp_id_to_outflow_conns[comp_id].size())
             {
                 std::ostringstream oss;
                 oss << "mux specifies " << mux.number_of_outports
                     << " outports but the number of connections are "
-                    << mux_comp_id_to_outflow_conns[compId].size() << "\n";
+                    << mux_comp_id_to_outflow_conns[comp_id].size() << "\n";
                 issues.push_back(oss.str());
             }
         }
@@ -1933,7 +1933,7 @@ void RunConnectionsBackward(Model& model, SimulationState& ss)
             default:
             {
                 std::cout << "Unhandled component type on backward pass: "
-                          << ToString(model.connection[connIdx].from) << std::endl;
+                          << to_string(model.connection[connIdx].from) << std::endl;
             }
             }
         }
@@ -2231,7 +2231,7 @@ void RunConnectionsForward(Model& model, SimulationState& ss)
             default:
             {
                 std::cerr << "unhandled component type on forward pass: "
-                          << ToString(model.connection[connIdx].to) << std::endl;
+                          << to_string(model.connection[connIdx].to) << std::endl;
                 std::exit(1);
             }
             }
@@ -2534,8 +2534,7 @@ void UpdateScheduleBasedSourceNextEvent(Model const& m, SimulationState& ss, dou
     }
 }
 
-// TODO: rename to ComponentTypeToString(.)
-std::string ToString(ComponentType compType)
+std::string to_string(ComponentType compType)
 {
     std::string result = "?";
     switch (compType)
@@ -2773,7 +2772,7 @@ FlowSummary SummarizeFlows(Model const& m, SimulationState const& ss, double t)
         {
             write_error_message("SummarizeFlows(.)",
                                 "Unhandled From type for connection - from pass: " +
-                                    ToString(m.connection[flowIdx].from));
+                                    to_string(m.connection[flowIdx].from));
         }
         break;
         }
@@ -2814,7 +2813,7 @@ FlowSummary SummarizeFlows(Model const& m, SimulationState const& ss, double t)
         {
             write_error_message("SummarizeFlows(.)",
                                 "Unhandled From type for connection - to pass: " +
-                                    ToString(m.connection[flowIdx].to));
+                                    to_string(m.connection[flowIdx].to));
         }
         break;
         }
@@ -2882,15 +2881,15 @@ void PrintModelState(Model& m, SimulationState& ss)
 {
     for (size_t storeIdx = 0; storeIdx < m.store.size(); ++storeIdx)
     {
-        std::cout << ToString(ComponentType::store_type) << "[" << storeIdx
+        std::cout << to_string(ComponentType::store_type) << "[" << storeIdx
                   << "].InitialStorage (J): " << m.store[storeIdx].initial_storage_J << std::endl;
-        std::cout << ToString(ComponentType::store_type) << "[" << storeIdx
+        std::cout << to_string(ComponentType::store_type) << "[" << storeIdx
                   << "].StorageAmount (J) : " << ss.storage_amounts_J[storeIdx] << std::endl;
-        std::cout << ToString(ComponentType::store_type) << "[" << storeIdx
+        std::cout << to_string(ComponentType::store_type) << "[" << storeIdx
                   << "].Capacity (J)      : " << m.store[storeIdx].capacity_J << std::endl;
         double soc =
             (double)ss.storage_amounts_J[storeIdx] * 100.0 / (double)m.store[storeIdx].capacity_J;
-        std::cout << ToString(ComponentType::store_type) << "[" << storeIdx
+        std::cout << to_string(ComponentType::store_type) << "[" << storeIdx
                   << "].SOC               : " << soc << " %" << std::endl;
     }
 }
@@ -4013,7 +4012,7 @@ Connection Model_AddConnection(Model& m,
                           << "attempt to doubly connect "
                           << "compId=" << fromId << " outport=" << fromPort
                           << " tag=" << m.component.tag[fromId]
-                          << " type=" << ToString(m.component.component_type[fromId]) << std::endl;
+                          << " type=" << to_string(m.component.component_type[fromId]) << std::endl;
             }
             if (conn.to_component_id == toId && conn.to_port == toPort)
             {
@@ -4022,7 +4021,7 @@ Connection Model_AddConnection(Model& m,
                           << "attempt to doubly connect "
                           << "compId=" << toId << " inport=" << toPort
                           << " tag=" << m.component.tag[toId]
-                          << " type=" << ToString(m.component.component_type[toId]) << std::endl;
+                          << " type=" << to_string(m.component.component_type[toId]) << std::endl;
             }
         }
         if (issueFound)
@@ -4216,7 +4215,7 @@ Connection Model_AddConnection(Model& m,
     default:
     {
         write_error_message("Model_AddConnection",
-                            "unhandled component type: " + ToString(fromType));
+                            "unhandled component type: " + to_string(fromType));
         std::exit(1);
     }
     }
@@ -4241,7 +4240,7 @@ Connection Model_AddConnection(Model& m,
         {
             write_error_message("Model_AddConnection",
                                 "unhandled inport: " + std::to_string(toPort) + " for " +
-                                    ToString(toType));
+                                    to_string(toType));
             std::exit(1);
         }
         break;
@@ -4349,7 +4348,7 @@ Connection Model_AddConnection(Model& m,
     break;
     default:
     {
-        write_error_message("Model_AddConnection", "unhandled component type: " + ToString(toType));
+        write_error_message("Model_AddConnection", "unhandled component type: " + to_string(toType));
         std::exit(1);
     }
     break;
@@ -4902,7 +4901,7 @@ Result ParseNetwork(FlowDict const& fd, Model& m, toml::table const& table)
         {
             std::cout << "[network] "
                       << "port is unaddressable for "
-                      << ToString(m.component.component_type[fromCompId]) << ": trying to address "
+                      << to_string(m.component.component_type[fromCompId]) << ": trying to address "
                       << fromTap.port << " but only " << m.component.outflow_type[fromCompId].size()
                       << " ports available" << std::endl;
             return Result::failure;
@@ -4929,7 +4928,7 @@ Result ParseNetwork(FlowDict const& fd, Model& m, toml::table const& table)
                 return Result::failure;
             }
             std::cout << "[network] port is unaddressable for "
-                      << ToString(m.component.component_type[toCompId]) << ": trying to address "
+                      << to_string(m.component.component_type[toCompId]) << ": trying to address "
                       << toTap.port << " but only " << m.component.inflow_type[toCompId].size()
                       << " ports available" << std::endl;
             return Result::failure;
@@ -5014,9 +5013,9 @@ std::string ConnectionToString(ComponentDict const& cd, Connection const& c, boo
     }
     std::ostringstream oss {};
     oss << fromTag << (compact ? "" : ("[" + std::to_string(c.from_component_id) + "]")) << ":OUT("
-        << c.from_port << ")" << (compact ? "" : (": " + ToString(c.from))) << " => " << toTag
+        << c.from_port << ")" << (compact ? "" : (": " + to_string(c.from))) << " => " << toTag
         << (compact ? "" : ("[" + std::to_string(c.to_component_id) + "]")) << ":IN(" << c.to_port
-        << ")" << (compact ? "" : (": " + ToString(c.to)));
+        << ")" << (compact ? "" : (": " + to_string(c.to)));
     return oss.str();
 }
 
@@ -5089,14 +5088,14 @@ std::string NodeConnectionToString(Model const& model,
 
     if (c.from_component_id.index() == 0)
     {
-        oss << (compact ? "" : (": " + ToString(c.from)));
+        oss << (compact ? "" : (": " + to_string(c.from)));
     }
 
     oss << " => " << toTag << (compact ? "" : ("[" + toString + "]")) << ":IN(" << c.to_port << ")";
 
     if (c.to_component_id.index() == 0)
     {
-        oss << (compact ? "" : (": " + ToString(c.to)));
+        oss << (compact ? "" : (": " + to_string(c.to)));
     }
 
     return oss.str();

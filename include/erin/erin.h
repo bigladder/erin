@@ -621,7 +621,7 @@ double NextStorageEvent(SimulationState const& ss, size_t storeIdx, double t);
 void UpdateStoresPerElapsedTime(Model const& m, SimulationState& ss, double elapsedTime);
 
 // TODO: change name to `std::string ComponentTypeToString(ComponentType);`
-std::string ToString(ComponentType ct);
+std::string to_string(ComponentType ct);
 
 std::optional<ComponentType> TagToComponentType(std::string const& tag);
 

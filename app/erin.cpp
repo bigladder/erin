@@ -14,6 +14,8 @@
 #include "erin/all.h"
 #include "compilation_settings.h"
 
+int exit_code = EXIT_SUCCESS;
+
 erin::Log get_standard_log(erin::Logger& logger)
 {
     using namespace erin;
@@ -140,7 +142,8 @@ CLI::App* add_run(CLI::App& app)
         if (!ifs.good())
         {
             Log_error(log, "Could not open input file stream on input file");
-            return EXIT_FAILURE;
+            exit_code = EXIT_FAILURE;
+            return;
         }
         auto name_only = std::filesystem::path(toml_filename).filename();
         toml::value data = toml::parse(ifs, name_only.string());
@@ -152,7 +155,8 @@ CLI::App* add_run(CLI::App& app)
         if (!maybe_sim.has_value())
         {
             Log_error(log, "Simulation returned without value");
-            return EXIT_FAILURE;
+            exit_code = EXIT_FAILURE;
+            return;
         }
         Simulation s = std::move(maybe_sim.value());
         if (verbose)
@@ -169,7 +173,6 @@ CLI::App* add_run(CLI::App& app)
             save_reliability_curves,
             verbose,
             show_seed);
-        return EXIT_SUCCESS;
     };
 
     subcommand->callback([&]() { run_it(); });
@@ -199,7 +202,8 @@ CLI::App* add_graph(CLI::App& app)
         if (!ifs.good())
         {
             Log_error(log, "Could not open input file stream on input file");
-            return EXIT_FAILURE;
+            exit_code = EXIT_FAILURE;
+            return;
         }
         auto name_only = std::filesystem::path(toml_filename).filename();
         auto data = toml::parse(ifs, name_only.string());
@@ -211,7 +215,8 @@ CLI::App* add_graph(CLI::App& app)
         if (!maybe_sim.has_value())
         {
             Log_error(log, "Could not parse sim data from TOML");
-            return EXIT_FAILURE;
+            exit_code = EXIT_FAILURE;
+            return;
         }
         Simulation s = std::move(maybe_sim.value());
         std::string dot_data =
@@ -221,11 +226,11 @@ CLI::App* add_graph(CLI::App& app)
         if (!ofs.good())
         {
             std::cout << "Could not open output file stream on output file" << std::endl;
-            return EXIT_FAILURE;
+            exit_code = EXIT_FAILURE;
+            return;
         }
         ofs << dot_data << std::endl;
         ofs.close();
-        return EXIT_SUCCESS;
     };
 
     subcommand->callback([&]() { graph(); });
@@ -249,7 +254,8 @@ CLI::App* add_check_network(CLI::App& app)
         if (!ifs.good())
         {
             Log_error(log, "Could not open input file stream on input file");
-            return EXIT_FAILURE;
+            exit_code = EXIT_FAILURE;
+            return;
         }
         auto name_only = std::filesystem::path(toml_filename).filename();
         auto data = toml::parse(ifs, name_only.string());
@@ -260,7 +266,8 @@ CLI::App* add_check_network(CLI::App& app)
         auto maybe_sim = read_from_toml(data, validationInfo, component_tags_in_use, log);
         if (!maybe_sim.has_value())
         {
-            return EXIT_FAILURE;
+            exit_code = EXIT_FAILURE;
+            return;
         }
         Simulation s = std::move(maybe_sim.value());
         std::vector<std::string> issues = erin::check_network(s.the_model);
@@ -271,10 +278,10 @@ CLI::App* add_check_network(CLI::App& app)
             {
                 std::cout << issue << std::endl;
             }
-            return EXIT_FAILURE;
+            exit_code = EXIT_FAILURE;
+            return;
         }
         std::cout << "No issues found with network." << std::endl;
-        return EXIT_SUCCESS;
     };
 
     subcommand->callback([&]() { check_network(); });
@@ -302,7 +309,8 @@ CLI::App* add_update(CLI::App& app)
         if (!ifs.good())
         {
             std::cout << "Could not open input file stream on input file" << std::endl;
-            return EXIT_FAILURE;
+            exit_code = EXIT_FAILURE;
+            return;
         }
         using namespace erin;
         auto name_only = std::filesystem::path(input_filename).filename();
@@ -472,11 +480,11 @@ CLI::App* add_update(CLI::App& app)
         if (!ofs.good())
         {
             std::cout << "Could not open ouptut file stream for output file" << std::endl;
-            return EXIT_FAILURE;
+            exit_code = EXIT_FAILURE;
+            return;
         }
         ofs << data;
         ofs.close();
-        return EXIT_SUCCESS;
     };
 
     subcommand->callback([&]() { update(); });
@@ -511,7 +519,8 @@ CLI::App* add_pack_loads(CLI::App& app)
         if (!ifs.good())
         {
             erin::Log_error(log, "Could not open input file stream on input file");
-            return EXIT_FAILURE;
+            exit_code = EXIT_FAILURE;
+            return;
         }
         auto toml_filename_only = std::filesystem::path(toml_filename).filename();
         auto data = toml::parse(ifs, toml_filename_only.string());
@@ -523,10 +532,11 @@ CLI::App* add_pack_loads(CLI::App& app)
         auto maybeLoads = parse_loads(load_table, explicit_validation, file_validation, log);
         if (!maybeLoads.has_value())
         {
-            return EXIT_FAILURE;
+            exit_code = EXIT_FAILURE;
+            return;
         }
         std::vector<erin::Load> loads = std::move(maybeLoads.value());
-        return erin::write_packed_loads(loads, loads_filename);
+        exit_code = erin::write_packed_loads(loads, loads_filename);
     };
 
     subcommand->callback([&]() { pack_loads(); });
@@ -536,10 +546,8 @@ CLI::App* add_pack_loads(CLI::App& app)
 
 int main(int argc, char** argv)
 {
-    int result = EXIT_SUCCESS;
-
     CLI::App app {"erin"};
-    app.require_subcommand(0);
+    app.require_subcommand(0, 1);
 
     add_version(app);
     add_limits(app);
@@ -560,5 +568,5 @@ int main(int argc, char** argv)
         std::cout << app.help() << std::endl;
     }
 
-    return result;
+    return exit_code;
 }

@@ -8,6 +8,7 @@ set(test_sources
   erin_simulation_tests.cpp
   erin_switch_tests.cpp
   erin_tests.cpp
+  network-utils-tests.cpp
 )
 
 add_executable(${PROJECT_NAME}_tests ${test_sources})

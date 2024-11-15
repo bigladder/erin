@@ -21,7 +21,7 @@ void strong_connect(size_t& time_index,
     find_times[node_idx] = static_cast<int>(time_index);
     low_links[node_idx] = static_cast<int>(time_index);
     time_index++;
-    stack.push(node_idx);
+    stack.push(static_cast<int>(node_idx));
     on_stacks[node_idx] = true;
 
     for (std::pair<size_t, size_t> const& e : edges)

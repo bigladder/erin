@@ -233,7 +233,7 @@ CLI::App* add_graph(CLI::App& app)
     return subcommand;
 }
 
-CLI::App* add_checkNetwork(CLI::App& app)
+CLI::App* add_check_network(CLI::App& app)
 {
     auto subcommand = app.add_subcommand("check", "Check network for issues");
 
@@ -545,7 +545,7 @@ int main(int argc, char** argv)
     add_limits(app);
     add_run(app);
     add_graph(app);
-    add_checkNetwork(app);
+    add_check_network(app);
     add_update(app);
     add_pack_loads(app);
 

@@ -10,6 +10,7 @@ set(library_sources
     ${PROJECT_SOURCE_DIR}/src/erin-load.cpp
     ${PROJECT_SOURCE_DIR}/src/erin-logging.cpp
     ${PROJECT_SOURCE_DIR}/src/erin-lookup-table.cpp
+    ${PROJECT_SOURCE_DIR}/src/erin-network-utils.cpp
     ${PROJECT_SOURCE_DIR}/src/erin-random.cpp
     ${PROJECT_SOURCE_DIR}/src/erin-reliability.cpp
     ${PROJECT_SOURCE_DIR}/src/erin-scenario.cpp
@@ -32,6 +33,7 @@ set(library_sources
     ${PROJECT_SOURCE_DIR}/include/erin/load.h
     ${PROJECT_SOURCE_DIR}/include/erin/logging.h
     ${PROJECT_SOURCE_DIR}/include/erin/lookup_table.h
+    ${PROJECT_SOURCE_DIR}/include/erin/network-utils.h
     ${PROJECT_SOURCE_DIR}/include/erin/random.h
     ${PROJECT_SOURCE_DIR}/include/erin/reliability.h
     ${PROJECT_SOURCE_DIR}/include/erin/result.h

@@ -150,7 +150,7 @@ void print_components(Simulation const& s)
         assert(compId < m.component.subtype_index.size());
         std::vector<size_t> const& outflowTypes = m.component.outflow_type[compId];
         std::vector<size_t> inflowTypes = m.component.inflow_type[compId];
-        std::cout << compId << ": " << ToString(m.component.component_type[compId]);
+        std::cout << compId << ": " << to_string(m.component.component_type[compId]);
         if (!m.component.tag[compId].empty())
         {
             std::cout << " -- " << m.component.tag[compId] << std::endl;

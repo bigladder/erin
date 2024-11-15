@@ -1,11 +1,5 @@
 // Copyright (c) 2020 - 2024 Big Ladder Software, LLC.
 // See the LICENSE.txt file for additional terms and conditions.
-#include "erin/erin.h"
-#include "erin/logging.h"
-#include "erin/lookup_table.h"
-#include "erin/time_and_amount.h"
-#include "erin/units.h"
-#include "erin/utils.h"
 #include <cmath>
 #include <cstdlib>
 #include <sstream>
@@ -14,7 +8,16 @@
 #include <string>
 #include <unordered_set>
 #include <utility>
+
 #include <fmt/core.h>
+
+#include "erin/erin.h"
+#include "erin/logging.h"
+#include "erin/lookup_table.h"
+#include "erin/time_and_amount.h"
+#include "erin/units.h"
+#include "erin/utils.h"
+#include "erin/network-utils.h"
 
 namespace erin
 {
@@ -95,13 +98,13 @@ void add_connection_issue(std::vector<std::string>& issues,
     oss << "- ACCORDING TO THE COMPONENT:\n";
     oss << "  - component id:            " << compId << "\n";
     oss << "  - component " << direction << " port:  " << compPort << "\n";
-    oss << "  - component type:          " << ToString(compType) << "\n";
+    oss << "  - component type:          " << to_string(compType) << "\n";
     oss << "  - component tag:           " << componentTag << "\n";
     oss << "  - component subtype index: " << compSubtypeIdx << "\n";
     oss << "- ACCORDING TO THE " << direction << " CONNECTION:\n";
     oss << "  - connection id:  " << connIdx << "\n";
     oss << "  - component type: "
-        << ToString(flowDirection == FlowDirection::outflow ? conn.from : conn.to) << "\n";
+        << to_string(flowDirection == FlowDirection::outflow ? conn.from : conn.to) << "\n";
     oss << "  - component id:   "
         << (flowDirection == FlowDirection::outflow ? conn.from_component_id : conn.to_component_id)
         << "\n";
@@ -120,20 +123,32 @@ void add_connection_issue(std::vector<std::string>& issues,
     issues.push_back(oss.str());
 }
 
+std::vector<std::pair<size_t, size_t>> connections_to_edges(std::vector<Connection> const& conns)
+{
+    std::vector<std::pair<size_t, size_t>> result(conns.size());
+    for (size_t conn_idx = 0; conn_idx < conns.size(); ++conn_idx)
+    {
+        auto const& c = conns[conn_idx];
+        std::pair<size_t, size_t> edge = {c.from_component_id, c.to_component_id};
+        result[conn_idx] = std::move(edge);
+    }
+    return result;
+}
+
 std::vector<std::string> check_network(Model const& m)
 {
     std::vector<std::string> issues;
-    std::unordered_set<std::string> connectedOutflowPorts;
-    std::unordered_set<std::string> connectedInflowPorts;
-    std::unordered_set<std::string> compTags;
+    std::unordered_set<std::string> connected_outflow_ports;
+    std::unordered_set<std::string> connected_inflow_ports;
+    std::unordered_set<std::string> comp_tags;
     {
         for (auto const& tag : m.component.tag)
         {
-            if (!tag.empty() && compTags.contains(tag))
+            if (!tag.empty() && comp_tags.contains(tag))
             {
                 issues.push_back("multiple components with name '" + tag + "'");
             }
-            compTags.insert(tag);
+            comp_tags.insert(tag);
         }
     }
     assert(m.component.component_type.size() == m.component.inflow_type.size());
@@ -142,95 +157,99 @@ std::vector<std::string> check_network(Model const& m)
     assert(m.component.component_type.size() == m.component.initial_age_s.size());
     assert(m.component.component_type.size() == m.component.report.size());
     assert(m.component.component_type.size() == m.component.tag.size());
-    std::unordered_map<size_t, std::set<size_t>> muxCompIdToInflowConns;
-    std::unordered_map<size_t, std::set<size_t>> muxCompIdToOutflowConns;
-    for (size_t compId = 0; compId < m.component.component_type.size(); ++compId)
+    std::unordered_map<size_t, std::set<size_t>> mux_comp_id_to_inflow_conns;
+    std::unordered_map<size_t, std::set<size_t>> mux_comp_id_to_outflow_conns;
+    for (size_t component_id = 0; component_id < m.component.component_type.size(); ++component_id)
     {
-        assert(compId < m.component.component_type.size());
-        if (m.component.component_type[compId] == ComponentType::mux_type)
+        assert(component_id < m.component.component_type.size());
+        if (m.component.component_type[component_id] == ComponentType::mux_type)
         {
-            muxCompIdToInflowConns[compId] = std::set<size_t> {};
-            muxCompIdToOutflowConns[compId] = std::set<size_t> {};
+            mux_comp_id_to_inflow_conns[component_id] = std::set<size_t> {};
+            mux_comp_id_to_outflow_conns[component_id] = std::set<size_t> {};
         }
-        ComponentType compType = m.component.component_type[compId];
-        size_t idx = m.component.subtype_index[compId];
-        std::string const& tag = m.component.tag[compId];
-        size_t nConns = m.connection.size();
-        ignore(nConns);
-        switch (compType)
+        ComponentType component_type = m.component.component_type[component_id];
+        size_t idx = m.component.subtype_index[component_id];
+        std::string const& tag = m.component.tag[component_id];
+        size_t num_conns = m.connection.size();
+        ignore(num_conns);
+        switch (component_type)
         {
         case ComponentType::constant_efficiency_converter_type:
         {
             assert(idx < m.constant_efficiency_converter.size());
             ConstantEfficiencyConverter const& cec = m.constant_efficiency_converter[idx];
-            size_t inflowConnIdx = cec.inflow_connection_id;
-            assert(inflowConnIdx < nConns);
-            Connection const& inflowConn = m.connection[inflowConnIdx];
-            size_t inflowPort = 0;
-            if ((inflowConn.to != compType) || (inflowConn.to_component_id != compId) ||
-                (inflowConn.to_subtype_index != idx) || (inflowConn.to_port != inflowPort))
+            size_t inflow_conn_idx = cec.inflow_connection_id;
+            assert(inflow_conn_idx < num_conns);
+            Connection const& inflow_conn = m.connection[inflow_conn_idx];
+            size_t inflow_port = 0;
+            if ((inflow_conn.to != component_type) ||
+                (inflow_conn.to_component_id != component_id) ||
+                (inflow_conn.to_subtype_index != idx) || (inflow_conn.to_port != inflow_port))
             {
                 add_connection_issue(issues,
                                      tag,
-                                     compId,
-                                     inflowPort,
+                                     component_id,
+                                     inflow_port,
                                      idx,
-                                     compType,
-                                     inflowConn,
-                                     inflowConnIdx,
+                                     component_type,
+                                     inflow_conn,
+                                     inflow_conn_idx,
                                      FlowDirection::inflow);
             }
-            size_t outflowConnIdx = cec.outflow_connection_id;
-            assert(outflowConnIdx < nConns);
-            Connection const& outflowConn = m.connection[outflowConnIdx];
-            size_t outflowPort = 0;
-            if ((outflowConn.from != compType) || (outflowConn.from_component_id != compId) ||
-                (outflowConn.from_subtype_index != idx) || (outflowConn.from_port != outflowPort))
+            size_t outflow_conn_idx = cec.outflow_connection_id;
+            assert(outflow_conn_idx < num_conns);
+            Connection const& outflow_conn = m.connection[outflow_conn_idx];
+            size_t outflow_port = 0;
+            if ((outflow_conn.from != component_type) ||
+                (outflow_conn.from_component_id != component_id) ||
+                (outflow_conn.from_subtype_index != idx) ||
+                (outflow_conn.from_port != outflow_port))
             {
                 add_connection_issue(issues,
                                      tag,
-                                     compId,
-                                     outflowPort,
+                                     component_id,
+                                     outflow_port,
                                      idx,
-                                     compType,
-                                     outflowConn,
-                                     outflowConnIdx,
+                                     component_type,
+                                     outflow_conn,
+                                     outflow_conn_idx,
                                      FlowDirection::outflow);
             }
-            size_t wasteflowConnIdx = cec.wasteflow_connection_id;
-            assert(wasteflowConnIdx < nConns);
-            Connection const& wfConn = m.connection[wasteflowConnIdx];
-            size_t wfPort = 2;
-            if ((wfConn.from != compType) || (wfConn.from_component_id != compId) ||
-                (wfConn.from_subtype_index != idx) || (wfConn.from_port != wfPort))
+            size_t wasteflow_conn_idx = cec.wasteflow_connection_id;
+            assert(wasteflow_conn_idx < num_conns);
+            Connection const& wf_conn = m.connection[wasteflow_conn_idx];
+            size_t wf_port = 2;
+            if ((wf_conn.from != component_type) || (wf_conn.from_component_id != component_id) ||
+                (wf_conn.from_subtype_index != idx) || (wf_conn.from_port != wf_port))
             {
                 add_connection_issue(issues,
                                      tag,
-                                     compId,
-                                     wfPort,
+                                     component_id,
+                                     wf_port,
                                      idx,
-                                     compType,
-                                     wfConn,
-                                     wasteflowConnIdx,
+                                     component_type,
+                                     wf_conn,
+                                     wasteflow_conn_idx,
                                      FlowDirection::outflow);
             }
             if (cec.lossflow_connection_id.has_value())
             {
-                size_t lfConnIdx = cec.lossflow_connection_id.value();
-                assert(lfConnIdx < nConns);
-                Connection const& lfConn = m.connection[lfConnIdx];
-                size_t lfPort = 1;
-                if ((lfConn.from != compType) || (lfConn.from_component_id != compId) ||
-                    (lfConn.from_subtype_index != idx) || (lfConn.from_port != lfPort))
+                size_t lf_conn_idx = cec.lossflow_connection_id.value();
+                assert(lf_conn_idx < num_conns);
+                Connection const& lf_conn = m.connection[lf_conn_idx];
+                size_t lf_port = 1;
+                if ((lf_conn.from != component_type) ||
+                    (lf_conn.from_component_id != component_id) ||
+                    (lf_conn.from_subtype_index != idx) || (lf_conn.from_port != lf_port))
                 {
                     add_connection_issue(issues,
                                          tag,
-                                         compId,
-                                         lfPort,
+                                         component_id,
+                                         lf_port,
                                          idx,
-                                         compType,
-                                         lfConn,
-                                         lfConnIdx,
+                                         component_type,
+                                         lf_conn,
+                                         lf_conn_idx,
                                          FlowDirection::outflow);
                 }
             }
@@ -240,74 +259,78 @@ std::vector<std::string> check_network(Model const& m)
         {
             assert(idx < m.variable_efficiency_converter.size());
             VariableEfficiencyConverter const& vec = m.variable_efficiency_converter[idx];
-            size_t inflowConnIdx = vec.inflow_connection_id;
-            assert(inflowConnIdx < nConns);
-            Connection const& inflowConn = m.connection[inflowConnIdx];
-            size_t inflowPort = 0;
-            if ((inflowConn.to != compType) || (inflowConn.to_component_id != compId) ||
-                (inflowConn.to_subtype_index != idx) || (inflowConn.to_port != inflowPort))
+            size_t inflow_conn_idx = vec.inflow_connection_id;
+            assert(inflow_conn_idx < num_conns);
+            Connection const& inflow_conn = m.connection[inflow_conn_idx];
+            size_t inflow_port = 0;
+            if ((inflow_conn.to != component_type) ||
+                (inflow_conn.to_component_id != component_id) ||
+                (inflow_conn.to_subtype_index != idx) || (inflow_conn.to_port != inflow_port))
             {
                 add_connection_issue(issues,
                                      tag,
-                                     compId,
-                                     inflowPort,
+                                     component_id,
+                                     inflow_port,
                                      idx,
-                                     compType,
-                                     inflowConn,
-                                     inflowConnIdx,
+                                     component_type,
+                                     inflow_conn,
+                                     inflow_conn_idx,
                                      FlowDirection::inflow);
             }
-            size_t outflowConnIdx = vec.outflow_connection_id;
-            assert(outflowConnIdx < nConns);
-            Connection const& outflowConn = m.connection[outflowConnIdx];
-            size_t outflowPort = 0;
-            if ((outflowConn.from != compType) || (outflowConn.from_component_id != compId) ||
-                (outflowConn.from_subtype_index != idx) || (outflowConn.from_port != outflowPort))
+            size_t outflow_conn_idx = vec.outflow_connection_id;
+            assert(outflow_conn_idx < num_conns);
+            Connection const& outflow_conn = m.connection[outflow_conn_idx];
+            size_t outflow_port = 0;
+            if ((outflow_conn.from != component_type) ||
+                (outflow_conn.from_component_id != component_id) ||
+                (outflow_conn.from_subtype_index != idx) ||
+                (outflow_conn.from_port != outflow_port))
             {
                 add_connection_issue(issues,
                                      tag,
-                                     compId,
-                                     outflowPort,
+                                     component_id,
+                                     outflow_port,
                                      idx,
-                                     compType,
-                                     outflowConn,
-                                     outflowConnIdx,
+                                     component_type,
+                                     outflow_conn,
+                                     outflow_conn_idx,
                                      FlowDirection::outflow);
             }
-            size_t wasteflowConnIdx = vec.wasteflow_connection_id;
-            assert(wasteflowConnIdx < nConns);
-            Connection const& wfConn = m.connection[wasteflowConnIdx];
-            size_t wfPort = 2;
-            if ((wfConn.from != compType) || (wfConn.from_component_id != compId) ||
-                (wfConn.from_subtype_index != idx) || (wfConn.from_port != wfPort))
+            size_t wasteflow_conn_idx = vec.wasteflow_connection_id;
+            assert(wasteflow_conn_idx < num_conns);
+            Connection const& wf_conn = m.connection[wasteflow_conn_idx];
+            size_t wf_port = 2;
+            if ((wf_conn.from != component_type) || (wf_conn.from_component_id != component_id) ||
+                (wf_conn.from_subtype_index != idx) || (wf_conn.from_port != wf_port))
             {
                 add_connection_issue(issues,
                                      tag,
-                                     compId,
-                                     wfPort,
+                                     component_id,
+                                     wf_port,
                                      idx,
-                                     compType,
-                                     wfConn,
-                                     wasteflowConnIdx,
+                                     component_type,
+                                     wf_conn,
+                                     wasteflow_conn_idx,
                                      FlowDirection::outflow);
             }
             if (vec.lossflow_connection_id.has_value())
             {
-                size_t lfConnIdx = vec.lossflow_connection_id.value();
-                assert(lfConnIdx < nConns);
-                Connection const& lfConn = m.connection[lfConnIdx];
-                size_t lfPort = 1;
-                if ((lfConn.from != compType) || (lfConn.from_component_id != compId) ||
-                    (lfConn.from_subtype_index != idx) || (lfConn.from_port != lfPort))
+                size_t lf_conn_idx = vec.lossflow_connection_id.value();
+                assert(lf_conn_idx < num_conns);
+                Connection const& lf_conn = m.connection[lf_conn_idx];
+                size_t lf_port = 1;
+                if ((lf_conn.from != component_type) ||
+                    (lf_conn.from_component_id != component_id) ||
+                    (lf_conn.from_subtype_index != idx) || (lf_conn.from_port != lf_port))
                 {
                     add_connection_issue(issues,
                                          tag,
-                                         compId,
-                                         lfPort,
+                                         component_id,
+                                         lf_port,
                                          idx,
-                                         compType,
-                                         lfConn,
-                                         lfConnIdx,
+                                         component_type,
+                                         lf_conn,
+                                         lf_conn_idx,
                                          FlowDirection::outflow);
                 }
             }
@@ -317,20 +340,21 @@ std::vector<std::string> check_network(Model const& m)
         {
             assert(idx < m.constant_load.size());
             ConstantLoad const& comp = m.constant_load[idx];
-            size_t inflowConnIdx = comp.inflow_connection_id;
-            Connection const& inflowConn = m.connection[inflowConnIdx];
-            size_t inflowPort = 0;
-            if ((inflowConn.to != compType) || (inflowConn.to_component_id != compId) ||
-                (inflowConn.to_subtype_index != idx) || (inflowConn.to_port != inflowPort))
+            size_t inflow_conn_idx = comp.inflow_connection_id;
+            Connection const& inflow_conn = m.connection[inflow_conn_idx];
+            size_t inflow_port = 0;
+            if ((inflow_conn.to != component_type) ||
+                (inflow_conn.to_component_id != component_id) ||
+                (inflow_conn.to_subtype_index != idx) || (inflow_conn.to_port != inflow_port))
             {
                 add_connection_issue(issues,
                                      tag,
-                                     compId,
-                                     inflowPort,
+                                     component_id,
+                                     inflow_port,
                                      idx,
-                                     compType,
-                                     inflowConn,
-                                     inflowConnIdx,
+                                     component_type,
+                                     inflow_conn,
+                                     inflow_conn_idx,
                                      FlowDirection::inflow);
             }
         }
@@ -339,21 +363,23 @@ std::vector<std::string> check_network(Model const& m)
         {
             assert(idx < m.constant_source.size());
             ConstantSource const& comp = m.constant_source[idx];
-            size_t outflowConnIdx = comp.outflow_connection_id;
-            assert(outflowConnIdx < nConns);
-            Connection const& outflowConn = m.connection[outflowConnIdx];
-            size_t outflowPort = 0;
-            if ((outflowConn.from != compType) || (outflowConn.from_component_id != compId) ||
-                (outflowConn.from_subtype_index != idx) || (outflowConn.from_port != outflowPort))
+            size_t outflow_conn_idx = comp.outflow_connection_id;
+            assert(outflow_conn_idx < num_conns);
+            Connection const& outflow_conn = m.connection[outflow_conn_idx];
+            size_t outflow_port = 0;
+            if ((outflow_conn.from != component_type) ||
+                (outflow_conn.from_component_id != component_id) ||
+                (outflow_conn.from_subtype_index != idx) ||
+                (outflow_conn.from_port != outflow_port))
             {
                 add_connection_issue(issues,
                                      tag,
-                                     compId,
-                                     outflowPort,
+                                     component_id,
+                                     outflow_port,
                                      idx,
-                                     compType,
-                                     outflowConn,
-                                     outflowConnIdx,
+                                     component_type,
+                                     outflow_conn,
+                                     outflow_conn_idx,
                                      FlowDirection::outflow);
             }
         }
@@ -367,72 +393,75 @@ std::vector<std::string> check_network(Model const& m)
         {
             assert(idx < m.mover.size());
             Mover const& comp = m.mover[idx];
-            size_t inflowConnIdx = comp.inflow_connection_id;
-            assert(inflowConnIdx < nConns);
-            Connection const& inflowConn = m.connection[inflowConnIdx];
-            size_t inflowPort = 0;
-            if ((inflowConn.to != compType) || (inflowConn.to_component_id != compId) ||
-                (inflowConn.to_subtype_index != idx) || (inflowConn.to_port != inflowPort))
+            size_t inflow_conn_idx = comp.inflow_connection_id;
+            assert(inflow_conn_idx < num_conns);
+            Connection const& inflow_conn = m.connection[inflow_conn_idx];
+            size_t inflow_port = 0;
+            if ((inflow_conn.to != component_type) ||
+                (inflow_conn.to_component_id != component_id) ||
+                (inflow_conn.to_subtype_index != idx) || (inflow_conn.to_port != inflow_port))
             {
                 add_connection_issue(issues,
                                      tag,
-                                     compId,
-                                     inflowPort,
+                                     component_id,
+                                     inflow_port,
                                      idx,
-                                     compType,
-                                     inflowConn,
-                                     inflowConnIdx,
+                                     component_type,
+                                     inflow_conn,
+                                     inflow_conn_idx,
                                      FlowDirection::inflow);
             }
-            size_t outflowConnIdx = comp.outflow_connection_id;
-            assert(outflowConnIdx < nConns);
-            Connection const& outflowConn = m.connection[outflowConnIdx];
-            size_t outflowPort = 0;
-            if ((outflowConn.from != compType) || (outflowConn.from_component_id != compId) ||
-                (outflowConn.from_subtype_index != idx) || (outflowConn.from_port != outflowPort))
+            size_t outflow_conn_idx = comp.outflow_connection_id;
+            assert(outflow_conn_idx < num_conns);
+            Connection const& outflow_conn = m.connection[outflow_conn_idx];
+            size_t outflow_port = 0;
+            if ((outflow_conn.from != component_type) ||
+                (outflow_conn.from_component_id != component_id) ||
+                (outflow_conn.from_subtype_index != idx) ||
+                (outflow_conn.from_port != outflow_port))
             {
                 add_connection_issue(issues,
                                      tag,
-                                     compId,
-                                     outflowPort,
+                                     component_id,
+                                     outflow_port,
                                      idx,
-                                     compType,
-                                     outflowConn,
-                                     outflowConnIdx,
+                                     component_type,
+                                     outflow_conn,
+                                     outflow_conn_idx,
                                      FlowDirection::outflow);
             }
-            size_t envConnIdx = comp.in_from_env_connection_id;
-            assert(envConnIdx < nConns);
-            Connection const& envConn = m.connection[envConnIdx];
-            size_t envInflowPort = 1;
-            if ((envConn.to != compType) || (envConn.to_component_id != compId) ||
-                (envConn.to_subtype_index != idx) || (envConn.to_port != envInflowPort))
+            size_t env_conn_idx = comp.in_from_env_connection_id;
+            assert(env_conn_idx < num_conns);
+            Connection const& env_conn = m.connection[env_conn_idx];
+            size_t env_inflow_port = 1;
+            if ((env_conn.to != component_type) || (env_conn.to_component_id != component_id) ||
+                (env_conn.to_subtype_index != idx) || (env_conn.to_port != env_inflow_port))
             {
                 add_connection_issue(issues,
                                      tag,
-                                     compId,
-                                     envInflowPort,
+                                     component_id,
+                                     env_inflow_port,
                                      idx,
-                                     compType,
-                                     envConn,
-                                     envConnIdx,
+                                     component_type,
+                                     env_conn,
+                                     env_conn_idx,
                                      FlowDirection::inflow);
             }
-            size_t wConnIdx = comp.wasteflow_connection_id;
-            assert(wConnIdx < nConns);
-            Connection const& wConn = m.connection[wConnIdx];
-            size_t wasteOutflowPort = 1;
-            if ((wConn.from != compType) || (wConn.from_component_id != compId) ||
-                (wConn.from_subtype_index != idx) || (wConn.from_port != wasteOutflowPort))
+            size_t w_conn_idx = comp.wasteflow_connection_id;
+            assert(w_conn_idx < num_conns);
+            Connection const& w_conn = m.connection[w_conn_idx];
+            size_t waste_outflow_port = 1;
+            if ((w_conn.from != component_type) || (w_conn.from_component_id != component_id) ||
+                (w_conn.from_subtype_index != idx) || (w_conn.from_port != waste_outflow_port))
             {
                 add_connection_issue(issues,
                                      tag,
-                                     compId,
-                                     wasteOutflowPort,
+                                     component_id,
+                                     waste_outflow_port,
                                      idx,
-                                     compType,
-                                     wConn,
-                                     wConnIdx,
+                                     component_type,
+                                     w_conn,
+                                     w_conn_idx,
                                      FlowDirection::outflow);
             }
         }
@@ -441,72 +470,75 @@ std::vector<std::string> check_network(Model const& m)
         {
             assert(idx < m.variable_efficiency_mover.size());
             VariableEfficiencyMover const& comp = m.variable_efficiency_mover[idx];
-            size_t inflowConnIdx = comp.inflow_connection_id;
-            assert(inflowConnIdx < nConns);
-            Connection const& inflowConn = m.connection[inflowConnIdx];
-            size_t inflowPort = 0;
-            if ((inflowConn.to != compType) || (inflowConn.to_component_id != compId) ||
-                (inflowConn.to_subtype_index != idx) || (inflowConn.to_port != inflowPort))
+            size_t inflow_conn_idx = comp.inflow_connection_id;
+            assert(inflow_conn_idx < num_conns);
+            Connection const& inflow_conn = m.connection[inflow_conn_idx];
+            size_t inflow_port = 0;
+            if ((inflow_conn.to != component_type) ||
+                (inflow_conn.to_component_id != component_id) ||
+                (inflow_conn.to_subtype_index != idx) || (inflow_conn.to_port != inflow_port))
             {
                 add_connection_issue(issues,
                                      tag,
-                                     compId,
-                                     inflowPort,
+                                     component_id,
+                                     inflow_port,
                                      idx,
-                                     compType,
-                                     inflowConn,
-                                     inflowConnIdx,
+                                     component_type,
+                                     inflow_conn,
+                                     inflow_conn_idx,
                                      FlowDirection::inflow);
             }
-            size_t outflowConnIdx = comp.outflow_connection_id;
-            assert(outflowConnIdx < nConns);
-            Connection const& outflowConn = m.connection[outflowConnIdx];
-            size_t outflowPort = 0;
-            if ((outflowConn.from != compType) || (outflowConn.from_component_id != compId) ||
-                (outflowConn.from_subtype_index != idx) || (outflowConn.from_port != outflowPort))
+            size_t outflow_conn_idx = comp.outflow_connection_id;
+            assert(outflow_conn_idx < num_conns);
+            Connection const& outflow_conn = m.connection[outflow_conn_idx];
+            size_t outflow_port = 0;
+            if ((outflow_conn.from != component_type) ||
+                (outflow_conn.from_component_id != component_id) ||
+                (outflow_conn.from_subtype_index != idx) ||
+                (outflow_conn.from_port != outflow_port))
             {
                 add_connection_issue(issues,
                                      tag,
-                                     compId,
-                                     outflowPort,
+                                     component_id,
+                                     outflow_port,
                                      idx,
-                                     compType,
-                                     outflowConn,
-                                     outflowConnIdx,
+                                     component_type,
+                                     outflow_conn,
+                                     outflow_conn_idx,
                                      FlowDirection::outflow);
             }
-            size_t envConnIdx = comp.in_from_env_connection_id;
-            assert(envConnIdx < nConns);
-            Connection const& envConn = m.connection[envConnIdx];
-            size_t envInflowPort = 1;
-            if ((envConn.to != compType) || (envConn.to_component_id != compId) ||
-                (envConn.to_subtype_index != idx) || (envConn.to_port != envInflowPort))
+            size_t env_conn_idx = comp.in_from_env_connection_id;
+            assert(env_conn_idx < num_conns);
+            Connection const& env_conn = m.connection[env_conn_idx];
+            size_t env_inflow_port = 1;
+            if ((env_conn.to != component_type) || (env_conn.to_component_id != component_id) ||
+                (env_conn.to_subtype_index != idx) || (env_conn.to_port != env_inflow_port))
             {
                 add_connection_issue(issues,
                                      tag,
-                                     compId,
-                                     envInflowPort,
+                                     component_id,
+                                     env_inflow_port,
                                      idx,
-                                     compType,
-                                     envConn,
-                                     envConnIdx,
+                                     component_type,
+                                     env_conn,
+                                     env_conn_idx,
                                      FlowDirection::inflow);
             }
-            size_t wConnIdx = comp.wasteflow_connection_id;
-            assert(wConnIdx < nConns);
-            Connection const& wConn = m.connection[wConnIdx];
-            size_t wasteOutflowPort = 1;
-            if ((wConn.from != compType) || (wConn.from_component_id != compId) ||
-                (wConn.from_subtype_index != idx) || (wConn.from_port != wasteOutflowPort))
+            size_t w_conn_idx = comp.wasteflow_connection_id;
+            assert(w_conn_idx < num_conns);
+            Connection const& w_conn = m.connection[w_conn_idx];
+            size_t waste_outflow_port = 1;
+            if ((w_conn.from != component_type) || (w_conn.from_component_id != component_id) ||
+                (w_conn.from_subtype_index != idx) || (w_conn.from_port != waste_outflow_port))
             {
                 add_connection_issue(issues,
                                      tag,
-                                     compId,
-                                     wasteOutflowPort,
+                                     component_id,
+                                     waste_outflow_port,
                                      idx,
-                                     compType,
-                                     wConn,
-                                     wConnIdx,
+                                     component_type,
+                                     w_conn,
+                                     w_conn_idx,
                                      FlowDirection::outflow);
             }
         }
@@ -515,39 +547,42 @@ std::vector<std::string> check_network(Model const& m)
         {
             assert(idx < m.mux.size());
             Mux const& comp = m.mux[idx];
-            for (size_t inPort = 0; inPort < comp.number_of_inports; ++inPort)
+            for (size_t in_port = 0; in_port < comp.number_of_inports; ++in_port)
             {
-                size_t inflowConnIdx = comp.inflow_connection_ids[inPort];
-                Connection const& inflowConn = m.connection[inflowConnIdx];
-                if ((inflowConn.to != compType) || (inflowConn.to_component_id != compId) ||
-                    (inflowConn.to_subtype_index != idx) || (inflowConn.to_port != inPort))
+                size_t inflow_conn_idx = comp.inflow_connection_ids[in_port];
+                Connection const& inflow_conn = m.connection[inflow_conn_idx];
+                if ((inflow_conn.to != component_type) ||
+                    (inflow_conn.to_component_id != component_id) ||
+                    (inflow_conn.to_subtype_index != idx) || (inflow_conn.to_port != in_port))
                 {
                     add_connection_issue(issues,
                                          tag,
-                                         compId,
-                                         inPort,
+                                         component_id,
+                                         in_port,
                                          idx,
-                                         compType,
-                                         inflowConn,
-                                         inflowConnIdx,
+                                         component_type,
+                                         inflow_conn,
+                                         inflow_conn_idx,
                                          FlowDirection::inflow);
                 }
             }
-            for (size_t outPort = 0; outPort < comp.number_of_outports; ++outPort)
+            for (size_t out_port = 0; out_port < comp.number_of_outports; ++out_port)
             {
-                size_t outflowConnIdx = comp.outflow_connection_ids[outPort];
-                Connection const& outflowConn = m.connection[outflowConnIdx];
-                if ((outflowConn.from != compType) || (outflowConn.from_component_id != compId) ||
-                    (outflowConn.from_subtype_index != idx) || (outflowConn.from_port != outPort))
+                size_t outflow_conn_idx = comp.outflow_connection_ids[out_port];
+                Connection const& outflow_conn = m.connection[outflow_conn_idx];
+                if ((outflow_conn.from != component_type) ||
+                    (outflow_conn.from_component_id != component_id) ||
+                    (outflow_conn.from_subtype_index != idx) ||
+                    (outflow_conn.from_port != out_port))
                 {
                     add_connection_issue(issues,
                                          tag,
-                                         compId,
-                                         outPort,
+                                         component_id,
+                                         out_port,
                                          idx,
-                                         compType,
-                                         outflowConn,
-                                         outflowConnIdx,
+                                         component_type,
+                                         outflow_conn,
+                                         outflow_conn_idx,
                                          FlowDirection::outflow);
                 }
             }
@@ -557,36 +592,39 @@ std::vector<std::string> check_network(Model const& m)
         {
             assert(idx < m.pass_through.size());
             PassThrough const& comp = m.pass_through[idx];
-            size_t inflowConnIdx = comp.inflow_connection_id;
-            Connection const& inflowConn = m.connection[inflowConnIdx];
-            size_t inflowPort = 0;
-            if ((inflowConn.to != compType) || (inflowConn.to_component_id != compId) ||
-                (inflowConn.to_subtype_index != idx) || (inflowConn.to_port != inflowPort))
+            size_t inflow_conn_idx = comp.inflow_connection_id;
+            Connection const& inflow_conn = m.connection[inflow_conn_idx];
+            size_t inflow_port = 0;
+            if ((inflow_conn.to != component_type) ||
+                (inflow_conn.to_component_id != component_id) ||
+                (inflow_conn.to_subtype_index != idx) || (inflow_conn.to_port != inflow_port))
             {
                 add_connection_issue(issues,
                                      tag,
-                                     compId,
-                                     inflowPort,
+                                     component_id,
+                                     inflow_port,
                                      idx,
-                                     compType,
-                                     inflowConn,
-                                     inflowConnIdx,
+                                     component_type,
+                                     inflow_conn,
+                                     inflow_conn_idx,
                                      FlowDirection::inflow);
             }
-            size_t outflowConnIdx = comp.outflow_connection_id;
-            Connection const& outflowConn = m.connection[outflowConnIdx];
-            size_t outflowPort = 0;
-            if ((outflowConn.from != compType) || (outflowConn.from_component_id != compId) ||
-                (outflowConn.from_subtype_index != idx) || (outflowConn.from_port != outflowPort))
+            size_t outflow_conn_idx = comp.outflow_connection_id;
+            Connection const& outflow_conn = m.connection[outflow_conn_idx];
+            size_t outflow_port = 0;
+            if ((outflow_conn.from != component_type) ||
+                (outflow_conn.from_component_id != component_id) ||
+                (outflow_conn.from_subtype_index != idx) ||
+                (outflow_conn.from_port != outflow_port))
             {
                 add_connection_issue(issues,
                                      tag,
-                                     compId,
-                                     outflowPort,
+                                     component_id,
+                                     outflow_port,
                                      idx,
-                                     compType,
-                                     outflowConn,
-                                     outflowConnIdx,
+                                     component_type,
+                                     outflow_conn,
+                                     outflow_conn_idx,
                                      FlowDirection::outflow);
             }
         }
@@ -595,56 +633,58 @@ std::vector<std::string> check_network(Model const& m)
         {
             assert(idx < m.transfer_switch.size());
             Switch const& comp = m.transfer_switch[idx];
-            size_t primaryInflowConnIdx = comp.inflow_connection_id_primary;
-            Connection const& primaryInflowConn = m.connection[primaryInflowConnIdx];
-            size_t primaryInflowPort = 0;
-            if ((primaryInflowConn.to != compType) ||
-                (primaryInflowConn.to_component_id != compId) ||
-                (primaryInflowConn.to_subtype_index != idx) ||
-                (primaryInflowConn.to_port != primaryInflowPort))
+            size_t primary_inflow_conn_idx = comp.inflow_connection_id_primary;
+            Connection const& primary_inflow_conn = m.connection[primary_inflow_conn_idx];
+            size_t primary_inflow_port = 0;
+            if ((primary_inflow_conn.to != component_type) ||
+                (primary_inflow_conn.to_component_id != component_id) ||
+                (primary_inflow_conn.to_subtype_index != idx) ||
+                (primary_inflow_conn.to_port != primary_inflow_port))
             {
                 add_connection_issue(issues,
                                      tag,
-                                     compId,
-                                     primaryInflowPort,
+                                     component_id,
+                                     primary_inflow_port,
                                      idx,
-                                     compType,
-                                     primaryInflowConn,
-                                     primaryInflowConnIdx,
+                                     component_type,
+                                     primary_inflow_conn,
+                                     primary_inflow_conn_idx,
                                      FlowDirection::inflow);
             }
-            size_t secondaryInflowConnIdx = comp.inflow_connection_id_secondary;
-            Connection const& secondaryInflowConn = m.connection[secondaryInflowConnIdx];
-            size_t secondaryInflowPort = 1;
-            if ((secondaryInflowConn.to != compType) ||
-                (secondaryInflowConn.to_component_id != compId) ||
-                (secondaryInflowConn.to_subtype_index != idx) ||
-                (secondaryInflowConn.to_port != secondaryInflowPort))
+            size_t secondary_inflow_conn_idx = comp.inflow_connection_id_secondary;
+            Connection const& secondary_inflow_conn = m.connection[secondary_inflow_conn_idx];
+            size_t secondary_inflow_port = 1;
+            if ((secondary_inflow_conn.to != component_type) ||
+                (secondary_inflow_conn.to_component_id != component_id) ||
+                (secondary_inflow_conn.to_subtype_index != idx) ||
+                (secondary_inflow_conn.to_port != secondary_inflow_port))
             {
                 add_connection_issue(issues,
                                      tag,
-                                     compId,
-                                     secondaryInflowPort,
+                                     component_id,
+                                     secondary_inflow_port,
                                      idx,
-                                     compType,
-                                     secondaryInflowConn,
-                                     secondaryInflowConnIdx,
+                                     component_type,
+                                     secondary_inflow_conn,
+                                     secondary_inflow_conn_idx,
                                      FlowDirection::inflow);
             }
-            size_t outflowConnIdx = comp.outflow_connection_id;
-            Connection const& outflowConn = m.connection[outflowConnIdx];
-            size_t outflowPort = 0;
-            if ((outflowConn.from != compType) || (outflowConn.from_component_id != compId) ||
-                (outflowConn.from_subtype_index != idx) || (outflowConn.from_port != outflowPort))
+            size_t outflow_conn_idx = comp.outflow_connection_id;
+            Connection const& outflow_conn = m.connection[outflow_conn_idx];
+            size_t outflow_port = 0;
+            if ((outflow_conn.from != component_type) ||
+                (outflow_conn.from_component_id != component_id) ||
+                (outflow_conn.from_subtype_index != idx) ||
+                (outflow_conn.from_port != outflow_port))
             {
                 add_connection_issue(issues,
                                      tag,
-                                     compId,
-                                     outflowPort,
+                                     component_id,
+                                     outflow_port,
                                      idx,
-                                     compType,
-                                     outflowConn,
-                                     outflowConnIdx,
+                                     component_type,
+                                     outflow_conn,
+                                     outflow_conn_idx,
                                      FlowDirection::outflow);
             }
         }
@@ -653,20 +693,21 @@ std::vector<std::string> check_network(Model const& m)
         {
             assert(idx < m.scheduled_load.size());
             ScheduleBasedLoad const& comp = m.scheduled_load[idx];
-            size_t inflowConnIdx = comp.inflow_connection_id;
-            Connection const& inflowConn = m.connection[inflowConnIdx];
-            size_t inflowPort = 0;
-            if ((inflowConn.to != compType) || (inflowConn.to_component_id != compId) ||
-                (inflowConn.to_subtype_index != idx) || (inflowConn.to_port != inflowPort))
+            size_t inflow_conn_idx = comp.inflow_connection_id;
+            Connection const& inflow_conn = m.connection[inflow_conn_idx];
+            size_t inflow_port = 0;
+            if ((inflow_conn.to != component_type) ||
+                (inflow_conn.to_component_id != component_id) ||
+                (inflow_conn.to_subtype_index != idx) || (inflow_conn.to_port != inflow_port))
             {
                 add_connection_issue(issues,
                                      tag,
-                                     compId,
-                                     inflowPort,
+                                     component_id,
+                                     inflow_port,
                                      idx,
-                                     compType,
-                                     inflowConn,
-                                     inflowConnIdx,
+                                     component_type,
+                                     inflow_conn,
+                                     inflow_conn_idx,
                                      FlowDirection::inflow);
             }
         }
@@ -675,36 +716,38 @@ std::vector<std::string> check_network(Model const& m)
         {
             assert(idx < m.scheduled_source.size());
             ScheduleBasedSource const& comp = m.scheduled_source[idx];
-            size_t outflowConnIdx = comp.outflow_connection_id;
-            Connection const& outflowConn = m.connection[outflowConnIdx];
-            size_t outflowPort = 0;
-            if ((outflowConn.from != compType) || (outflowConn.from_component_id != compId) ||
-                (outflowConn.from_subtype_index != idx) || (outflowConn.from_port != outflowPort))
+            size_t outflow_conn_idx = comp.outflow_connection_id;
+            Connection const& outflow_conn = m.connection[outflow_conn_idx];
+            size_t outflow_port = 0;
+            if ((outflow_conn.from != component_type) ||
+                (outflow_conn.from_component_id != component_id) ||
+                (outflow_conn.from_subtype_index != idx) ||
+                (outflow_conn.from_port != outflow_port))
             {
                 add_connection_issue(issues,
                                      tag,
-                                     compId,
-                                     outflowPort,
+                                     component_id,
+                                     outflow_port,
                                      idx,
-                                     compType,
-                                     outflowConn,
-                                     outflowConnIdx,
+                                     component_type,
+                                     outflow_conn,
+                                     outflow_conn_idx,
                                      FlowDirection::outflow);
             }
-            size_t wfConnIdx = comp.wasteflow_connection_id;
-            Connection const& wfConn = m.connection[wfConnIdx];
-            size_t wfPort = 1;
-            if ((wfConn.from != compType) || (wfConn.from_component_id != compId) ||
-                (wfConn.from_subtype_index != idx) || (wfConn.from_port != wfPort))
+            size_t wf_conn_idx = comp.wasteflow_connection_id;
+            Connection const& wf_conn = m.connection[wf_conn_idx];
+            size_t wf_port = 1;
+            if ((wf_conn.from != component_type) || (wf_conn.from_component_id != component_id) ||
+                (wf_conn.from_subtype_index != idx) || (wf_conn.from_port != wf_port))
             {
                 add_connection_issue(issues,
                                      tag,
-                                     compId,
-                                     wfPort,
+                                     component_id,
+                                     wf_port,
                                      idx,
-                                     compType,
-                                     wfConn,
-                                     wfConnIdx,
+                                     component_type,
+                                     wf_conn,
+                                     wf_conn_idx,
                                      FlowDirection::outflow);
             }
         }
@@ -713,57 +756,61 @@ std::vector<std::string> check_network(Model const& m)
         {
             assert(idx < m.store.size());
             Store const& comp = m.store[idx];
-            size_t outflowConnIdx = comp.outflow_connection_id;
-            Connection const& outflowConn = m.connection[outflowConnIdx];
-            size_t outflowPort = 0;
-            if ((outflowConn.from != compType) || (outflowConn.from_component_id != compId) ||
-                (outflowConn.from_subtype_index != idx) || (outflowConn.from_port != outflowPort))
+            size_t outflow_conn_idx = comp.outflow_connection_id;
+            Connection const& outflow_conn = m.connection[outflow_conn_idx];
+            size_t outflow_port = 0;
+            if ((outflow_conn.from != component_type) ||
+                (outflow_conn.from_component_id != component_id) ||
+                (outflow_conn.from_subtype_index != idx) ||
+                (outflow_conn.from_port != outflow_port))
             {
                 add_connection_issue(issues,
                                      tag,
-                                     compId,
-                                     outflowPort,
+                                     component_id,
+                                     outflow_port,
                                      idx,
-                                     compType,
-                                     outflowConn,
-                                     outflowConnIdx,
+                                     component_type,
+                                     outflow_conn,
+                                     outflow_conn_idx,
                                      FlowDirection::outflow);
             }
             if (comp.inflow_connection_id.has_value())
             {
-                size_t inflowConnIdx = comp.inflow_connection_id.value();
-                Connection const& inflowConn = m.connection[inflowConnIdx];
-                size_t inflowPort = 0;
-                if ((inflowConn.to != compType) || (inflowConn.to_component_id != compId) ||
-                    (inflowConn.to_subtype_index != idx) || (inflowConn.to_port != inflowPort))
+                size_t inflow_conn_idx = comp.inflow_connection_id.value();
+                Connection const& inflow_conn = m.connection[inflow_conn_idx];
+                size_t inflow_port = 0;
+                if ((inflow_conn.to != component_type) ||
+                    (inflow_conn.to_component_id != component_id) ||
+                    (inflow_conn.to_subtype_index != idx) || (inflow_conn.to_port != inflow_port))
                 {
                     add_connection_issue(issues,
                                          tag,
-                                         compId,
-                                         inflowPort,
+                                         component_id,
+                                         inflow_port,
                                          idx,
-                                         compType,
-                                         inflowConn,
-                                         inflowConnIdx,
+                                         component_type,
+                                         inflow_conn,
+                                         inflow_conn_idx,
                                          FlowDirection::inflow);
                 }
             }
             if (comp.wasteflow_connection_id.has_value())
             {
-                size_t wfConnIdx = comp.wasteflow_connection_id.value();
-                Connection const& wfConn = m.connection[wfConnIdx];
-                size_t wfPort = 1;
-                if ((wfConn.from != compType) || (wfConn.from_component_id != compId) ||
-                    (wfConn.from_subtype_index != idx) || (wfConn.from_port != wfPort))
+                size_t wf_conn_idx = comp.wasteflow_connection_id.value();
+                Connection const& wf_conn = m.connection[wf_conn_idx];
+                size_t wf_port = 1;
+                if ((wf_conn.from != component_type) ||
+                    (wf_conn.from_component_id != component_id) ||
+                    (wf_conn.from_subtype_index != idx) || (wf_conn.from_port != wf_port))
                 {
                     add_connection_issue(issues,
                                          tag,
-                                         compId,
-                                         wfPort,
+                                         component_id,
+                                         wf_port,
                                          idx,
-                                         compType,
-                                         wfConn,
-                                         wfConnIdx,
+                                         component_type,
+                                         wf_conn,
+                                         wf_conn_idx,
                                          FlowDirection::outflow);
                 }
             }
@@ -776,166 +823,185 @@ std::vector<std::string> check_network(Model const& m)
         break;
         default:
         {
-            std::cout << "unhandled component type: " + ToString(compType) << std::endl;
+            std::cout << "unhandled component type: " + to_string(component_type) << std::endl;
             std::exit(1);
         }
         break;
         }
     }
-    for (size_t connIdx = 0; connIdx < m.connection.size(); ++connIdx)
+    for (size_t conn_idx = 0; conn_idx < m.connection.size(); ++conn_idx)
     {
-        Connection const& conn = m.connection[connIdx];
+        Connection const& conn = m.connection[conn_idx];
         // asser that component port links back to connection
-        ComponentType fromType = conn.from;
-        ComponentType toType = conn.to;
-        if (fromType == ComponentType::mux_type)
+        ComponentType from_type = conn.from;
+        ComponentType to_type = conn.to;
+        if (from_type == ComponentType::mux_type)
         {
-            auto const& fromMux = m.mux[conn.from_subtype_index];
-            if (conn.from_port >= fromMux.outflow_connection_ids.size())
+            auto const& from_mux = m.mux[conn.from_subtype_index];
+            if (conn.from_port >= from_mux.outflow_connection_ids.size())
             {
                 std::ostringstream oss;
                 oss << "mux outflow connection inconsistent\n";
                 oss << "conn.FromId: " << conn.from_component_id << "\n";
                 oss << "conn.FromPort: " << conn.from_port << "\n";
-                oss << "mux num outflow connections: " << fromMux.number_of_outports << "\n";
+                oss << "mux num outflow connections: " << from_mux.number_of_outports << "\n";
                 oss << "mux num outflow connections from count: "
-                    << fromMux.outflow_connection_ids.size() << "\n";
+                    << from_mux.outflow_connection_ids.size() << "\n";
                 issues.push_back(oss.str());
             }
-            else if (fromMux.outflow_connection_ids[conn.from_port] != connIdx)
+            else if (from_mux.outflow_connection_ids[conn.from_port] != conn_idx)
             {
                 std::ostringstream oss;
                 oss << "mux outflow connection inconsistent\n";
-                oss << "connId: " << connIdx << "\n";
+                oss << "connId: " << conn_idx << "\n";
                 oss << "conn.FromId: " << conn.from_component_id << "\n";
                 oss << "conn.FromPort: " << conn.from_port << "\n";
                 oss << "fromMux.OutflowConns[conn.FromPort]: "
-                    << fromMux.outflow_connection_ids[conn.from_port] << "\n";
+                    << from_mux.outflow_connection_ids[conn.from_port] << "\n";
                 issues.push_back(oss.str());
             }
-            if (fromMux.number_of_outports != fromMux.outflow_connection_ids.size())
+            if (from_mux.number_of_outports != from_mux.outflow_connection_ids.size())
             {
                 std::ostringstream oss;
                 oss << "mux num outflows inconsistent\n";
-                oss << "mux num outflow connections: " << fromMux.number_of_outports << "\n";
+                oss << "mux num outflow connections: " << from_mux.number_of_outports << "\n";
                 oss << "mux num outflow connections from count: "
-                    << fromMux.outflow_connection_ids.size() << "\n";
+                    << from_mux.outflow_connection_ids.size() << "\n";
                 issues.push_back(oss.str());
             }
-            if (muxCompIdToOutflowConns[conn.from_component_id].contains(connIdx))
+            if (mux_comp_id_to_outflow_conns[conn.from_component_id].contains(conn_idx))
             {
                 std::ostringstream oss;
                 oss << "mux has multiple instances of the same outflow "
                        "connection\n";
-                oss << "connIdx: " << connIdx << "\n";
+                oss << "connIdx: " << conn_idx << "\n";
                 issues.push_back(oss.str());
             }
-            muxCompIdToOutflowConns[conn.from_component_id].insert(connIdx);
+            mux_comp_id_to_outflow_conns[conn.from_component_id].insert(conn_idx);
         }
-        if (toType == ComponentType::mux_type)
+        if (to_type == ComponentType::mux_type)
         {
-            auto const& toMux = m.mux[conn.to_subtype_index];
-            if (conn.to_port >= toMux.inflow_connection_ids.size())
+            auto const& to_mux = m.mux[conn.to_subtype_index];
+            if (conn.to_port >= to_mux.inflow_connection_ids.size())
             {
                 std::ostringstream oss;
                 oss << "mux inflow connection inconsistent\n";
                 oss << "conn.ToId: " << conn.to_component_id << "\n";
                 oss << "conn.ToPort: " << conn.to_port << "\n";
-                oss << "mux num inflow connections: " << toMux.number_of_inports << "\n";
+                oss << "mux num inflow connections: " << to_mux.number_of_inports << "\n";
                 oss << "mux num inflow connections from count: "
-                    << toMux.inflow_connection_ids.size() << "\n";
+                    << to_mux.inflow_connection_ids.size() << "\n";
                 issues.push_back(oss.str());
             }
-            else if (toMux.inflow_connection_ids[conn.to_port] != connIdx)
+            else if (to_mux.inflow_connection_ids[conn.to_port] != conn_idx)
             {
                 std::ostringstream oss;
                 oss << "mux inflow connection inconsistent\n";
-                oss << "connId: " << connIdx << "\n";
+                oss << "connId: " << conn_idx << "\n";
                 oss << "conn.ToId: " << conn.to_component_id << "\n";
                 oss << "conn.FromPort: " << conn.to_port << "\n";
                 oss << "toMux.InflowConns[conn.FromPort]: "
-                    << toMux.outflow_connection_ids[conn.to_port] << "\n";
+                    << to_mux.outflow_connection_ids[conn.to_port] << "\n";
                 issues.push_back(oss.str());
             }
-            if (toMux.number_of_inports != toMux.inflow_connection_ids.size())
+            if (to_mux.number_of_inports != to_mux.inflow_connection_ids.size())
             {
                 std::ostringstream oss;
                 oss << "mux num inflows inconsistent\n";
-                oss << "mux num inflow connections: " << toMux.number_of_inports << "\n";
+                oss << "mux num inflow connections: " << to_mux.number_of_inports << "\n";
                 oss << "mux num inflow connections from count: "
-                    << toMux.inflow_connection_ids.size() << "\n";
+                    << to_mux.inflow_connection_ids.size() << "\n";
                 issues.push_back(oss.str());
             }
-            if (muxCompIdToInflowConns[conn.to_component_id].contains(connIdx))
+            if (mux_comp_id_to_inflow_conns[conn.to_component_id].contains(conn_idx))
             {
                 std::ostringstream oss;
                 oss << "mux has multiple instances of the same inflow "
                        "connection\n";
-                oss << "connIdx: " << connIdx << "\n";
+                oss << "connIdx: " << conn_idx << "\n";
                 issues.push_back(oss.str());
             }
-            muxCompIdToInflowConns[conn.to_component_id].insert(connIdx);
+            mux_comp_id_to_inflow_conns[conn.to_component_id].insert(conn_idx);
         }
-        std::string outflowCompPort;
+        std::string outflow_comp_port;
         {
             std::ostringstream oss;
             oss << conn.from_component_id << ":" << conn.from_port;
-            outflowCompPort = oss.str();
+            outflow_comp_port = oss.str();
         };
-        if (connectedOutflowPorts.contains(outflowCompPort))
+        if (connected_outflow_ports.contains(outflow_comp_port))
         {
             std::ostringstream oss;
             oss << "Port multiply connected: "
-                << "- outflowCompPort: " << outflowCompPort << "\n"
+                << "- outflowCompPort: " << outflow_comp_port << "\n"
                 << "- compId: " << conn.from_component_id << "\n"
                 << "- outflowPort: " << conn.from_port << "\n"
                 << "- tag: " << m.component.tag[conn.from_component_id] << "\n"
-                << "- type: " << ToString(m.component.component_type[conn.from_component_id])
+                << "- type: " << to_string(m.component.component_type[conn.from_component_id])
                 << "\n";
             issues.push_back(oss.str());
         }
-        connectedOutflowPorts.insert(outflowCompPort);
-        std::string inflowCompPort;
+        connected_outflow_ports.insert(outflow_comp_port);
+        std::string inflow_comp_port;
         {
             std::ostringstream oss;
             oss << conn.to_component_id << ":" << conn.to_port;
-            inflowCompPort = oss.str();
+            inflow_comp_port = oss.str();
         };
-        if (connectedInflowPorts.contains(inflowCompPort))
+        if (connected_inflow_ports.contains(inflow_comp_port))
         {
             std::ostringstream oss;
             oss << "Port multiply connected: "
-                << "- inflowCompPort: " << inflowCompPort << "\n"
+                << "- inflowCompPort: " << inflow_comp_port << "\n"
                 << "- compId: " << conn.to_component_id << "\n"
                 << "- outflowPort: " << conn.to_port << "\n"
                 << "- tag: " << m.component.tag[conn.to_component_id] << "\n"
-                << "- type: " << ToString(m.component.component_type[conn.to_component_id]) << "\n";
+                << "- type: " << to_string(m.component.component_type[conn.to_component_id])
+                << "\n";
             issues.push_back(oss.str());
         }
-        connectedInflowPorts.insert(inflowCompPort);
+        connected_inflow_ports.insert(inflow_comp_port);
     }
-    for (size_t compId = 0; compId < m.component.component_type.size(); ++compId)
+    for (size_t comp_id = 0; comp_id < m.component.component_type.size(); ++comp_id)
     {
-        if (m.component.component_type[compId] == ComponentType::mux_type)
+        if (m.component.component_type[comp_id] == ComponentType::mux_type)
         {
-            Mux const& mux = m.mux[m.component.subtype_index[compId]];
-            if (mux.number_of_inports != muxCompIdToInflowConns[compId].size())
+            Mux const& mux = m.mux[m.component.subtype_index[comp_id]];
+            if (mux.number_of_inports != mux_comp_id_to_inflow_conns[comp_id].size())
             {
                 std::ostringstream oss;
                 oss << "mux specifies " << mux.number_of_inports
                     << " inports but the number of connections are "
-                    << muxCompIdToInflowConns[compId].size() << "\n";
+                    << mux_comp_id_to_inflow_conns[comp_id].size() << "\n";
                 issues.push_back(oss.str());
             }
-            if (mux.number_of_outports != muxCompIdToOutflowConns[compId].size())
+            if (mux.number_of_outports != mux_comp_id_to_outflow_conns[comp_id].size())
             {
                 std::ostringstream oss;
                 oss << "mux specifies " << mux.number_of_outports
                     << " outports but the number of connections are "
-                    << muxCompIdToOutflowConns[compId].size() << "\n";
+                    << mux_comp_id_to_outflow_conns[comp_id].size() << "\n";
                 issues.push_back(oss.str());
             }
         }
+    }
+    std::vector<std::pair<size_t, size_t>> edges = connections_to_edges(m.connection);
+    std::vector<std::vector<std::string>> sccs =
+        find_strongly_connected_components(m.component.tag, edges);
+    if (sccs.size() > 0)
+    {
+        std::ostringstream oss;
+        oss << "ERROR: network is not a directed acyclical graph" << std::endl;
+        oss << "... the following components have cyclical relationships:" << std::endl;
+        for (size_t comp_idx = 0; comp_idx < sccs.size(); ++comp_idx)
+        {
+            oss << "... * STRONGLY CONNECTED COMPONENT " << (comp_idx + 1) << std::endl;
+            for (auto const& node : sccs[comp_idx])
+            {
+                oss << "...  - " << node << std::endl;
+            }
+        }
+        issues.push_back(oss.str());
     }
     return issues;
 }
@@ -1902,7 +1968,7 @@ void RunConnectionsBackward(Model& model, SimulationState& ss)
             default:
             {
                 std::cout << "Unhandled component type on backward pass: "
-                          << ToString(model.connection[connIdx].from) << std::endl;
+                          << to_string(model.connection[connIdx].from) << std::endl;
             }
             }
         }
@@ -2200,7 +2266,7 @@ void RunConnectionsForward(Model& model, SimulationState& ss)
             default:
             {
                 std::cerr << "unhandled component type on forward pass: "
-                          << ToString(model.connection[connIdx].to) << std::endl;
+                          << to_string(model.connection[connIdx].to) << std::endl;
                 std::exit(1);
             }
             }
@@ -2503,8 +2569,7 @@ void UpdateScheduleBasedSourceNextEvent(Model const& m, SimulationState& ss, dou
     }
 }
 
-// TODO: rename to ComponentTypeToString(.)
-std::string ToString(ComponentType compType)
+std::string to_string(ComponentType compType)
 {
     std::string result = "?";
     switch (compType)
@@ -2742,7 +2807,7 @@ FlowSummary SummarizeFlows(Model const& m, SimulationState const& ss, double t)
         {
             write_error_message("SummarizeFlows(.)",
                                 "Unhandled From type for connection - from pass: " +
-                                    ToString(m.connection[flowIdx].from));
+                                    to_string(m.connection[flowIdx].from));
         }
         break;
         }
@@ -2783,7 +2848,7 @@ FlowSummary SummarizeFlows(Model const& m, SimulationState const& ss, double t)
         {
             write_error_message("SummarizeFlows(.)",
                                 "Unhandled From type for connection - to pass: " +
-                                    ToString(m.connection[flowIdx].to));
+                                    to_string(m.connection[flowIdx].to));
         }
         break;
         }
@@ -2851,15 +2916,15 @@ void PrintModelState(Model& m, SimulationState& ss)
 {
     for (size_t storeIdx = 0; storeIdx < m.store.size(); ++storeIdx)
     {
-        std::cout << ToString(ComponentType::store_type) << "[" << storeIdx
+        std::cout << to_string(ComponentType::store_type) << "[" << storeIdx
                   << "].InitialStorage (J): " << m.store[storeIdx].initial_storage_J << std::endl;
-        std::cout << ToString(ComponentType::store_type) << "[" << storeIdx
+        std::cout << to_string(ComponentType::store_type) << "[" << storeIdx
                   << "].StorageAmount (J) : " << ss.storage_amounts_J[storeIdx] << std::endl;
-        std::cout << ToString(ComponentType::store_type) << "[" << storeIdx
+        std::cout << to_string(ComponentType::store_type) << "[" << storeIdx
                   << "].Capacity (J)      : " << m.store[storeIdx].capacity_J << std::endl;
         double soc =
             (double)ss.storage_amounts_J[storeIdx] * 100.0 / (double)m.store[storeIdx].capacity_J;
-        std::cout << ToString(ComponentType::store_type) << "[" << storeIdx
+        std::cout << to_string(ComponentType::store_type) << "[" << storeIdx
                   << "].SOC               : " << soc << " %" << std::endl;
     }
 }
@@ -3982,7 +4047,7 @@ Connection Model_AddConnection(Model& m,
                           << "attempt to doubly connect "
                           << "compId=" << fromId << " outport=" << fromPort
                           << " tag=" << m.component.tag[fromId]
-                          << " type=" << ToString(m.component.component_type[fromId]) << std::endl;
+                          << " type=" << to_string(m.component.component_type[fromId]) << std::endl;
             }
             if (conn.to_component_id == toId && conn.to_port == toPort)
             {
@@ -3991,7 +4056,7 @@ Connection Model_AddConnection(Model& m,
                           << "attempt to doubly connect "
                           << "compId=" << toId << " inport=" << toPort
                           << " tag=" << m.component.tag[toId]
-                          << " type=" << ToString(m.component.component_type[toId]) << std::endl;
+                          << " type=" << to_string(m.component.component_type[toId]) << std::endl;
             }
         }
         if (issueFound)
@@ -4185,7 +4250,7 @@ Connection Model_AddConnection(Model& m,
     default:
     {
         write_error_message("Model_AddConnection",
-                            "unhandled component type: " + ToString(fromType));
+                            "unhandled component type: " + to_string(fromType));
         std::exit(1);
     }
     }
@@ -4210,7 +4275,7 @@ Connection Model_AddConnection(Model& m,
         {
             write_error_message("Model_AddConnection",
                                 "unhandled inport: " + std::to_string(toPort) + " for " +
-                                    ToString(toType));
+                                    to_string(toType));
             std::exit(1);
         }
         break;
@@ -4318,7 +4383,8 @@ Connection Model_AddConnection(Model& m,
     break;
     default:
     {
-        write_error_message("Model_AddConnection", "unhandled component type: " + ToString(toType));
+        write_error_message("Model_AddConnection",
+                            "unhandled component type: " + to_string(toType));
         std::exit(1);
     }
     break;
@@ -4871,7 +4937,7 @@ Result ParseNetwork(FlowDict const& fd, Model& m, toml::table const& table)
         {
             std::cout << "[network] "
                       << "port is unaddressable for "
-                      << ToString(m.component.component_type[fromCompId]) << ": trying to address "
+                      << to_string(m.component.component_type[fromCompId]) << ": trying to address "
                       << fromTap.port << " but only " << m.component.outflow_type[fromCompId].size()
                       << " ports available" << std::endl;
             return Result::failure;
@@ -4898,7 +4964,7 @@ Result ParseNetwork(FlowDict const& fd, Model& m, toml::table const& table)
                 return Result::failure;
             }
             std::cout << "[network] port is unaddressable for "
-                      << ToString(m.component.component_type[toCompId]) << ": trying to address "
+                      << to_string(m.component.component_type[toCompId]) << ": trying to address "
                       << toTap.port << " but only " << m.component.inflow_type[toCompId].size()
                       << " ports available" << std::endl;
             return Result::failure;
@@ -4983,9 +5049,9 @@ std::string ConnectionToString(ComponentDict const& cd, Connection const& c, boo
     }
     std::ostringstream oss {};
     oss << fromTag << (compact ? "" : ("[" + std::to_string(c.from_component_id) + "]")) << ":OUT("
-        << c.from_port << ")" << (compact ? "" : (": " + ToString(c.from))) << " => " << toTag
+        << c.from_port << ")" << (compact ? "" : (": " + to_string(c.from))) << " => " << toTag
         << (compact ? "" : ("[" + std::to_string(c.to_component_id) + "]")) << ":IN(" << c.to_port
-        << ")" << (compact ? "" : (": " + ToString(c.to)));
+        << ")" << (compact ? "" : (": " + to_string(c.to)));
     return oss.str();
 }
 
@@ -5058,14 +5124,14 @@ std::string NodeConnectionToString(Model const& model,
 
     if (c.from_component_id.index() == 0)
     {
-        oss << (compact ? "" : (": " + ToString(c.from)));
+        oss << (compact ? "" : (": " + to_string(c.from)));
     }
 
     oss << " => " << toTag << (compact ? "" : ("[" + toString + "]")) << ":IN(" << c.to_port << ")";
 
     if (c.to_component_id.index() == 0)
     {
-        oss << (compact ? "" : (": " + ToString(c.to)));
+        oss << (compact ? "" : (": " + to_string(c.to)));
     }
 
     return oss.str();

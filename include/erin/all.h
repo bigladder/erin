@@ -9,6 +9,7 @@
 #include "erin/graph.h"
 #include "erin/load.h"
 #include "erin/logging.h"
+#include "erin/network-utils.h"
 #include "erin/reliability.h"
 #include "erin/result.h"
 #include "erin/scenario.h"

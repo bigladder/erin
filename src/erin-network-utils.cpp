@@ -18,8 +18,8 @@ void strong_connect(size_t& time_index,
                     std::vector<std::string> const& nodes,
                     std::vector<std::pair<size_t, size_t>> const& edges)
 {
-    find_times[node_idx] = time_index;
-    low_links[node_idx] = time_index;
+    find_times[node_idx] = static_cast<int>(time_index);
+    low_links[node_idx] = static_cast<int>(time_index);
     time_index++;
     stack.push(node_idx);
     on_stacks[node_idx] = true;

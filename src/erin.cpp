@@ -167,7 +167,8 @@ std::vector<std::string> check_network(Model const& m)
             assert(inflow_conn_idx < num_conns);
             Connection const& inflow_conn = m.connection[inflow_conn_idx];
             size_t inflow_port = 0;
-            if ((inflow_conn.to != component_type) || (inflow_conn.to_component_id != component_id) ||
+            if ((inflow_conn.to != component_type) ||
+                (inflow_conn.to_component_id != component_id) ||
                 (inflow_conn.to_subtype_index != idx) || (inflow_conn.to_port != inflow_port))
             {
                 add_connection_issue(issues,
@@ -184,8 +185,10 @@ std::vector<std::string> check_network(Model const& m)
             assert(outflow_conn_idx < num_conns);
             Connection const& outflow_conn = m.connection[outflow_conn_idx];
             size_t outflow_port = 0;
-            if ((outflow_conn.from != component_type) || (outflow_conn.from_component_id != component_id) ||
-                (outflow_conn.from_subtype_index != idx) || (outflow_conn.from_port != outflow_port))
+            if ((outflow_conn.from != component_type) ||
+                (outflow_conn.from_component_id != component_id) ||
+                (outflow_conn.from_subtype_index != idx) ||
+                (outflow_conn.from_port != outflow_port))
             {
                 add_connection_issue(issues,
                                      tag,
@@ -220,7 +223,8 @@ std::vector<std::string> check_network(Model const& m)
                 assert(lf_conn_idx < num_conns);
                 Connection const& lf_conn = m.connection[lf_conn_idx];
                 size_t lf_port = 1;
-                if ((lf_conn.from != component_type) || (lf_conn.from_component_id != component_id) ||
+                if ((lf_conn.from != component_type) ||
+                    (lf_conn.from_component_id != component_id) ||
                     (lf_conn.from_subtype_index != idx) || (lf_conn.from_port != lf_port))
                 {
                     add_connection_issue(issues,
@@ -244,7 +248,8 @@ std::vector<std::string> check_network(Model const& m)
             assert(inflow_conn_idx < num_conns);
             Connection const& inflow_conn = m.connection[inflow_conn_idx];
             size_t inflow_port = 0;
-            if ((inflow_conn.to != component_type) || (inflow_conn.to_component_id != component_id) ||
+            if ((inflow_conn.to != component_type) ||
+                (inflow_conn.to_component_id != component_id) ||
                 (inflow_conn.to_subtype_index != idx) || (inflow_conn.to_port != inflow_port))
             {
                 add_connection_issue(issues,
@@ -261,8 +266,10 @@ std::vector<std::string> check_network(Model const& m)
             assert(outflow_conn_idx < num_conns);
             Connection const& outflow_conn = m.connection[outflow_conn_idx];
             size_t outflow_port = 0;
-            if ((outflow_conn.from != component_type) || (outflow_conn.from_component_id != component_id) ||
-                (outflow_conn.from_subtype_index != idx) || (outflow_conn.from_port != outflow_port))
+            if ((outflow_conn.from != component_type) ||
+                (outflow_conn.from_component_id != component_id) ||
+                (outflow_conn.from_subtype_index != idx) ||
+                (outflow_conn.from_port != outflow_port))
             {
                 add_connection_issue(issues,
                                      tag,
@@ -297,7 +304,8 @@ std::vector<std::string> check_network(Model const& m)
                 assert(lf_conn_idx < num_conns);
                 Connection const& lf_conn = m.connection[lf_conn_idx];
                 size_t lf_port = 1;
-                if ((lf_conn.from != component_type) || (lf_conn.from_component_id != component_id) ||
+                if ((lf_conn.from != component_type) ||
+                    (lf_conn.from_component_id != component_id) ||
                     (lf_conn.from_subtype_index != idx) || (lf_conn.from_port != lf_port))
                 {
                     add_connection_issue(issues,
@@ -320,7 +328,8 @@ std::vector<std::string> check_network(Model const& m)
             size_t inflow_conn_idx = comp.inflow_connection_id;
             Connection const& inflow_conn = m.connection[inflow_conn_idx];
             size_t inflow_port = 0;
-            if ((inflow_conn.to != component_type) || (inflow_conn.to_component_id != component_id) ||
+            if ((inflow_conn.to != component_type) ||
+                (inflow_conn.to_component_id != component_id) ||
                 (inflow_conn.to_subtype_index != idx) || (inflow_conn.to_port != inflow_port))
             {
                 add_connection_issue(issues,
@@ -343,8 +352,10 @@ std::vector<std::string> check_network(Model const& m)
             assert(outflow_conn_idx < num_conns);
             Connection const& outflow_conn = m.connection[outflow_conn_idx];
             size_t outflow_port = 0;
-            if ((outflow_conn.from != component_type) || (outflow_conn.from_component_id != component_id) ||
-                (outflow_conn.from_subtype_index != idx) || (outflow_conn.from_port != outflow_port))
+            if ((outflow_conn.from != component_type) ||
+                (outflow_conn.from_component_id != component_id) ||
+                (outflow_conn.from_subtype_index != idx) ||
+                (outflow_conn.from_port != outflow_port))
             {
                 add_connection_issue(issues,
                                      tag,
@@ -371,7 +382,8 @@ std::vector<std::string> check_network(Model const& m)
             assert(inflow_conn_idx < num_conns);
             Connection const& inflow_conn = m.connection[inflow_conn_idx];
             size_t inflow_port = 0;
-            if ((inflow_conn.to != component_type) || (inflow_conn.to_component_id != component_id) ||
+            if ((inflow_conn.to != component_type) ||
+                (inflow_conn.to_component_id != component_id) ||
                 (inflow_conn.to_subtype_index != idx) || (inflow_conn.to_port != inflow_port))
             {
                 add_connection_issue(issues,
@@ -388,8 +400,10 @@ std::vector<std::string> check_network(Model const& m)
             assert(outflow_conn_idx < num_conns);
             Connection const& outflow_conn = m.connection[outflow_conn_idx];
             size_t outflow_port = 0;
-            if ((outflow_conn.from != component_type) || (outflow_conn.from_component_id != component_id) ||
-                (outflow_conn.from_subtype_index != idx) || (outflow_conn.from_port != outflow_port))
+            if ((outflow_conn.from != component_type) ||
+                (outflow_conn.from_component_id != component_id) ||
+                (outflow_conn.from_subtype_index != idx) ||
+                (outflow_conn.from_port != outflow_port))
             {
                 add_connection_issue(issues,
                                      tag,
@@ -445,7 +459,8 @@ std::vector<std::string> check_network(Model const& m)
             assert(inflow_conn_idx < num_conns);
             Connection const& inflow_conn = m.connection[inflow_conn_idx];
             size_t inflow_port = 0;
-            if ((inflow_conn.to != component_type) || (inflow_conn.to_component_id != component_id) ||
+            if ((inflow_conn.to != component_type) ||
+                (inflow_conn.to_component_id != component_id) ||
                 (inflow_conn.to_subtype_index != idx) || (inflow_conn.to_port != inflow_port))
             {
                 add_connection_issue(issues,
@@ -462,8 +477,10 @@ std::vector<std::string> check_network(Model const& m)
             assert(outflow_conn_idx < num_conns);
             Connection const& outflow_conn = m.connection[outflow_conn_idx];
             size_t outflow_port = 0;
-            if ((outflow_conn.from != component_type) || (outflow_conn.from_component_id != component_id) ||
-                (outflow_conn.from_subtype_index != idx) || (outflow_conn.from_port != outflow_port))
+            if ((outflow_conn.from != component_type) ||
+                (outflow_conn.from_component_id != component_id) ||
+                (outflow_conn.from_subtype_index != idx) ||
+                (outflow_conn.from_port != outflow_port))
             {
                 add_connection_issue(issues,
                                      tag,
@@ -519,7 +536,8 @@ std::vector<std::string> check_network(Model const& m)
             {
                 size_t inflow_conn_idx = comp.inflow_connection_ids[in_port];
                 Connection const& inflow_conn = m.connection[inflow_conn_idx];
-                if ((inflow_conn.to != component_type) || (inflow_conn.to_component_id != component_id) ||
+                if ((inflow_conn.to != component_type) ||
+                    (inflow_conn.to_component_id != component_id) ||
                     (inflow_conn.to_subtype_index != idx) || (inflow_conn.to_port != in_port))
                 {
                     add_connection_issue(issues,
@@ -537,8 +555,10 @@ std::vector<std::string> check_network(Model const& m)
             {
                 size_t outflow_conn_idx = comp.outflow_connection_ids[out_port];
                 Connection const& outflow_conn = m.connection[outflow_conn_idx];
-                if ((outflow_conn.from != component_type) || (outflow_conn.from_component_id != component_id) ||
-                    (outflow_conn.from_subtype_index != idx) || (outflow_conn.from_port != out_port))
+                if ((outflow_conn.from != component_type) ||
+                    (outflow_conn.from_component_id != component_id) ||
+                    (outflow_conn.from_subtype_index != idx) ||
+                    (outflow_conn.from_port != out_port))
                 {
                     add_connection_issue(issues,
                                          tag,
@@ -560,7 +580,8 @@ std::vector<std::string> check_network(Model const& m)
             size_t inflow_conn_idx = comp.inflow_connection_id;
             Connection const& inflow_conn = m.connection[inflow_conn_idx];
             size_t inflow_port = 0;
-            if ((inflow_conn.to != component_type) || (inflow_conn.to_component_id != component_id) ||
+            if ((inflow_conn.to != component_type) ||
+                (inflow_conn.to_component_id != component_id) ||
                 (inflow_conn.to_subtype_index != idx) || (inflow_conn.to_port != inflow_port))
             {
                 add_connection_issue(issues,
@@ -576,8 +597,10 @@ std::vector<std::string> check_network(Model const& m)
             size_t outflow_conn_idx = comp.outflow_connection_id;
             Connection const& outflow_conn = m.connection[outflow_conn_idx];
             size_t outflow_port = 0;
-            if ((outflow_conn.from != component_type) || (outflow_conn.from_component_id != component_id) ||
-                (outflow_conn.from_subtype_index != idx) || (outflow_conn.from_port != outflow_port))
+            if ((outflow_conn.from != component_type) ||
+                (outflow_conn.from_component_id != component_id) ||
+                (outflow_conn.from_subtype_index != idx) ||
+                (outflow_conn.from_port != outflow_port))
             {
                 add_connection_issue(issues,
                                      tag,
@@ -634,8 +657,10 @@ std::vector<std::string> check_network(Model const& m)
             size_t outflow_conn_idx = comp.outflow_connection_id;
             Connection const& outflow_conn = m.connection[outflow_conn_idx];
             size_t outflow_port = 0;
-            if ((outflow_conn.from != component_type) || (outflow_conn.from_component_id != component_id) ||
-                (outflow_conn.from_subtype_index != idx) || (outflow_conn.from_port != outflow_port))
+            if ((outflow_conn.from != component_type) ||
+                (outflow_conn.from_component_id != component_id) ||
+                (outflow_conn.from_subtype_index != idx) ||
+                (outflow_conn.from_port != outflow_port))
             {
                 add_connection_issue(issues,
                                      tag,
@@ -656,7 +681,8 @@ std::vector<std::string> check_network(Model const& m)
             size_t inflow_conn_idx = comp.inflow_connection_id;
             Connection const& inflow_conn = m.connection[inflow_conn_idx];
             size_t inflow_port = 0;
-            if ((inflow_conn.to != component_type) || (inflow_conn.to_component_id != component_id) ||
+            if ((inflow_conn.to != component_type) ||
+                (inflow_conn.to_component_id != component_id) ||
                 (inflow_conn.to_subtype_index != idx) || (inflow_conn.to_port != inflow_port))
             {
                 add_connection_issue(issues,
@@ -678,8 +704,10 @@ std::vector<std::string> check_network(Model const& m)
             size_t outflow_conn_idx = comp.outflow_connection_id;
             Connection const& outflow_conn = m.connection[outflow_conn_idx];
             size_t outflow_port = 0;
-            if ((outflow_conn.from != component_type) || (outflow_conn.from_component_id != component_id) ||
-                (outflow_conn.from_subtype_index != idx) || (outflow_conn.from_port != outflow_port))
+            if ((outflow_conn.from != component_type) ||
+                (outflow_conn.from_component_id != component_id) ||
+                (outflow_conn.from_subtype_index != idx) ||
+                (outflow_conn.from_port != outflow_port))
             {
                 add_connection_issue(issues,
                                      tag,
@@ -716,8 +744,10 @@ std::vector<std::string> check_network(Model const& m)
             size_t outflow_conn_idx = comp.outflow_connection_id;
             Connection const& outflow_conn = m.connection[outflow_conn_idx];
             size_t outflow_port = 0;
-            if ((outflow_conn.from != component_type) || (outflow_conn.from_component_id != component_id) ||
-                (outflow_conn.from_subtype_index != idx) || (outflow_conn.from_port != outflow_port))
+            if ((outflow_conn.from != component_type) ||
+                (outflow_conn.from_component_id != component_id) ||
+                (outflow_conn.from_subtype_index != idx) ||
+                (outflow_conn.from_port != outflow_port))
             {
                 add_connection_issue(issues,
                                      tag,
@@ -734,7 +764,8 @@ std::vector<std::string> check_network(Model const& m)
                 size_t inflowConnIdx = comp.inflow_connection_id.value();
                 Connection const& inflowConn = m.connection[inflowConnIdx];
                 size_t inflowPort = 0;
-                if ((inflowConn.to != component_type) || (inflowConn.to_component_id != component_id) ||
+                if ((inflowConn.to != component_type) ||
+                    (inflowConn.to_component_id != component_id) ||
                     (inflowConn.to_subtype_index != idx) || (inflowConn.to_port != inflowPort))
                 {
                     add_connection_issue(issues,

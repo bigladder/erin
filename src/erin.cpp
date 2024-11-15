@@ -784,7 +784,8 @@ std::vector<std::string> check_network(Model const& m)
                 size_t wf_conn_idx = comp.wasteflow_connection_id.value();
                 Connection const& wf_conn = m.connection[wf_conn_idx];
                 size_t wf_port = 1;
-                if ((wf_conn.from != component_type) || (wf_conn.from_component_id != component_id) ||
+                if ((wf_conn.from != component_type) ||
+                    (wf_conn.from_component_id != component_id) ||
                     (wf_conn.from_subtype_index != idx) || (wf_conn.from_port != wf_port))
                 {
                     add_connection_issue(issues,
@@ -940,7 +941,8 @@ std::vector<std::string> check_network(Model const& m)
                 << "- compId: " << conn.to_component_id << "\n"
                 << "- outflowPort: " << conn.to_port << "\n"
                 << "- tag: " << m.component.tag[conn.to_component_id] << "\n"
-                << "- type: " << to_string(m.component.component_type[conn.to_component_id]) << "\n";
+                << "- type: " << to_string(m.component.component_type[conn.to_component_id])
+                << "\n";
             issues.push_back(oss.str());
         }
         connected_inflow_ports.insert(inflow_comp_port);
@@ -4348,7 +4350,8 @@ Connection Model_AddConnection(Model& m,
     break;
     default:
     {
-        write_error_message("Model_AddConnection", "unhandled component type: " + to_string(toType));
+        write_error_message("Model_AddConnection",
+                            "unhandled component type: " + to_string(toType));
         std::exit(1);
     }
     break;

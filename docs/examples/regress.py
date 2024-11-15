@@ -9,35 +9,36 @@ import datetime
 
 
 print("Platform: " + platform.system())
-if platform.system() == 'Windows':
+if platform.system() == "Windows":
     from shutil import which
-    DIFF_PROG = 'fc' if which('fc') is not None else 'diff'
-    ROOT_DIR = (Path('.') / '..' / '..').absolute()
-    BIN_DIR = ROOT_DIR / 'build' / 'bin' / 'Release'
+
+    DIFF_PROG = "fc" if which("fc") is not None else "diff"
+    ROOT_DIR = (Path(".") / ".." / "..").absolute()
+    BIN_DIR = ROOT_DIR / "build" / "bin" / "Release"
     if not BIN_DIR.exists():
-        BIN_DIR = ROOT_DIR / 'build' / 'bin' / 'Debug'
+        BIN_DIR = ROOT_DIR / "build" / "bin" / "Debug"
     if not BIN_DIR.exists():
-        BIN_DIR = ROOT_DIR / 'out' / 'build' / 'x64-Debug' / 'bin'
+        BIN_DIR = ROOT_DIR / "out" / "build" / "x64-Debug" / "bin"
     if not BIN_DIR.exists():
-        BIN_DIR = ROOT_DIR / 'out' / 'build' / 'x64-Release' / 'bin'
+        BIN_DIR = ROOT_DIR / "out" / "build" / "x64-Release" / "bin"
     if not BIN_DIR.exists():
         print("Could not find build directory!")
         sys.exit(1)
     BIN_DIR = BIN_DIR.resolve()
     ALL_TESTS = [
-        BIN_DIR / 'erin_tests.exe',
+        BIN_DIR / "erin_tests.exe",
     ]
-    CLI_EXE = BIN_DIR / 'erin.exe'
-    PERF01_EXE = BIN_DIR / 'erin_stress_test.exe'
-elif platform.system() == 'Darwin' or platform.system() == 'Linux':
-    DIFF_PROG = 'diff'
-    BIN_DIR = (Path('.') / '..' / '..' / 'build' / 'bin').absolute()
+    CLI_EXE = BIN_DIR / "erin.exe"
+    PERF01_EXE = BIN_DIR / "erin_stress_test.exe"
+elif platform.system() == "Darwin" or platform.system() == "Linux":
+    DIFF_PROG = "diff"
+    BIN_DIR = (Path(".") / ".." / ".." / "build" / "bin").absolute()
     BIN_DIR = BIN_DIR.resolve()
     ALL_TESTS = [
-        BIN_DIR / 'erin_tests',
+        BIN_DIR / "erin_tests",
     ]
-    CLI_EXE = BIN_DIR / 'erin'
-    PERF01_EXE = BIN_DIR / 'erin_stress_test'
+    CLI_EXE = BIN_DIR / "erin"
+    PERF01_EXE = BIN_DIR / "erin_stress_test"
 else:
     print(f"Unhandled platform, '{platform.system()}'")
     sys.exit(1)
@@ -90,13 +91,13 @@ def run_tests():
     print("", flush=True)
 
 
-def run_command(cmd, dir=None):
+def run_command(cmd, dir=None, check_return_code=True):
     """
     Run the given command in the given directory.
     """
     cwd = str(Path.cwd().resolve()) if dir is None else dir
     result = subprocess.run(cmd, capture_output=True, cwd=cwd)
-    if result.returncode != 0:
+    if check_return_code and result.returncode != 0:
         print(f"Error running CLI for {' '.join(cmd)}")
         print("stdout:\n")
         print(result.stdout.decode())
@@ -112,8 +113,8 @@ def smoke_test(example_name, dir=None, timeit=False, print_it=False):
     """
     cwd = str(Path.cwd().resolve()) if dir is None else dir
 
-    out_name = 'out.csv'
-    stats_name = 'stats.csv'
+    out_name = "out.csv"
+    stats_name = "stats.csv"
 
     Path(out_name).unlink(missing_ok=True)
     Path(stats_name).unlink(missing_ok=True)
@@ -145,30 +146,28 @@ def run_bench(bench_file, example_name, dir=None):
     Run a benchmark test.
     """
     git_sha = "<no-git-sha-detected>"
-    git_sha_result = subprocess.run(
-        ["git", "rev-parse", "HEAD"],
-        capture_output=True)
-    prog_info = subprocess.run(
-        [CLI_EXE, "version"],
-        capture_output=True,
-        text=True)
+    git_sha_result = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True)
+    prog_info = subprocess.run([CLI_EXE, "version"], capture_output=True, text=True)
     is_debug = "Build Type: Debug" in prog_info.stdout
     if git_sha_result.returncode == 0:
         git_sha = git_sha_result.stdout.decode("utf-8").strip()
     now = datetime.datetime.now().isoformat()
     result = smoke_test(example_name, dir)
-    with open(bench_file, 'a') as f:
+    with open(bench_file, "a") as f:
         time_s = result.time_ns / 1_000_000_000.0
         debug_flag = "true" if is_debug else "false"
-        print(f"{{\"time\": \"{now}\", \"commit\": \"{git_sha}\", " +
-              f"\"debug\": {debug_flag}, \"name\": \"{example_name}\", " +
-              f"\"time-s\": {time_s}}}", file=f)
+        print(
+            f'{{"time": "{now}", "commit": "{git_sha}", '
+            + f'"debug": {debug_flag}, "name": "{example_name}", '
+            + f'"time-s": {time_s}}}',
+            file=f,
+        )
 
 
 def read_csv(path):
     header = None
     data = {}
-    with open(path, newline='') as csvfile:
+    with open(path, newline="") as csvfile:
         rdr = csv.reader(csvfile)
         for row in rdr:
             if header is None:
@@ -194,8 +193,8 @@ def compare_csv(original_csv_path, proposed_csv_path):
         print("header lengths NOT equal")
         print(f"-- len(original['header']): {len(orig['header'])}")
         print(f"-- len(proposed['header']): {len(prop['header'])}")
-    orig_set = set(orig['header'])
-    prop_set = set(prop['header'])
+    orig_set = set(orig["header"])
+    prop_set = set(prop["header"])
     if orig_set != prop_set:
         in_orig_only = orig_set.difference(prop_set)
         in_prop_only = prop_set.difference(orig_set)
@@ -203,17 +202,17 @@ def compare_csv(original_csv_path, proposed_csv_path):
         print(f"- {','.join(sorted(in_orig_only))}")
         print("in proposed but not original: ")
         print(f"- {','.join(sorted(in_prop_only))}")
-    col0_key = orig['header'][0] if len(orig['header']) > 0 else ""
-    col1_key = orig['header'][1] if len(orig['header']) > 1 else ""
+    col0_key = orig["header"][0] if len(orig["header"]) > 0 else ""
+    col1_key = orig["header"][1] if len(orig["header"]) > 1 else ""
 
     def prefix_for(idx):
         items = []
-        if col0_key in orig['data'] and col0_key in prop['data']:
-            test_a = len(orig['data'][col0_key]) > idx
-            test_b = len(prop['data'][col0_key]) > idx
+        if col0_key in orig["data"] and col0_key in prop["data"]:
+            test_a = len(orig["data"][col0_key]) > idx
+            test_b = len(prop["data"][col0_key]) > idx
             if test_a and test_b:
-                vorig = orig['data'][col0_key][idx]
-                vprop = prop['data'][col0_key][idx]
+                vorig = orig["data"][col0_key][idx]
+                vprop = prop["data"][col0_key][idx]
                 if vorig == vprop:
                     items.append(vorig)
                 else:
@@ -222,12 +221,12 @@ def compare_csv(original_csv_path, proposed_csv_path):
                 return ""
         else:
             return ""
-        if col1_key in orig['data'] and col1_key in prop['data']:
-            test_a = len(orig['data'][col1_key]) > idx
-            test_b = len(prop['data'][col1_key]) > idx
+        if col1_key in orig["data"] and col1_key in prop["data"]:
+            test_a = len(orig["data"][col1_key]) > idx
+            test_b = len(prop["data"][col1_key]) > idx
             if test_a and test_b:
-                vorig = orig['data'][col1_key][idx]
-                vprop = prop['data'][col1_key][idx]
+                vorig = orig["data"][col1_key][idx]
+                vprop = prop["data"][col1_key][idx]
                 if vorig == vprop:
                     items.append(vorig)
                 else:
@@ -237,6 +236,7 @@ def compare_csv(original_csv_path, proposed_csv_path):
         else:
             return ""
         return ":".join(items)
+
     for key in orig["header"]:
         if key not in prop["data"]:
             continue
@@ -262,11 +262,9 @@ def full_compare_csv(file1_name, file2_name, dir1=None, dir2=None):
     file1_name = os.path.join(cwd1, file1_name)
     file2_name = os.path.join(cwd2, file2_name)
 
-    result = subprocess.run(
-        [DIFF_PROG, file1_name, file2_name],
-        capture_output=True)
+    result = subprocess.run([DIFF_PROG, file1_name, file2_name], capture_output=True)
     if result.returncode != 0:
-        print(f'diff did not compare clean for {file1_name} for {file2_name}')
+        print(f"diff did not compare clean for {file1_name} for {file2_name}")
         print("stdout:\n")
         print(result.stdout.decode())
         print("stderr:\n")
@@ -283,11 +281,11 @@ def run_cli(example_name, dir=None, timeit=False, print_it=False):
     """
     _ = smoke_test(example_name, dir, timeit, print_it)
 
-    ref_out_name = f'ex{example_name}-out.csv'
-    ref_stats_name = f'ex{example_name}-stats.csv'
+    ref_out_name = f"ex{example_name}-out.csv"
+    ref_stats_name = f"ex{example_name}-stats.csv"
 
-    out_name = 'out.csv'
-    stats_name = 'stats.csv'
+    out_name = "out.csv"
+    stats_name = "stats.csv"
 
     full_compare_csv(out_name, ref_out_name, dir1=dir, dir2=dir)
     full_compare_csv(stats_name, ref_stats_name, dir1=dir, dir2=dir)
@@ -299,16 +297,14 @@ def run_perf():
     """
     Run performance tests and report timing
     """
-    result = subprocess.run(
-        [PERF01_EXE],
-        capture_output=True)
+    result = subprocess.run([PERF01_EXE], capture_output=True)
     if result.returncode != 0:
         print(f"error running performance test {PERF01_EXE}")
         print("stdout:\n")
         print(result.stdout.decode())
         print("stderr:\n")
         print(result.stderr.decode())
-    print(result.stdout.decode(), end='')
+    print(result.stdout.decode(), end="")
 
 
 def pack_csv_cli(example_name, dir=None, timeit=False, print_it=False):
@@ -317,14 +313,14 @@ def pack_csv_cli(example_name, dir=None, timeit=False, print_it=False):
     """
     cwd = str(Path.cwd().resolve()) if dir is None else dir
 
-    packed_loads_name = 'packed-loads.csv'
+    packed_loads_name = "packed-loads.csv"
     Path(packed_loads_name).unlink(missing_ok=True)
 
     in_name = f"ex{example_name}.toml"
     start_time = time.perf_counter_ns()
     result = subprocess.run(
-        [CLI_EXE, "pack-loads", f"{in_name}", "-o", f"{packed_loads_name}"],
-        cwd=cwd)
+        [CLI_EXE, "pack-loads", f"{in_name}", "-o", f"{packed_loads_name}"], cwd=cwd
+    )
     end_time = time.perf_counter_ns()
     time_ns = end_time - start_time
     if result.returncode != 0:
@@ -395,9 +391,7 @@ if __name__ == "__main__":
     run_cli("35")
     run_cli("36")
     run_command([CLI_EXE, "run", "ex37.toml", "-r"])
-    files_generated = [f
-                       for f in Path.cwd().resolve().glob(
-                           "class_2_hurricane*.csv")]
+    files_generated = [f for f in Path.cwd().resolve().glob("class_2_hurricane*.csv")]
     if len(files_generated) != 10:
         print("Error on example 37")
         print(f"Should have created 10 csv files, got {len(files_generated)}")
@@ -410,6 +404,15 @@ if __name__ == "__main__":
     run_cli("41")
     run_cli("42")
     run_cli("43")
+    # Ensure check detects cycles in network
+    cwd = str(Path.cwd().resolve())
+    cmd = [CLI_EXE, "check", "ex_bad_network.toml"]
+    result = run_command(cmd, dir=cwd, check_return_code=False)
+    if result.returncode == 0:
+        # NOTE: we should have a non-zero exit code if checks don't pass
+        sys.exit(1)
+    else:
+        print(".", end="", sep="", flush=True)
     print("\nPassed all regression tests!")
 
     if os.environ.get("ERIN_SHORT_TEST") is not None:
@@ -419,24 +422,31 @@ if __name__ == "__main__":
     # Run original (unpacked) and rename/move output
     orig_name = "ft-illinois"
     smoke_test(orig_name, dir=orig_name, print_it=True)
-    rename_file("out.csv", f"ex{orig_name}-out.csv",
-                dir1=orig_name, dir2=orig_name)
+    rename_file("out.csv", f"ex{orig_name}-out.csv", dir1=orig_name, dir2=orig_name)
 
     # Pack and rename packed loads
     packed_name = orig_name + "_packed"
     pack_csv_cli(orig_name, dir=orig_name, timeit=False, print_it=False)
-    rename_file("packed-loads.csv", f"ex{packed_name}-loads.csv",
-                dir1=orig_name, dir2=packed_name)
+    rename_file(
+        "packed-loads.csv",
+        f"ex{packed_name}-loads.csv",
+        dir1=orig_name,
+        dir2=packed_name,
+    )
 
     # Run packed and rename output
     smoke_test(packed_name, dir=packed_name, print_it=True)
-    rename_file("out.csv", f"ex{packed_name}-out.csv",
-                dir1=packed_name, dir2=packed_name)
+    rename_file(
+        "out.csv", f"ex{packed_name}-out.csv", dir1=packed_name, dir2=packed_name
+    )
 
     # compare packed<->unpacked outputs
-    full_compare_csv(file1_name=f"ex{packed_name}-out.csv",
-                     file2_name=f"ex{orig_name}-out.csv",
-                     dir1=packed_name, dir2=orig_name)
+    full_compare_csv(
+        file1_name=f"ex{packed_name}-out.csv",
+        file2_name=f"ex{orig_name}-out.csv",
+        dir1=packed_name,
+        dir2=orig_name,
+    )
     print("\nPassed load-packing test!")
 
     run_perf()

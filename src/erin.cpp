@@ -1,11 +1,5 @@
 // Copyright (c) 2020 - 2024 Big Ladder Software, LLC.
 // See the LICENSE.txt file for additional terms and conditions.
-#include "erin/erin.h"
-#include "erin/logging.h"
-#include "erin/lookup_table.h"
-#include "erin/time_and_amount.h"
-#include "erin/units.h"
-#include "erin/utils.h"
 #include <cmath>
 #include <cstdlib>
 #include <sstream>
@@ -14,7 +8,16 @@
 #include <string>
 #include <unordered_set>
 #include <utility>
+
 #include <fmt/core.h>
+
+#include "erin/erin.h"
+#include "erin/logging.h"
+#include "erin/lookup_table.h"
+#include "erin/time_and_amount.h"
+#include "erin/units.h"
+#include "erin/utils.h"
+#include "erin/network-utils.h"
 
 namespace erin
 {
@@ -118,6 +121,19 @@ void add_connection_issue(std::vector<std::string>& issues,
             << "' is declared but not hooked up to the network.";
     }
     issues.push_back(oss.str());
+}
+
+std::vector<std::pair<size_t, size_t>>
+connections_to_edges(std::vector<Connection> const& conns)
+{
+    std::vector<std::pair<size_t, size_t>> result(conns.size());
+    for (size_t conn_idx = 0; conn_idx < conns.size(); ++conn_idx)
+    {
+        auto const& c = conns[conn_idx];
+        std::pair<size_t, size_t> edge = { c.from_component_id, c.to_component_id };
+        result[conn_idx] = std::move(edge);
+    }
+    return result;
 }
 
 std::vector<std::string> check_network(Model const& m)
@@ -969,6 +985,25 @@ std::vector<std::string> check_network(Model const& m)
                 issues.push_back(oss.str());
             }
         }
+    }
+    std::vector<std::pair<size_t, size_t>> edges =
+        connections_to_edges(m.connection);
+    std::vector<std::vector<std::string>> sccs =
+        find_strongly_connected_components(m.component.tag, edges);
+    if (sccs.size() > 0)
+    {
+        std::ostringstream oss;
+        oss << "ERROR: network is not a directed acyclical graph" << std::endl;
+        oss << "... the following components have cyclical relationships:" << std::endl;
+        for (size_t comp_idx = 0; comp_idx < sccs.size(); ++comp_idx)
+        {
+            oss << "... * STRONGLY CONNECTED COMPONENT " << (comp_idx + 1) << std::endl;
+            for (auto const& node : sccs[comp_idx])
+            {
+                oss << "...  - " << node << std::endl;
+            }
+        }
+        issues.push_back(oss.str());
     }
     return issues;
 }

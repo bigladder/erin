@@ -8,6 +8,7 @@ namespace template_uploader
 	internal class Program
 	{
 		private static readonly bool VERBOSE = false;
+		private static readonly int TIME_OUT_MS = 25000;
 		public static void DisplayPrompt(string preamble, string prompt)
 		{
 			if (preamble != null && preamble.Length > 0)
@@ -74,7 +75,7 @@ namespace template_uploader
 			Task<HttpResponseMessage> loginRequest =
 				client.GetAsync(
 					$"User/login?u={userName}&p={password}");
-			if (!loginRequest.Wait(5000))
+			if (!loginRequest.Wait(TIME_OUT_MS))
 			{
 				Console.WriteLine("Unable to login");
 				Environment.Exit(1);
@@ -119,7 +120,7 @@ namespace template_uploader
 				client.PostAsync(
 					"ErinAdmin/addEquipmentType",
 					addEquipRequestBody);
-			if (!request.Wait(5000))
+			if (!request.Wait(TIME_OUT_MS))
 			{
 				Console.WriteLine("Unable to addEquipment -- timeout");
 				Environment.Exit(1);

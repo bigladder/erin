@@ -401,7 +401,17 @@ namespace TemplateEngine
 			{
 				TemplateParameter tp = kvp.Value;
 				string optText = tp.IsOptional ? " (optional)" : "";
-				Console.WriteLine($"- {kvp.Key}{optText}: {tp.Type}");
+				string defaultValue = "";
+				if (tp.DefaultValue != null)
+				{
+					defaultValue = (tp.DefaultValue.ToString() ?? "").Trim();
+					if (defaultValue.Length > 0)
+					{
+						defaultValue = $" (default: {defaultValue})";
+					}
+				}
+				Console.WriteLine(
+					$"- {kvp.Key}{optText}{defaultValue}: {tp.Type}");
 			}
 		}
 
@@ -438,10 +448,16 @@ namespace TemplateEngine
 				string paramName = paramKvp.Key;
 				TomlTable singleParam = (TomlTable)paramKvp.Value;
 				string paramTypeAsStr = Get<string>(singleParam, "type");
+				object? defaultValue = null;
+				if (paramTable.ContainsKey("default"))
+				{
+					defaultValue = paramTable["default"];
+				}
 				ParamType paramType = StringToParamType(paramTypeAsStr);
 				if (paramType == ParamType.Unhandled)
 				{
-					throw new Exception($"[ERROR] Unhandled parameter type for '{paramName}' ({paramTypeAsStr})");
+					throw new Exception(
+						$"[ERROR] Unhandled parameter type for '{paramName}' ({paramTypeAsStr})");
 				}
 				switch (paramType)
 				{
@@ -466,6 +482,7 @@ namespace TemplateEngine
 								catch {}
 								return false;
 							},
+							DefaultValue = defaultValue,
 						};
 						parameters.Add(paramName, tp);
 					}
@@ -486,6 +503,7 @@ namespace TemplateEngine
 								catch {}
 								return false;
 							},
+							DefaultValue = defaultValue,
 						};
 						parameters.Add(paramName, tp);
 					}
@@ -506,6 +524,7 @@ namespace TemplateEngine
 								catch {}
 								return false;
 							},
+							DefaultValue = defaultValue,
 						};
 						parameters.Add(paramName, tp);
 					}
@@ -526,6 +545,7 @@ namespace TemplateEngine
 								catch {}
 								return false;
 							},
+							DefaultValue = defaultValue,
 						};
 						parameters.Add(paramName, tp);
 					}
@@ -546,6 +566,7 @@ namespace TemplateEngine
 								catch {}
 								return false;
 							},
+							DefaultValue = defaultValue,
 						};
 						parameters.Add(paramName, tp);
 					}
@@ -571,6 +592,7 @@ namespace TemplateEngine
 								catch {}
 								return false;
 							},
+							DefaultValue = defaultValue,
 						};
 						parameters.Add(paramName, tp);
 					}
@@ -612,6 +634,7 @@ namespace TemplateEngine
 								catch {}
 								return false;
 							},
+							DefaultValue = defaultValue,
 						};
 						parameters.Add(paramName, tp);
 					}
@@ -791,10 +814,23 @@ namespace TemplateEngine
 						{
 							defaultValue = fieldValue["default"];
 						}
+						else if (parameters.TryGetValue(
+							fieldName, out TemplateParameter? tp))
+						{
+							defaultValue = tp.DefaultValue;
+						}
+						string defaultStr = "";
+						if (defaultValue != null)
+						{
+							string def = defaultValue.ToString() ?? "";
+							defaultStr = $" (default: {def})";
+						}
 						if (verbose)
 						{
 							Console.WriteLine(
-								$"[INFO] Found field '{fieldName}' parameterized on '{paramName}' {templateInfo}"
+								$"[INFO] Found field '{fieldName}' "
+								+ $"parameterized on '{paramName}' "
+								+ $"{templateInfo} {defaultStr}"
 							);
 						}
 					}
@@ -803,18 +839,14 @@ namespace TemplateEngine
 				{}
 				if (isParam)
 				{
-					if (!component.ContainsKey(paramName))
-					{
-						throw new Exception($"[ERROR] Component missing param {paramName} {templateInfo}");
-					}
-					if (!parameters.ContainsKey(paramName))
-					{
-						throw new Exception($"[ERROR] Reference to undefined parameter {paramName} {templateInfo}");
-					}
 					TemplateParameter tp = parameters[paramName];
 					if (!tp.IsOptional && !component.ContainsKey(paramName))
 					{
 						throw new Exception($"[ERROR] Missing required param '{paramName}' {templateInfo}");
+					}
+					if (!parameters.ContainsKey(paramName))
+					{
+						throw new Exception($"[ERROR] Reference to undefined parameter {paramName} {templateInfo}");
 					}
 					object? paramValue = null;
 					if (component.ContainsKey(paramName))
@@ -825,7 +857,8 @@ namespace TemplateEngine
 					{
 						if (!tp.Validate(paramValue))
 						{
-							throw new Exception($"[ERROR] Invalid value for parameter {paramName} {templateInfo}");
+							throw new Exception(
+								$"[ERROR] Invalid value for parameter {paramName} {templateInfo}");
 						}
 						toAdd.Add(fieldName, paramValue);
 					}
@@ -833,7 +866,8 @@ namespace TemplateEngine
 					{
 						if (!tp.Validate(defaultValue))
 						{
-							throw new Exception($"[ERROR] Invalid default value for parameter {paramName} {templateInfo}");
+							throw new Exception(
+								$"[ERROR] Invalid default value for parameter {paramName} {templateInfo}");
 						}
 						toAdd.Add(fieldName, defaultValue);
 					}

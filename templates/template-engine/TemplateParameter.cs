@@ -18,6 +18,7 @@ namespace TemplateEngine
         public ParamType Type { get; set; }
         public bool IsOptional { get; set; }
         public Func<object, bool> Validate { get; set; }
+        public object? DefaultValue { get; set; }
 
         public TemplateParameter()
         {

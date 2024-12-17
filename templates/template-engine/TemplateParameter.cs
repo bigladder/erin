@@ -9,6 +9,7 @@ namespace TemplateEngine
         Number,
         String,
         TableFromStringToString,
+        ArrayOfTwoTupleOfNumber,
     }
 
     public class TemplateParameter

@@ -361,29 +361,34 @@ namespace TemplateEngine
 		public static ParamType
 		StringToParamType(string tag)
 		{
-			if (tag == "enum" || tag == "enumeration")
+			string t = tag.ToLower().Replace(" ", "");
+			if (t == "enum" || t == "enumeration")
 			{
 				return ParamType.Enumeration;
 			}
-			if (tag == "frac" || tag == "fraction")
+			if (t == "frac" || t == "fraction")
 			{
 				return ParamType.Fraction;
 			}
-			if (tag == "int" || tag == "integer")
+			if (t == "int" || t == "integer")
 			{
 				return ParamType.Integer;
 			}
-			if (tag == "num" || tag == "number")
+			if (t == "num" || t == "number")
 			{
 				return ParamType.Number;
 			}
-			if (tag == "str" || tag == "string")
+			if (t == "str" || t == "string")
 			{
 				return ParamType.String;
 			}
-			if (tag == "(table string string)" || tag == "(table str str)")
+			if (t == "(tablestringstring)" || t == "(tablestrstr)")
 			{
 				return ParamType.TableFromStringToString;
+			}
+			if (t == "[[numbernumber]*]" || t == "[[numnum]*]")
+			{
+				return ParamType.ArrayOfTwoTupleOfNumber;
 			}
 			return ParamType.Unhandled;
 		}
@@ -552,7 +557,8 @@ namespace TemplateEngine
 							Name = paramName,
 							Type = paramType,
 							IsOptional = isOptional,
-							Validate = x => {
+							Validate = x =>
+							{
 								try
 								{
 									TomlTable value = (TomlTable)x;
@@ -569,9 +575,51 @@ namespace TemplateEngine
 						parameters.Add(paramName, tp);
 					}
 					break;
+					case ParamType.ArrayOfTwoTupleOfNumber:
+					{
+						TemplateParameter tp = new()
+						{
+							Name = paramName,
+							Type = paramType,
+							IsOptional = isOptional,
+							Validate = x =>
+							{
+								try
+								{
+									TomlArray value = (TomlArray)x;
+									foreach (var item in value)
+									{
+										if (item == null)
+										{
+											return false;
+										}
+										TomlArray twoTuple = (TomlArray)item;
+										if (twoTuple.Count != 2)
+										{
+											return false;
+										}
+										var first = twoTuple[0];
+										var second = twoTuple[1];
+										if (first == null || second == null)
+										{
+											return false;
+										}
+										double f = (double)first;
+										double s = (double)second;
+									}
+									return true;
+								}
+								catch {}
+								return false;
+							},
+						};
+						parameters.Add(paramName, tp);
+					}
+					break;
 					default:
 					{
-						throw new Exception($"[ERROR] Unhandled param type: {paramType}");
+						throw new Exception(
+							$"[ERROR] Unhandled param type: {paramType}");
 					}
 				}
 			}

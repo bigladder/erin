@@ -449,9 +449,9 @@ namespace TemplateEngine
 				TomlTable singleParam = (TomlTable)paramKvp.Value;
 				string paramTypeAsStr = Get<string>(singleParam, "type");
 				object? defaultValue = null;
-				if (paramTable.ContainsKey("default"))
+				if (singleParam.ContainsKey("default"))
 				{
-					defaultValue = paramTable["default"];
+					defaultValue = singleParam["default"];
 				}
 				ParamType paramType = StringToParamType(paramTypeAsStr);
 				if (paramType == ParamType.Unhandled)

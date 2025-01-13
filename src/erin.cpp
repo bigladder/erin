@@ -1775,9 +1775,13 @@ void RunScheduleBasedSourceBackward(Model& model,
     assert(outConnIdx == sbs.outflow_connection_id);
     auto wasteConn = model.scheduled_source[sbsIdx].wasteflow_connection_id;
     auto schIdx = ss.schedule_based_source_index[sbsIdx];
-    auto available = sbs.time_and_availables[schIdx].amount_W > sbs.max_outflow_W
-                         ? sbs.max_outflow_W
-                         : sbs.time_and_availables[schIdx].amount_W;
+    flow_t available = 0;
+    if (sbs.time_and_availables.size() > schIdx)
+    {
+        available = sbs.time_and_availables[schIdx].amount_W > sbs.max_outflow_W
+                        ? sbs.max_outflow_W
+                        : sbs.time_and_availables[schIdx].amount_W;
+    }
     auto spillage = available > ss.flows[outConnIdx].requested_W
                         ? available - ss.flows[outConnIdx].requested_W
                         : 0;

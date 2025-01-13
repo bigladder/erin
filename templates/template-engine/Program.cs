@@ -29,7 +29,15 @@ if (ECHO_ARGS)
 	Console.WriteLine($"verbosity         : {verbose}");
 }
 
-Utils.Run(templateDirectory, inputFile, outputFile, verbose);
+try
+{
+	Utils.Run(templateDirectory, inputFile, outputFile, verbose);
+}
+catch (Exception ex)
+{
+	Console.WriteLine($"Exception on template expansion:\n{ex}");
+	return 1;
+}
 if (verbose)
 {
 	Console.WriteLine("Done!");

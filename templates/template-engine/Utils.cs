@@ -449,9 +449,9 @@ namespace TemplateEngine
 				TomlTable singleParam = (TomlTable)paramKvp.Value;
 				string paramTypeAsStr = Get<string>(singleParam, "type");
 				object? defaultValue = null;
-				if (paramTable.ContainsKey("default"))
+				if (singleParam.ContainsKey("default"))
 				{
-					defaultValue = paramTable["default"];
+					defaultValue = singleParam["default"];
 				}
 				ParamType paramType = StringToParamType(paramTypeAsStr);
 				if (paramType == ParamType.Unhandled)
@@ -459,6 +459,14 @@ namespace TemplateEngine
 					throw new Exception(
 						$"[ERROR] Unhandled parameter type for '{paramName}' ({paramTypeAsStr})");
 				}
+				TemplateParameter tp = new()
+				{
+					Name = paramName,
+					Type = paramType,
+					IsOptional = isOptional,
+					Validate = x => true,
+					DefaultValue = defaultValue,
+				};
 				switch (paramType)
 				{
 					case ParamType.Enumeration:
@@ -468,12 +476,7 @@ namespace TemplateEngine
 						{
 							throw new Exception($"[ERROR] Template {templateName} does not contain required 'enum_options' for parameter {paramName}");
 						}
-						TemplateParameter tp = new()
-						{
-							Name = paramName,
-							Type = paramType,
-							IsOptional = isOptional,
-							Validate = x => {
+						tp.Validate = x => {
 								try
 								{
 									string value = (string)x;
@@ -481,20 +484,12 @@ namespace TemplateEngine
 								}
 								catch {}
 								return false;
-							},
-							DefaultValue = defaultValue,
-						};
-						parameters.Add(paramName, tp);
+							};
 					}
 					break;
 					case ParamType.Fraction:
 					{
-						TemplateParameter tp = new()
-						{
-							Name = paramName,
-							Type = paramType,
-							IsOptional = isOptional,
-							Validate = x => {
+						tp.Validate = x => {
 								try
 								{
 									double value = (double)x;
@@ -502,20 +497,12 @@ namespace TemplateEngine
 								}
 								catch {}
 								return false;
-							},
-							DefaultValue = defaultValue,
-						};
-						parameters.Add(paramName, tp);
+							};
 					}
 					break;
 					case ParamType.Integer:
 					{
-						TemplateParameter tp = new()
-						{
-							Name = paramName,
-							Type = paramType,
-							IsOptional = isOptional,
-							Validate = x => {
+						tp.Validate = x => {
 								try
 								{
 									long value = (long)x;
@@ -523,20 +510,12 @@ namespace TemplateEngine
 								}
 								catch {}
 								return false;
-							},
-							DefaultValue = defaultValue,
-						};
-						parameters.Add(paramName, tp);
+							};
 					}
 					break;
 					case ParamType.Number:
 					{
-						TemplateParameter tp = new()
-						{
-							Name = paramName,
-							Type = paramType,
-							IsOptional = isOptional,
-							Validate = x => {
+						tp.Validate = x => {
 								try
 								{
 									double value = (double)x;
@@ -544,20 +523,12 @@ namespace TemplateEngine
 								}
 								catch {}
 								return false;
-							},
-							DefaultValue = defaultValue,
-						};
-						parameters.Add(paramName, tp);
+							};
 					}
 					break;
 					case ParamType.String:
 					{
-						TemplateParameter tp = new()
-						{
-							Name = paramName,
-							Type = paramType,
-							IsOptional = isOptional,
-							Validate = x => {
+						tp.Validate = x => {
 								try
 								{
 									string value = (string)x;
@@ -565,20 +536,12 @@ namespace TemplateEngine
 								}
 								catch {}
 								return false;
-							},
-							DefaultValue = defaultValue,
-						};
-						parameters.Add(paramName, tp);
+							};
 					}
 					break;
 					case ParamType.TableFromStringToString:
 					{
-						TemplateParameter tp = new()
-						{
-							Name = paramName,
-							Type = paramType,
-							IsOptional = isOptional,
-							Validate = x =>
+						tp.Validate = x =>
 							{
 								try
 								{
@@ -591,20 +554,12 @@ namespace TemplateEngine
 								}
 								catch {}
 								return false;
-							},
-							DefaultValue = defaultValue,
-						};
-						parameters.Add(paramName, tp);
+							};
 					}
 					break;
 					case ParamType.ArrayOfTwoTupleOfNumber:
 					{
-						TemplateParameter tp = new()
-						{
-							Name = paramName,
-							Type = paramType,
-							IsOptional = isOptional,
-							Validate = x =>
+						tp.Validate = x =>
 							{
 								try
 								{
@@ -633,10 +588,7 @@ namespace TemplateEngine
 								}
 								catch {}
 								return false;
-							},
-							DefaultValue = defaultValue,
-						};
-						parameters.Add(paramName, tp);
+							};
 					}
 					break;
 					default:
@@ -645,6 +597,7 @@ namespace TemplateEngine
 							$"[ERROR] Unhandled param type: {paramType}");
 					}
 				}
+				parameters.Add(paramName, tp);
 			}
 		}
 
@@ -815,7 +768,7 @@ namespace TemplateEngine
 							defaultValue = fieldValue["default"];
 						}
 						else if (parameters.TryGetValue(
-							fieldName, out TemplateParameter? tp))
+							paramName, out TemplateParameter? tp))
 						{
 							defaultValue = tp.DefaultValue;
 						}

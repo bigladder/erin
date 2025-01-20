@@ -10,12 +10,24 @@ annual_maintenance_cost_in_usd_per_size = 10.0
 num_inflows = 2
 num_outflows = 1
 connections = [
-  ["<0>", "ATS:IN(0)", "electricity"],
-  ["ATS:OUT(0)", "<0>", "electricity"],
-  ["<1>", "diesel_fuel_tank:IN(0)", "diesel"],
+  ["<0>", "ATS:IN(0)", "electricity", '{"portName":"Electricity Source"}'],
+  ["ATS:OUT(0)", "<0>", "electricity", '{"portName":"Electricity Supply"}'],
+  ["<1>", "diesel_fuel_tank:IN(0)", "diesel", '{"portName":"Diesel Source"}'],
   ["diesel_fuel_tank:OUT(0)", "genset:IN(0)", "diesel"],
   ["genset:OUT(0)", "ATS:IN(1)", "electricity"],
 ]
+
+[constants]
+inflow.type = "string" # datatype is still string in the API
+inflow.default = '["Electricity","Diesel"]'
+inflow.ui = '{"display": "read"}'
+inflow.erinType = false
+inflow.isRequired = true
+outflow.type = "string"
+outflow.default = "Electricity"
+outflow.ui = '{"display": "read"}'
+outflow.erinType = false
+outflow.isRequired = true
 
 [parameters.required]
 capacity.type = "number"

@@ -10,9 +10,9 @@ annual_maintenance_cost_in_usd_per_size = 10.0
 num_inflows = 2
 num_outflows = 1
 connections = [
-  ["<0>", "ATS:IN(0)", "electricity"],
-  ["ATS:OUT(0)", "<0>", "electricity"],
-  ["<1>", "diesel_fuel_tank:IN(0)", "diesel"],
+  ["<0>", "ATS:IN(0)", "electricity", '{"portName":"Primary Electricity Inflow"}'],
+  ["ATS:OUT(0)", "<0>", "electricity", '{"portName":"Electricity Outflow"}'],
+  ["<1>", "diesel_fuel_tank:IN(0)", "diesel", '{"portName":"Diesel Fuel Inflow"}'],
   ["diesel_fuel_tank:OUT(0)", "genset:IN(0)", "diesel"],
   ["genset:OUT(0)", "ATS:IN(1)", "electricity"],
 ]

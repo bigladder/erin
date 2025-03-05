@@ -18,12 +18,13 @@ connections = [
 ]
 
 [parameters.required]
-capacity.type = "number"
-capacity.constraints = [">0"]
-capacity.ui = '{"unit": "capacity_unit", "label": "Diesel Fuel Tank Capacity", "dispay": "input", "erinUnit": "kJ"}'
+tank_capacity.type = "number"
+tank_capacity.constraints = [">0"]
+tank_capacity.ui = '{"unit": "tank_capacity_unit", "label": "Diesel Fuel Tank Capacity", "dispay": "input", "erinUnit": "kJ"}'
 rate_unit.type = "enum"
 rate_unit.enum_options = ["gal dsl/s", "gal dsl/h", "W", "kW"]
 rate_unit.ui = '{"display": "unit"}'
+rate_unit.default = "gal dsl/h"
 max_charge.type = "number"
 max_charge.constraints = [">=0"]
 max_charge.ui = '{"unit": "rate_unit", "label": "Max Fill Rate", "display": "input", "erinUnit": "kW"}'
@@ -37,10 +38,10 @@ efficiency_by_fraction_out.type = "[[number number]*]"
 efficiency_by_fraction_out.ui = '{"yMax": 100, "yMin": 0, "yUnit": "%", "xLabel": "Load Fraction", "yLabel": "Efficiency", "display": "input"}'
 
 [parameters.optional]
-capacity_unit.type = "enum"
-capacity_unit.enum_options = ["gal dsl", "J", "kJ", "kWh"]
-capacity_unit.default = "kJ"
-capacity_unit.ui = '{"display": "unit"}'
+tank_capacity_unit.type = "enum"
+tank_capacity_unit.enum_options = ["gal dsl", "J", "kJ", "kWh"]
+tank_capacity_unit.default = "kJ"
+tank_capacity_unit.ui = '{"display": "unit"}'
 charge_at_soc.type = "frac"
 charge_at_soc.constraints = ["<1"]
 charge_at_soc.default = 0.8
@@ -66,13 +67,13 @@ flow = "electricity"
 id = "diesel_fuel_tank"
 type = "store"
 flow = "diesel"
-capacity.param = "capacity"
+capacity.param = "tank_capacity"
 rate_unit.param = "rate_unit"
 rate_unit.inherit_from = "simulation_info.rate_unit"
 rate_unit.default = "kW"
 max_charge.param = "max_charge"
 max_discharge.param = "max_discharge"
-capacity_unit.param = "capacity_unit"
+capacity_unit.param = "tank_capacity_unit"
 capacity_unit.inherit_from = "simulation_info.capacity_unit"
 capacity_unit.default = "kJ"
 charge_at_soc.param = "charge_at_soc"

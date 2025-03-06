@@ -1,10 +1,26 @@
 using Tomlyn;
 using Tomlyn.Model;
 
-namespace TemplateEngine
+namespace template_engine
 {
 	public class Utils
 	{
+		public static readonly HashSet<string> TYPE_ENUM_VARIANTS =
+			["enum", "enumeration"];
+		public static readonly HashSet<string> TYPE_FRAC_VARIANTS =
+			["frac", "fraction"];
+		public static readonly HashSet<string> TYPE_NUMBER_VARIANTS =
+			["double","num","number"];
+		public static readonly HashSet<string> TYPE_INT_VARIANTS =
+			["int","integer"];
+		public static readonly HashSet<string> TYPE_STR_VARIANTS =
+			["str","string"];
+		public static readonly HashSet<string> TYPE_TABLE_STR_TO_STR_VARIANTS =
+			["(tablestringstring)","(tablestrstr)","dictionary<string,string>"];
+		public static readonly HashSet<string> TYPE_VEC_OF_2TUPLE_NUM_VARIANTS =
+			["[[numbernumber]*]","[[numnum]*]","[[doubledouble]*]",
+			 "[[number,number]*]","[[num,num]*]", "[[double,double]*]",
+			 "list<(double,double)>","(double,double)[]"];
 
 		public static List<string>
 		ModelDifferences(object? a, object? b, string path=".")
@@ -78,7 +94,7 @@ namespace TemplateEngine
 				}
 				else if (b is double bDouble)
 				{
-					double aDouble = (double)aLong;
+					double aDouble = aLong;
 					if (aDouble != bDouble)
 					{
 						differences.Add(
@@ -124,7 +140,7 @@ namespace TemplateEngine
 				}
 				else if (b is long bLong)
 				{
-					double bDouble2 = (double)bLong;
+					double bDouble2 = bLong;
 					if (aDouble != bDouble2)
 					{
 						differences.Add(
@@ -210,8 +226,8 @@ namespace TemplateEngine
 				HashSet<string> bKeySet = new(bKeys);
 				HashSet<string> aNotB = new(aKeySet.Except(bKeySet));
 				HashSet<string> bNotA = new(bKeySet.Except(aKeySet));
-				differences.Add($"[{path}] In A, not B: {String.Join(", ", aNotB.ToList())}");
-				differences.Add($"[{path}] In B, not A: {String.Join(", ", bNotA.ToList())}");
+				differences.Add($"[{path}] In A, not B: {string.Join(", ", aNotB.ToList())}");
+				differences.Add($"[{path}] In B, not A: {string.Join(", ", bNotA.ToList())}");
 				return differences;
 			}
 			foreach (string key in aKeys)
@@ -362,31 +378,31 @@ namespace TemplateEngine
 		StringToParamType(string tag)
 		{
 			string t = tag.ToLower().Replace(" ", "");
-			if (t == "enum" || t == "enumeration")
+			if (TYPE_ENUM_VARIANTS.Contains(t))
 			{
 				return ParamType.Enumeration;
 			}
-			if (t == "frac" || t == "fraction")
+			if (TYPE_FRAC_VARIANTS.Contains(t))
 			{
 				return ParamType.Fraction;
 			}
-			if (t == "int" || t == "integer")
+			if (TYPE_INT_VARIANTS.Contains(t))
 			{
 				return ParamType.Integer;
 			}
-			if (t == "num" || t == "number")
+			if (TYPE_NUMBER_VARIANTS.Contains(t))
 			{
 				return ParamType.Number;
 			}
-			if (t == "str" || t == "string")
+			if (TYPE_STR_VARIANTS.Contains(t))
 			{
 				return ParamType.String;
 			}
-			if (t == "(tablestringstring)" || t == "(tablestrstr)")
+			if (TYPE_TABLE_STR_TO_STR_VARIANTS.Contains(t))
 			{
 				return ParamType.TableFromStringToString;
 			}
-			if (t == "[[numbernumber]*]" || t == "[[numnum]*]")
+			if (TYPE_VEC_OF_2TUPLE_NUM_VARIANTS.Contains(t))
 			{
 				return ParamType.ArrayOfTwoTupleOfNumber;
 			}
@@ -609,9 +625,9 @@ namespace TemplateEngine
 			{
 				conns.Add([fromStr, toStr, flowTypeStr]);
 			}
-			conns.Sort((List<string> a, List<string> b) => {
-				string aHash = String.Join(":", a);
-				string bHash = String.Join(":", b);
+			conns.Sort((a, b) => {
+				string aHash = string.Join(":", a);
+				string bHash = string.Join(":", b);
 				return aHash.CompareTo(bHash);
 			});
 			TomlArray cs = [];
@@ -913,7 +929,7 @@ namespace TemplateEngine
 						{
 							newParts.Add(parts[i]);
 						}
-						result = String.Join(":", newParts);
+						result = string.Join(":", newParts);
 					}
 				}
 				return result;

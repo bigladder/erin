@@ -20,17 +20,17 @@ connections = [
 [parameters.required]
 tank_capacity.type = "number"
 tank_capacity.constraints = [">0"]
-tank_capacity.ui = '{"unit": "tank_capacity_unit", "label": "Diesel Fuel Tank Capacity", "dispay": "input", "erinUnit": "kJ"}'
-rate_unit.type = "enum"
-rate_unit.enum_options = ["gal dsl/s", "gal dsl/h", "W", "kW"]
-rate_unit.ui = '{"display": "unit"}'
-rate_unit.default = "gal dsl/h"
+tank_capacity.ui = '{"unit": "tank_capacity_unit", "label": "Diesel Fuel Tank Capacity", "display": "input", "erinUnit": "kJ"}'
 max_charge.type = "number"
 max_charge.constraints = [">=0"]
-max_charge.ui = '{"unit": "rate_unit", "label": "Max Fill Rate", "display": "input", "erinUnit": "kW"}'
+max_charge.ui = '{"unit": "max_charge_unit", "label": "Max Fill Rate", "display": "input", "erinUnit": "kW"}'
+max_charge_unit.type = "enum"
+max_charge_unit.enum_options = ["gal dsl/h", "W", "kW", "MW"]
+max_charge_unit.ui = '{"display": "unit"}'
+max_charge_unit.default = "kW"
 max_discharge.type = "number"
 max_discharge.constraints = [">=0"]
-max_discharge.ui = '{"unit": "rate_unit", "label": "Max Discharge Rate", "display": "input", "erinUnit": "kW"}'
+max_discharge.ui = '{"unit": "max_charge_unit", "label": "Max Discharge Rate", "display": "input", "erinUnit": "kW"}'
 genset_max_outflow.type = "number"
 genset_max_outflow.constraints = [">0"]
 genset_max_outflow.ui = '{"label": "Peak Output Power", "unit": "genset_max_outflow_unit", "display": "input", "erinUnit": "kW"}'
@@ -68,7 +68,7 @@ id = "diesel_fuel_tank"
 type = "store"
 flow = "diesel"
 capacity.param = "tank_capacity"
-rate_unit.param = "rate_unit"
+rate_unit.param = "max_charge_unit"
 rate_unit.inherit_from = "simulation_info.rate_unit"
 rate_unit.default = "kW"
 max_charge.param = "max_charge"

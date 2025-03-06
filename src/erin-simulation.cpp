@@ -2224,7 +2224,8 @@ void WriteStatisticsToFile(Simulation const& s,
                            std::vector<ScenarioOccurrenceStats> const& occurrenceStats,
                            std::vector<size_t> const& compOrder,
                            std::vector<size_t> const& failOrder,
-                           std::vector<size_t> const& fragOrder)
+                           std::vector<size_t> const& fragOrder,
+                           bool aggregateGroups)
 {
     std::ofstream stats;
     stats.open(statsFilePath);
@@ -2281,7 +2282,13 @@ void WriteStatisticsToFile(Simulation const& s,
         }
         else
         {
-            stats << ",availability: " << s.the_model.component.tag[i];
+            std::string compName = s.the_model.component.tag[i];
+            if (aggregateGroups && s.the_model.component_to_group.contains(i))
+            {
+                auto& group = s.the_model.component_to_group.at(i);
+                compName = group + "(" + compName + ")";
+            }
+            stats << ",availability: " << compName;
         }
     }
     for (size_t i : failOrder)
@@ -3120,6 +3127,7 @@ void run(Simulation& s,
         // scenario
     }
     out.close();
-    WriteStatisticsToFile(s, statsFilename, occurrenceStats, compOrder, failOrder, fragOrder);
+    WriteStatisticsToFile(
+        s, statsFilename, occurrenceStats, compOrder, failOrder, fragOrder, aggregateGroups);
 }
 } // namespace erin

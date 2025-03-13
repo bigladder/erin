@@ -11,3 +11,8 @@ header.txt
 .vimrc
 Testing/
 debug/
+.cache/
+out/
+benchmark*.*
+benchmark/
+.mypy_cache/

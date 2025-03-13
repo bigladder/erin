@@ -1,0 +1,12 @@
+scenario id,scenario start time (P[YYYY]-[MM]-[DD]T[hh]:[mm]:[ss]),elapsed (hours),conv:OUT(0) => electrical_load:IN(0) [flow: electricity] (kW),conv:OUT(2) => WASTE:IN(0) [flow: ] (kW),natural_gas_source:OUT(0) => conv:IN(0) [flow: natural_gas] (kW),REQUEST:conv:OUT(0) => electrical_load:IN(0) [flow: electricity] (kW),REQUEST:conv:OUT(2) => WASTE:IN(0) [flow: ] (kW),REQUEST:natural_gas_source:OUT(0) => conv:IN(0) [flow: natural_gas] (kW),AVAILABLE:conv:OUT(0) => electrical_load:IN(0) [flow: electricity] (kW),AVAILABLE:conv:OUT(2) => WASTE:IN(0) [flow: ] (kW),AVAILABLE:natural_gas_source:OUT(0) => conv:IN(0) [flow: natural_gas] (kW),op-state: conv,op-state: electrical_load,op-state: natural_gas_source
+blue_sky,P0000-00-00T00:00:00,0,10,34.4,44.4,10,34.4,44.4,100,34.4,inf,available,available,available
+blue_sky,P0000-00-00T00:00:00,1,20,60,80,20,60,80,100,60,inf,available,available,available
+blue_sky,P0000-00-00T00:00:00,2,30,82.5,112.5,30,82.5,112.5,100,82.5,inf,available,available,available
+blue_sky,P0000-00-00T00:00:00,3,40,101.2,141.2,40,101.2,141.2,100,101.2,inf,available,available,available
+blue_sky,P0000-00-00T00:00:00,4,50,116.7,166.7,50,116.7,166.7,100,116.7,inf,available,available,available
+blue_sky,P0000-00-00T00:00:00,5,100,257.1,357.1,100,257.1,357.1,100,257.1,inf,available,available,available
+blue_sky,P0000-00-00T00:00:00,6,80,170,250,80,170,250,100,170,inf,available,available,available
+blue_sky,P0000-00-00T00:00:00,7,60,135.7,195.7,60,135.7,195.7,100,135.7,inf,available,available,available
+blue_sky,P0000-00-00T00:00:00,8,40,101.2,141.2,40,101.2,141.2,100,101.2,inf,available,available,available
+blue_sky,P0000-00-00T00:00:00,9,20,60,80,20,60,80,100,60,inf,available,available,available
+blue_sky,P0000-00-00T00:00:00,10,0,0,0,0,0,0,100,0,inf,available,available,available

@@ -1,4 +1,7 @@
+[meta]
+description = "demonstrates quantile table from file"
 [simulation_info]
+input_format_version = "0.2"
 rate_unit = "kW"
 quantity_unit = "kJ"
 time_unit = "hours"
@@ -35,7 +38,7 @@ csv_file = "ex19-grid-repair.csv"
 failure_dist = "grid_failure"
 repair_dist = "grid_repair"
 ############## Networks ################
-[networks.nw_electric]
+[network]
 connections = [
   ["utility_electrical:OUT(0)", "bldg_a_electric:IN(0)", "electricity"],
 ]

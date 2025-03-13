@@ -1,0 +1,13 @@
+scenario id,scenario start time (P[YYYY]-[MM]-[DD]T[hh]:[mm]:[ss]),elapsed (hours),S1:OUT(0) => L1:IN(0) [flow: electricity] (kW),S2:OUT(0) => L2:IN(0) [flow: electricity] (kW),REQUEST:S1:OUT(0) => L1:IN(0) [flow: electricity] (kW),REQUEST:S2:OUT(0) => L2:IN(0) [flow: electricity] (kW),AVAILABLE:S1:OUT(0) => L1:IN(0) [flow: electricity] (kW),AVAILABLE:S2:OUT(0) => L2:IN(0) [flow: electricity] (kW),op-state: L1,op-state: L2,op-state: S1,op-state: S2
+offset0,P0000-00-00T00:00:00,0,1,0,1,1,inf,0,available,available,available,fm_long
+offset0,P0000-00-00T00:00:00,96,1,1,1,1,inf,inf,available,available,available,available
+offset0,P0000-00-00T00:00:00,480,0,0,0,0,inf,inf,available,available,available,available
+offset100,P0000-00-00T00:00:00,0,1,1,1,1,inf,inf,available,available,available,available
+offset100,P0000-00-00T00:00:00,120,0,1,1,1,0,inf,available,available,fm,available
+offset100,P0000-00-00T00:00:00,480,0,0,0,0,0,inf,available,available,fm,available
+offset200,P0000-00-00T00:00:00,0,0,0,1,1,0,0,available,available,vulnerable_to_wind,vulnerable_to_wind
+offset200,P0000-00-00T00:00:00,96,1,1,1,1,inf,inf,available,available,available,available
+offset200,P0000-00-00T00:00:00,480,0,0,0,0,inf,inf,available,available,available,available
+offset300,P0000-00-00T00:00:00,0,0,0,1,1,0,0,available,available,vulnerable_to_wind,vulnerable_to_wind
+offset300,P0000-00-00T00:00:00,96,1,1,1,1,inf,inf,available,available,available,available
+offset300,P0000-00-00T00:00:00,480,0,0,0,0,inf,inf,available,available,available,available

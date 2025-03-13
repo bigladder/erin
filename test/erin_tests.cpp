@@ -1,6150 +1,2042 @@
-/* Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
- * See the LICENSE.txt file for additional terms and conditions. */
-
-#include "adevs.h"
-#include "checkout_line/clerk.h"
-#include "checkout_line/customer.h"
-#include "checkout_line/generator.h"
-#include "checkout_line/observer.h"
-#include "debug_utils.h"
-#include "erin/devs.h"
-#include "erin/devs/flow_limits.h"
-#include "erin/devs/converter.h"
-#include "erin/devs/flow_meter.h"
-#include "erin/devs/load.h"
-#include "erin/devs/mux.h"
-#include "erin/devs/on_off_switch.h"
-#include "erin/devs/storage.h"
-#include "erin/distribution.h"
-#include "erin/erin.h"
-#include "erin/fragility.h"
-#include "erin/graphviz.h"
-#include "erin/port.h"
-#include "erin/random.h"
-#include "erin/reliability.h"
-#include "erin/stream.h"
-#include "erin/type.h"
-#include "erin/utils.h"
-#include "erin/version.h"
-#include "erin_test_utils.h"
-#include "gtest/gtest.h"
-#include <algorithm>
-#include <chrono>
-#include <cmath>
-#include <functional>
+// Copyright (c) 2020 - 2024 Big Ladder Software, LLC.
+// See the LICENSE.txt file for additional terms and conditions.
 #include <iomanip>
-#include <iostream>
-#include <memory>
-#include <random>
-#include <set>
-#include <sstream>
+#include <limits>
 #include <unordered_map>
 #include <unordered_set>
-#include <utility>
+#include <vector>
 
-constexpr std::size_t comprehensive_test_num_events{1'000};
+#include <gtest/gtest.h>
 
-const double tolerance{1e-6};
+#include "erin/all.h"
 
-bool compare_ports(const erin::devs::PortValue& a, const erin::devs::PortValue& b)
+using namespace erin;
+
+static double round_it(double n, unsigned int places = 2)
 {
-  return (a.port == b.port) && (a.value == b.value);
-};
-
-bool check_times_and_loads(
-    const std::unordered_map<std::string, std::vector<ERIN::Datum>>& results,
-    const std::vector<ERIN::RealTimeType>& expected_times,
-    const std::vector<ERIN::FlowValueType>& expected_loads,
-    const std::string& id,
-    bool use_requested = false);
-
-bool
-check_times_and_loads(
-    const std::unordered_map<std::string, std::vector<ERIN::Datum>>& results,
-    const std::vector<ERIN::RealTimeType>& expected_times,
-    const std::vector<ERIN::FlowValueType>& expected_loads,
-    const std::string& id,
-    bool use_requested)
-{
-  namespace E = ERIN;
-  auto actual_times = E::get_times_from_results_for_component(results, id);
-  bool flag =
-    erin_test_utils::compare_vectors_functional<E::RealTimeType>(
-        expected_times,
-        actual_times);
-  std::vector<E::FlowValueType> actual_loads{};
-  if (use_requested) {
-    actual_loads = E::get_requested_flows_from_results_for_component(results, id);
-  }
-  else {
-    actual_loads = E::get_actual_flows_from_results_for_component(results, id);
-  }
-  flag = flag && erin_test_utils::compare_vectors_functional<E::FlowValueType>(
-      expected_loads, actual_loads);
-  if (!flag) {
-    if (expected_times.size() < 40) {
-      std::cout << "key: " << id
-                << " " << (use_requested ? "requested" : "achieved")
-                << "\n"
-                << "expected_times = "
-                << E::vec_to_string<E::RealTimeType>(expected_times) << "\n"
-                << "expected_loads = "
-                << E::vec_to_string<E::FlowValueType>(expected_loads) << "\n"
-                << "actual_times   = "
-                << E::vec_to_string<E::RealTimeType>(actual_times) << "\n"
-                << (use_requested ? "requested_loads=" : "actual_loads   = ")
-                << E::vec_to_string<E::FlowValueType>(actual_loads) << "\n";
-    }
-    else {
-      auto exp_num_times{expected_times.size()};
-      auto exp_num_loads{expected_loads.size()};
-      auto act_num_times{actual_times.size()};
-      auto act_num_loads{actual_loads.size()};
-      std::cout << "key: " << id
-                << " " << (use_requested ? "requested" : "achieved")
-                << "\n"
-                << "- expected_times.size(): " << exp_num_times << "\n"
-                << "- expected_loads.size(): " << exp_num_loads << "\n"
-                << "- actual_times.size(): " << act_num_times << "\n"
-                << "- actual_loads.size(): " << act_num_loads << "\n";
-      auto sizes = std::vector<decltype(exp_num_times)>{
-        exp_num_times, exp_num_loads, act_num_times, act_num_loads};
-      auto num{*std::min_element(sizes.begin(), sizes.end())};
-      int num_discrepancies{0};
-      const int max_reporting{10};
-      for (std::size_t idx{0}; idx < num; ++idx) {
-        auto t_exp{expected_times[idx]};
-        auto t_act{actual_times[idx]};
-        auto flow_exp{expected_loads[idx]};
-        auto flow_act{actual_loads[idx]};
-        if ((t_exp != t_act) || (flow_exp != flow_act)) {
-          std::cout << "idx: " << idx
-                    << " (t: " << t_act << ")\n";
-          ++num_discrepancies;
-        }
-        if (t_exp != t_act) {
-          std::cout << "- time discrepancy\n"
-                    << "-- expected-time: " << t_exp << "\n"
-                    << "-- actual-time: " << t_act << "\n"
-                    ;
-          if ((idx > 0) && (idx < (num - 1))) {
-            std::cout << "-- expected-times: ["
-                      << expected_times[idx-1]
-                      << ", <<" << expected_times[idx] << ">>, "
-                      << expected_times[idx+1] << "]\n"
-                      << "-- actual-times: ["
-                      << actual_times[idx-1]
-                      << ", <<" << actual_times[idx] << ">>, "
-                      << actual_times[idx+1] << "]\n";
-          }
-        }
-        if (flow_exp != flow_act) {
-          std::cout << "- flow discrepancy\n"
-                    << "-- expected-flow: " << flow_exp << "\n"
-                    << "-- actual-flow: " << flow_act << "\n"
-                    ;
-          if ((idx > 0) && (idx < (num - 1))) {
-            std::cout << "-- expected-flows: ["
-                      << expected_loads[idx-1]
-                      << ", <<" << expected_loads[idx] << ">>, "
-                      << expected_loads[idx+1] << "]\n"
-                      << "-- actual-flows: ["
-                      << actual_loads[idx-1]
-                      << ", <<" << actual_loads[idx] << ">>, "
-                      << actual_loads[idx+1] << "]\n";
-          }
-        }
-        if (num_discrepancies > max_reporting) {
-          break;
-        }
-      }
-    }
-  }
-  return flag;
+    double mult = std::pow(10.0, (double)places);
+    return std::round(n * mult) / mult;
 }
 
-TEST(AdevsUsageTest, CanRunCheckoutLineExample)
+static auto kW_as_W = [](double p_kW) -> uint32_t
+{ return static_cast<uint32_t>(std::round(p_kW * 1000.0)); };
+static auto hours_as_seconds = [](double h) -> double { return h * 3600.0; };
+static auto kWh_as_J = [](double kWh) -> double { return kWh * 3'600'000.0; };
+
+TEST(Erin, Test1)
 {
-  // Expected results from ADEVS manual
-  // URL: https://web.ornl.gov/~nutarojj/adevs/adevs-docs/manual.pdf,
-  // see Tables 3.1 and 3.2
-  std::string expected_output =
-    "# Col 1: Time customer enters the line\n"
-    "# Col 2: Time required for customer checkout\n"
-    "# Col 3: Time customer leaves the store\n"
-    "# Col 4: Time spent waiting in line\n"
-    "1 1 2 0\n"
-    "2 4 6 0\n"
-    "3 4 10 3\n"
-    "5 2 12 5\n"
-    "7 10 22 5\n"
-    "8 20 42 14\n"
-    "10 2 44 32\n"
-    "11 1 45 33\n";
-  adevs::SimpleDigraph<Customer> store;
-  // Note: adevs::SimpleDigraph and adevs::Digraph take ownership of the
-  // objects used in the couple calls.
-  // As such, those objects are deleted with the destructor to the store
-  // object.
-  // Therefore, delete is not called on c, g, or o...
-  auto c = new Clerk();
-  auto g = new Generator();
-  auto o = new Observer();
-  store.couple(g, c);
-  store.couple(c, o);
-  adevs::Simulator<Customer> sim;
-  store.add(&sim);
-  while (sim.next_event_time() < adevs_inf<adevs::Time>()) {
-    sim.exec_next_event();
-  }
-  std::string actual_output = o->get_results();
-  EXPECT_EQ(expected_output, actual_output);
+    Model m = {};
+    auto src_id = Model_AddConstantSource(m, 100);
+    auto load_id = Model_AddConstantLoad(m, 10);
+    auto src_to_load_conn = Model_AddConnection(m, src_id, 0, load_id, 0);
+    auto results = Simulate(m, false);
+    EXPECT_EQ(results.size(), 1) << "output must have a size of 1";
+    EXPECT_EQ(results[0].time_s, 0.0) << "time must equal 0.0";
+    EXPECT_EQ(results[0].flows.size(), 1) << "size of flows must equal 1";
+
+    auto src_to_load_result = ModelResults_GetFlowForConnection(m, src_to_load_conn, 0.0, results);
+    EXPECT_TRUE(src_to_load_result.has_value()) << "connection result should have a value";
+    EXPECT_EQ(src_to_load_result.value().actual_W, 10) << "actual value must equal 10";
+    EXPECT_EQ(src_to_load_result.value().available_W, 100) << "available must equal 100";
+    EXPECT_EQ(src_to_load_result.value().requested_W, 10) << "requested must equal 10";
 }
 
-TEST(ErinUtilFunctions, TestClamp)
+TEST(Erin, Test2)
 {
-  // POSITIVE INTEGERS
-  // at lower edge
-  EXPECT_EQ(0, ERIN::clamp_toward_0(0, 0, 10));
-  // at upper edge
-  EXPECT_EQ(10, ERIN::clamp_toward_0(10, 0, 10));
-  // in range
-  EXPECT_EQ(5, ERIN::clamp_toward_0(5, 0, 10));
-  // out of range above
-  EXPECT_EQ(10, ERIN::clamp_toward_0(15, 0, 10));
-  // out of range below
-  EXPECT_EQ(0, ERIN::clamp_toward_0(2, 5, 25));
-  // NEGATIVE INTEGERS
-  // at lower edge
-  EXPECT_EQ(-10, ERIN::clamp_toward_0(-10, -10, -5));
-  // at upper edge
-  EXPECT_EQ(-5, ERIN::clamp_toward_0(-5, -10, -5));
-  // in range
-  EXPECT_EQ(-8, ERIN::clamp_toward_0(-8, -10, -5));
-  // out of range above
-  EXPECT_EQ(0, ERIN::clamp_toward_0(-2, -10, -5));
-  // out of range below
-  EXPECT_EQ(-10, ERIN::clamp_toward_0(-15, -10, -5));
+    Model m = {};
+    auto src_id = Model_AddConstantSource(m, 100);
+    auto load_id = Model_AddConstantLoad(m, 10);
+    auto conv_id = Model_AddConstantEfficiencyConverter(m, 1, 2);
+    auto src_to_conv_conn = Model_AddConnection(m, src_id, 0, conv_id.id, 0);
+    auto conv_to_load_conn = Model_AddConnection(m, conv_id.id, 0, load_id, 0);
+    auto results = Simulate(m, false);
+    EXPECT_EQ(results.size(), 1) << "output must have a size of 1";
+    EXPECT_EQ(results[0].time_s, 0.0) << "time must equal 0.0";
+    EXPECT_EQ(results[0].flows.size(), 3) << "size of flows must equal 3";
+
+    auto src_to_conv_results = ModelResults_GetFlowForConnection(m, src_to_conv_conn, 0.0, results);
+    EXPECT_TRUE(src_to_conv_results.has_value()) << "source to converter must have results";
+    EXPECT_EQ(src_to_conv_results.value().requested_W, 20) << "requested must equal 20";
+    EXPECT_EQ(src_to_conv_results.value().actual_W, 20) << "actual value must equal 20";
+    EXPECT_EQ(src_to_conv_results.value().available_W, 100) << "available must equal 100";
+
+    auto conv_to_load_results =
+        ModelResults_GetFlowForConnection(m, conv_to_load_conn, 0.0, results);
+    EXPECT_TRUE(conv_to_load_results.has_value()) << "converter to load must have results";
+    EXPECT_EQ(conv_to_load_results.value().requested_W, 10) << "requested must equal 10";
+    EXPECT_EQ(conv_to_load_results.value().actual_W, 10) << "actual value must equal 10";
+    EXPECT_EQ(conv_to_load_results.value().available_W, 50) << "available must equal 50";
+
+    auto conv_to_waste_results =
+        ModelResults_GetFlowForConnection(m, conv_id.waste_connection_id, 0.0, results);
+    EXPECT_TRUE(conv_to_waste_results.has_value()) << "converter to waste must have results";
+    EXPECT_EQ(conv_to_waste_results.value().requested_W, 10) << "requested must equal 10";
+    EXPECT_EQ(conv_to_waste_results.value().actual_W, 10) << "actual value must equal 10";
+    EXPECT_EQ(conv_to_waste_results.value().available_W, 10) << "available must equal 10";
 }
 
-TEST(ErinBasicsTest, TestLoadItem)
+TEST(Erin, Test3)
 {
-  const auto li1 = ERIN::LoadItem(0, 1);
-  const auto li2 = ERIN::LoadItem(4, 0);
-  EXPECT_EQ(li1.get_time_advance(li2), 4);
-  EXPECT_EQ(li1.time, 0);
-  EXPECT_EQ(li1.value, 1.0);
-  EXPECT_EQ(li2.time, 4);
+    Model m = {};
+    auto src_id = Model_AddConstantSource(m, 100);
+    auto load1_id = Model_AddConstantLoad(m, 10);
+    auto load2_id = Model_AddConstantLoad(m, 2);
+    auto conv_id = Model_AddConstantEfficiencyConverter(m, 1, 2);
+    auto src_to_conv_conn = Model_AddConnection(m, src_id, 0, conv_id.id, 0);
+    auto conv_to_load1_conn = Model_AddConnection(m, conv_id.id, 0, load1_id, 0);
+    auto conv_to_load2_conn = Model_AddConnection(m, conv_id.id, 1, load2_id, 0);
+    auto results = Simulate(m, false);
+    EXPECT_EQ(results.size(), 1) << "output must have a size of 1";
+    EXPECT_EQ(results[0].time_s, 0.0) << "time must equal 0.0";
+    EXPECT_EQ(results[0].flows.size(), 4) << "size of flows must equal 4";
+
+    auto src_to_conv_results = ModelResults_GetFlowForConnection(m, src_to_conv_conn, 0.0, results);
+    EXPECT_TRUE(src_to_conv_results.has_value()) << "source to converter must have results";
+    EXPECT_EQ(src_to_conv_results.value().requested_W, 20) << "requested must equal 20";
+    EXPECT_EQ(src_to_conv_results.value().actual_W, 20) << "actual value must equal 20";
+    EXPECT_EQ(src_to_conv_results.value().available_W, 100) << "available must equal 100";
+
+    auto conv_to_load1_results =
+        ModelResults_GetFlowForConnection(m, conv_to_load1_conn, 0.0, results);
+    EXPECT_TRUE(conv_to_load1_results.has_value()) << "converter to load1 must have results";
+    EXPECT_EQ(conv_to_load1_results.value().requested_W, 10) << "requested must equal 10";
+    EXPECT_EQ(conv_to_load1_results.value().actual_W, 10) << "actual value must equal 10";
+    EXPECT_EQ(conv_to_load1_results.value().available_W, 50) << "available must equal 50";
+
+    auto conv_to_load2_results =
+        ModelResults_GetFlowForConnection(m, conv_to_load2_conn, 0.0, results);
+    EXPECT_TRUE(conv_to_load2_results.has_value()) << "conv to load2 must have results";
+    EXPECT_EQ(conv_to_load2_results.value().requested_W, 2) << "requested must equal 2";
+    EXPECT_EQ(conv_to_load2_results.value().actual_W, 2) << "actual value must equal 2";
+    EXPECT_EQ(conv_to_load2_results.value().available_W, 10) << "available must equal 10";
+
+    auto conv_to_waste_results =
+        ModelResults_GetFlowForConnection(m, conv_id.waste_connection_id, 0.0, results);
+    EXPECT_TRUE(conv_to_waste_results.has_value()) << "conv to waste must have results";
+    EXPECT_EQ(conv_to_waste_results.value().requested_W, 8) << "requested must equal 8";
+    EXPECT_EQ(conv_to_waste_results.value().actual_W, 8) << "actual value must equal 8";
+    EXPECT_EQ(conv_to_waste_results.value().available_W, 8) << "available must equal 8";
 }
 
-TEST(ErinBasicsTest, FlowState)
+TEST(Erin, Test3A)
 {
-  auto fs = ERIN::FlowState{0.0, 0.0};
-  EXPECT_EQ(fs.get_inflow(), 0.0);
-  EXPECT_EQ(fs.get_outflow(), 0.0);
-  EXPECT_EQ(fs.get_storeflow(), 0.0);
-  EXPECT_EQ(fs.get_lossflow(), 0.0);
-  fs = ERIN::FlowState{100.0, 50.0};
-  EXPECT_EQ(fs.get_inflow(), 100.0);
-  EXPECT_EQ(fs.get_outflow(), 50.0);
-  EXPECT_EQ(fs.get_storeflow(), 0.0);
-  EXPECT_EQ(fs.get_lossflow(), 50.0);
-  fs = ERIN::FlowState{100.0, 0.0, 90.0};
-  EXPECT_EQ(fs.get_inflow(), 100.0);
-  EXPECT_EQ(fs.get_outflow(), 0.0);
-  EXPECT_EQ(fs.get_storeflow(), 90.0);
-  EXPECT_EQ(fs.get_lossflow(), 10.0);
+    Model m {};
+    auto src_id = Model_AddConstantSource(m, 100);
+    auto load1_id = Model_AddConstantLoad(m, 10);
+    auto load2_id = Model_AddConstantLoad(m, 2);
+    auto conv_id = Model_AddConstantEfficiencyConverter(m, 1, 2);
+    auto conv_to_load2_conn = Model_AddConnection(m, conv_id.id, 1, load2_id, 0);
+    auto conv_to_load1_conn = Model_AddConnection(m, conv_id.id, 0, load1_id, 0);
+    auto src_to_conv_conn = Model_AddConnection(m, src_id, 0, conv_id.id, 0);
+    auto results = Simulate(m, false);
+    EXPECT_EQ(results.size(), 1) << "output must have a size of 1";
+    EXPECT_EQ(results[0].time_s, 0.0) << "time must equal 0.0";
+    EXPECT_EQ(results[0].flows.size(), 4) << "size of flows must equal 4";
+
+    auto src_to_conv_results = ModelResults_GetFlowForConnection(m, src_to_conv_conn, 0.0, results);
+    EXPECT_TRUE(src_to_conv_results.has_value()) << "source to converter must have results";
+    EXPECT_EQ(src_to_conv_results.value().requested_W, 20) << "requested must equal 20";
+    EXPECT_EQ(src_to_conv_results.value().actual_W, 20) << "actual value must equal 20";
+    EXPECT_EQ(src_to_conv_results.value().available_W, 100) << "available must equal 100";
+
+    auto conv_to_load1_results =
+        ModelResults_GetFlowForConnection(m, conv_to_load1_conn, 0.0, results);
+    EXPECT_TRUE(conv_to_load1_results.has_value() && "converter to load1 must have results");
+    EXPECT_EQ(conv_to_load1_results.value().requested_W, 10) << "requested must equal 10";
+    EXPECT_EQ(conv_to_load1_results.value().actual_W, 10) << "actual value must equal 10";
+    EXPECT_EQ(conv_to_load1_results.value().available_W, 50) << "available must equal 50";
+
+    auto conv_to_load2_results =
+        ModelResults_GetFlowForConnection(m, conv_to_load2_conn, 0.0, results);
+    EXPECT_TRUE(conv_to_load2_results.has_value()) << "conv to load2 must have results";
+    EXPECT_EQ(conv_to_load2_results.value().requested_W, 2) << "requested must equal 2";
+    EXPECT_EQ(conv_to_load2_results.value().actual_W, 2) << "actual value must equal 2";
+    EXPECT_EQ(conv_to_load2_results.value().available_W, 10) << "available must equal 10";
+
+    auto conv_to_waste_results =
+        ModelResults_GetFlowForConnection(m, conv_id.waste_connection_id, 0.0, results);
+    EXPECT_TRUE(conv_to_waste_results.has_value()) << "conv to waste must have results";
+    EXPECT_EQ(conv_to_waste_results.value().requested_W, 8) << "requested must equal 8";
+    EXPECT_EQ(conv_to_waste_results.value().actual_W, 8) << "actual value must equal 8";
+    EXPECT_EQ(conv_to_waste_results.value().available_W, 8) << "available must equal 8";
 }
 
-TEST(ErinBasicsTest, CanRunPowerLimitedSink)
+TEST(Erin, Test4)
 {
-  namespace E = ERIN;
-  E::RealTimeType t_max{4};
-  std::vector<E::RealTimeType> expected_time = {0, 1, 2, 3, t_max};
-  std::vector<E::FlowValueType> expected_flow = {50, 50, 40, 0, 0};
-  std::string elec{"electrical"};
-  std::string limit_id{"lim"};
-  auto lim = new E::Source(limit_id, E::ComponentType::Source, elec, 50);
-  std::string sink_id{"load"};
-  auto sink = new E::Sink(
-      sink_id,
-      E::ComponentType::Load,
-      elec,
-      { E::LoadItem{0,160},
-        E::LoadItem{1,80},
-        E::LoadItem{2,40},
-        E::LoadItem{3,0},
-        E::LoadItem{t_max,0}});
-  std::shared_ptr<E::FlowWriter> fw = std::make_shared<E::DefaultFlowWriter>();
-  lim->set_flow_writer(fw);
-  lim->set_recording_on();
-  sink->set_flow_writer(fw);
-  sink->set_recording_on();
-  adevs::Digraph<E::FlowValueType, E::Time> network;
-  network.couple(
-      sink, E::Sink::outport_inflow_request,
-      lim, E::FlowLimits::inport_outflow_request);
-  network.couple(
-      lim, E::FlowLimits::outport_outflow_achieved,
-      sink, E::Sink::inport_inflow_achieved);
-  adevs::Simulator<E::PortValue, E::Time> sim;
-  network.add(&sim);
-  while (sim.next_event_time() < E::inf) {
-    sim.exec_next_event();
-  }
-  fw->finalize_at_time(t_max);
-  auto results = fw->get_results();
-  fw->clear();
-  ASSERT_TRUE(
-      check_times_and_loads(results, expected_time, expected_flow, sink_id));
-  ASSERT_TRUE(
-      check_times_and_loads(results, expected_time, expected_flow, limit_id));
+    std::vector<TimeAndAmount> times_and_loads = {};
+    times_and_loads.push_back({0.0, 10});
+    times_and_loads.push_back({3600.0, 200});
+    Model m = {};
+    m.final_time_s = 3600.0;
+    auto src_id = Model_AddConstantSource(m, 100);
+    auto load_id = Model_AddScheduleBasedLoad(m, times_and_loads);
+    auto src_to_load_conn = Model_AddConnection(m, src_id, 0, load_id, 0);
+    auto results = Simulate(m, false);
+    EXPECT_EQ(results.size(), 2) << "output must have a size of 2";
+    EXPECT_EQ(results[0].time_s, 0.0) << "time must equal 0.0";
+    EXPECT_EQ(results[0].flows.size(), 1) << "size of flows[0] must equal 1";
+
+    auto src_to_load_results_0 =
+        ModelResults_GetFlowForConnection(m, src_to_load_conn, 0.0, results);
+    EXPECT_TRUE(src_to_load_results_0.has_value())
+        << "source to load must have results at time=0.0";
+    EXPECT_EQ(src_to_load_results_0.value().requested_W, 10) << "requested must equal 10";
+    EXPECT_EQ(src_to_load_results_0.value().actual_W, 10) << "actual value must equal 10";
+    EXPECT_EQ(src_to_load_results_0.value().available_W, 100) << "available must equal 100";
+    EXPECT_EQ(results[1].time_s, 3600.0) << "time must equal 3600.0";
+    EXPECT_EQ(results[1].flows.size(), 1) << "size of flows[1] must equal 1";
+
+    auto src_to_load_results_3600 =
+        ModelResults_GetFlowForConnection(m, src_to_load_conn, 3600.0, results);
+    EXPECT_TRUE(src_to_load_results_3600.has_value())
+        << "source to load must have results at time=3600.0";
+    EXPECT_EQ(src_to_load_results_3600.value().requested_W, 200) << "requested must equal 200";
+    EXPECT_EQ(src_to_load_results_3600.value().actual_W, 100) << "actual value must equal 100";
+    EXPECT_EQ(src_to_load_results_3600.value().available_W, 100) << "available must equal 100";
 }
 
-TEST(ErinBasicsTest, CanRunUsingComponents)
+TEST(Erin, Test5)
 {
-  namespace EP = erin::port;
-  namespace EN = erin::network;
-  namespace E = ERIN;
-  const std::string stream_name{"electrical"};
-  std::string elec{stream_name};
-  auto loads_by_scenario = std::unordered_map<
-    std::string, std::vector<E::LoadItem>>(
-        {{"bluesky", {
-            E::LoadItem{0,160},
-            E::LoadItem{1,80},
-            E::LoadItem{2,40},
-            E::LoadItem{3,0},
-            E::LoadItem{4,0}}}});
-  const std::string source_id{"electrical_pcc"};
-  std::unique_ptr<E::Component> source =
-    std::make_unique<E::SourceComponent>(source_id, elec);
-  const std::string load_id{"electrical_load"};
-  std::unique_ptr<E::Component> load =
-    std::make_unique<E::LoadComponent>(
-        load_id, elec, loads_by_scenario);
-  EN::Connection conn{
-    EN::ComponentAndPort{source_id, EP::Type::Outflow, 0},
-      EN::ComponentAndPort{load_id, EP::Type::Inflow, 0},
-      stream_name};
-  std::string scenario_id{"bluesky"};
-  adevs::Digraph<E::FlowValueType, E::Time> network;
-  auto pes_load = load->add_to_network(network, scenario_id);
-  auto pes_source = source->add_to_network(network, scenario_id);
-  EN::connect(
-      network,
-      pes_source.port_map,
-      EP::Type::Outflow,
-      0,
-      pes_load.port_map,
-      EP::Type::Inflow,
-      0,
-      true,
-      stream_name);
-  adevs::Simulator<E::PortValue, E::Time> sim;
-  network.add(&sim);
-  bool worked{false};
-  int iworked{0};
-  while (sim.next_event_time() < E::inf) {
-    sim.exec_next_event();
-    worked = true;
-    ++iworked;
-  }
-  EXPECT_TRUE(iworked > 0);
-  EXPECT_TRUE(worked);
+    std::vector<TimeAndAmount> times_and_loads = {};
+    Model m = {};
+    auto src_id = Model_AddConstantSource(m, 100);
+    auto load1_id = Model_AddConstantLoad(m, 10);
+    auto load2_id = Model_AddConstantLoad(m, 7);
+    auto load3_id = Model_AddConstantLoad(m, 5);
+    auto conv1 = Model_AddConstantEfficiencyConverter(m, 1, 4);
+    auto conv2 = Model_AddConstantEfficiencyConverter(m, 1, 4);
+    auto conv3 = Model_AddConstantEfficiencyConverter(m, 1, 4);
+    auto src_to_conv1_conn = Model_AddConnection(m, src_id, 0, conv1.id, 0);
+    auto conv1_to_load1_conn = Model_AddConnection(m, conv1.id, 0, load1_id, 0);
+    auto conv1_to_conv2_conn = Model_AddConnection(m, conv1.id, 1, conv2.id, 0);
+    auto conv2_to_load2_conn = Model_AddConnection(m, conv2.id, 0, load2_id, 0);
+    auto conv2_to_conv3_conn = Model_AddConnection(m, conv2.id, 1, conv3.id, 0);
+    auto conv3_to_load3_conn = Model_AddConnection(m, conv3.id, 0, load3_id, 0);
+    auto results = Simulate(m, false);
+    auto src_to_conv1_results =
+        ModelResults_GetFlowForConnection(m, src_to_conv1_conn, 0.0, results);
+    auto conv1_to_load1_results =
+        ModelResults_GetFlowForConnection(m, conv1_to_load1_conn, 0.0, results);
+    auto conv1_to_conv2_results =
+        ModelResults_GetFlowForConnection(m, conv1_to_conv2_conn, 0.0, results);
+    auto conv2_to_load2_results =
+        ModelResults_GetFlowForConnection(m, conv2_to_load2_conn, 0.0, results);
+    auto conv2_to_conv3_results =
+        ModelResults_GetFlowForConnection(m, conv2_to_conv3_conn, 0.0, results);
+    auto conv3_to_load3_results =
+        ModelResults_GetFlowForConnection(m, conv3_to_load3_conn, 0.0, results);
+    EXPECT_EQ(src_to_conv1_results.value().actual_W, 40) << "src to conv1 should flow 40";
+    EXPECT_EQ(conv1_to_load1_results.value().actual_W, 10) << "conv1 to load1 should flow 10";
+    EXPECT_EQ(conv1_to_conv2_results.value().actual_W, 28) << "conv1 to conv2 should flow 28";
+    EXPECT_EQ(conv2_to_load2_results.value().actual_W, 7) << "conv1 to conv2 should flow 7";
+    EXPECT_EQ(conv2_to_conv3_results.value().actual_W, 20) << "conv2 to conv3 should flow 21";
+    EXPECT_EQ(conv3_to_load3_results.value().actual_W, 5) << "conv3 to load3 should flow 5";
 }
 
-TEST(ErinBasicsTest, CanReadSimulationInfoFromToml)
+TEST(Erin, Test6)
 {
-  namespace E = ::ERIN;
-  std::stringstream ss{};
-  ss << "[simulation_info]\n"
-        "rate_unit = \"kW\"\n"
-        "quantity_unit = \"kJ\"\n"
-        "time_unit = \"hours\"\n"
-        "max_time = 3000\n"
-        "random_seed = 0\n";
-  E::TomlInputReader tir{ss};
-  E::SimulationInfo expected{
-    "kW", "kJ", E::TimeUnits::Hours, 3000, false, 0.0, true, 0};
-  auto actual = tir.read_simulation_info();
-  EXPECT_EQ(expected, actual);
+    Model m = {};
+    auto src1_id = Model_AddConstantSource(m, 10);
+    auto src2_id = Model_AddConstantSource(m, 50);
+    auto load1_id = Model_AddConstantLoad(m, 10);
+    auto load2_id = Model_AddConstantLoad(m, 80);
+    auto mux_id = Model_AddMux(m, 2, 2);
+    auto src1_to_mux_conn = Model_AddConnection(m, src1_id, 0, mux_id, 0);
+    auto src2_to_mux_conn = Model_AddConnection(m, src2_id, 0, mux_id, 1);
+    auto mux_to_load1_conn = Model_AddConnection(m, mux_id, 0, load1_id, 0);
+    auto mux_to_load2_conn = Model_AddConnection(m, mux_id, 1, load2_id, 0);
+    auto results = Simulate(m, false);
+    auto src1_to_mux_results = ModelResults_GetFlowForConnection(m, src1_to_mux_conn, 0.0, results);
+    EXPECT_EQ(src1_to_mux_results.value().actual_W, 10) << "src1 -> mux expected actual flow of 10";
+
+    auto src2_to_mux_results = ModelResults_GetFlowForConnection(m, src2_to_mux_conn, 0.0, results);
+    EXPECT_EQ(src2_to_mux_results.value().actual_W, 50) << "src2 -> mux expected actual flow of 50";
+
+    auto mux_to_load1_results =
+        ModelResults_GetFlowForConnection(m, mux_to_load1_conn, 0.0, results);
+    EXPECT_EQ(mux_to_load1_results.value().actual_W, 10)
+        << "mux -> load1 expected actual flow of 10";
+
+    auto mux_to_load2_results =
+        ModelResults_GetFlowForConnection(m, mux_to_load2_conn, 0.0, results);
+    EXPECT_EQ(mux_to_load2_results.value().actual_W, 50)
+        << "mux -> load2 expected actual flow of 50";
 }
 
-TEST(ErinBasicsTest, CanReadFragilityCurvesFromToml)
+TEST(Erin, Test7)
 {
-  namespace ef = erin::fragility;
-  std::stringstream ss{};
-  ss << "############################################################\n"
-        "# Fragility Curves\n"
-        "[fragility_curve.somewhat_vulnerable_to_flooding]\n"
-        "vulnerable_to = \"inundation_depth_ft\"\n"
-        "type = \"linear\"\n"
-        "lower_bound = 6.0\n"
-        "upper_bound = 14.0\n"
-        "[fragility_curve.highly_vulnerable_to_wind]\n"
-        "vulnerable_to = \"wind_speed_mph\"\n"
-        "type = \"linear\"\n"
-        "lower_bound = 80.0\n"
-        "upper_bound = 160.0\n";
-  ERIN::TomlInputReader tir{ss};
-  std::unordered_map<std::string, ef::FragilityCurve> expected{};
-  ef::FragilityCurve c1{
-    "inundation_depth_ft", std::make_unique<ef::Linear>(6.0, 14.0)};
-  ef::FragilityCurve c2{
-    "wind_speed_mph", std::make_unique<ef::Linear>(80.0, 160.0)};
-  expected.insert(
-      std::move(
-        std::make_pair("somewhat_vulnerable_to_flooding", std::move(c1))));
-  expected.insert(
-      std::move(
-        std::make_pair("highly_vulnerable_to_wind", std::move(c2))));
-  auto actual = tir.read_fragility_curve_data();
-  ASSERT_EQ(expected.size(), actual.size());
-  for (auto& e_pair: expected) {
-    auto a_it = actual.find(e_pair.first);
-    ASSERT_FALSE(a_it == actual.end());
-    auto& e_fc = e_pair.second;
-    auto& a_fc = a_it->second;
-    EXPECT_EQ(e_fc.vulnerable_to, a_fc.vulnerable_to);
-    ASSERT_EQ(e_fc.curve->get_curve_type(), a_fc.curve->get_curve_type());
-    EXPECT_EQ(e_fc.curve->str(), a_fc.curve->str());
-  }
+    Model m = {};
+    m.final_time_s = 10.0;
+    auto src_id = Model_AddConstantSource(m, 0);
+    auto store_id = Model_AddStore(m, 100, 10, 10, 0, 100);
+    auto load_id = Model_AddConstantLoad(m, 10);
+    auto src_to_store_conn = Model_AddConnection(m, src_id, 0, store_id, 0);
+    auto store_to_load_conn = Model_AddConnection(m, store_id, 0, load_id, 0);
+    auto results = Simulate(m, false);
+
+    auto src_to_store_results =
+        ModelResults_GetFlowForConnection(m, src_to_store_conn, 0.0, results);
+    EXPECT_EQ(src_to_store_results.value().actual_W, 0) << "src to store should be providing 0";
+    EXPECT_EQ(src_to_store_results.value().requested_W, 10) << "src to store request is 10";
+    EXPECT_EQ(src_to_store_results.value().available_W, 0) << "src to store available is 0";
+
+    auto store_to_load_results =
+        ModelResults_GetFlowForConnection(m, store_to_load_conn, 0.0, results);
+    EXPECT_TRUE(store_to_load_results.has_value())
+        << "should have results for store to load connection";
+    EXPECT_EQ(store_to_load_results.value().actual_W, 10) << "store to load should be providing 10";
+    EXPECT_EQ(store_to_load_results.value().requested_W, 10)
+        << "store to load should be requesting 10";
+    EXPECT_EQ(store_to_load_results.value().available_W, 10)
+        << "store to load available should be 10";
+    EXPECT_EQ(results.size(), 2) << "there should be two time events in results";
+    EXPECT_TRUE((results[1].time_s > 10.0 - 1e-6) && (results[1].time_s < 10.0 + 1e-6))
+        << "time should be 10";
+
+    auto src_to_store_results_at_10 =
+        ModelResults_GetFlowForConnection(m, src_to_store_conn, 10.0, results);
+    EXPECT_EQ(src_to_store_results_at_10.value().actual_W, 0)
+        << "src to store should be providing 0";
+    EXPECT_EQ(src_to_store_results_at_10.value().requested_W, 20) << "src to store request is 20";
+    EXPECT_EQ(src_to_store_results_at_10.value().available_W, 0) << "src to store available is 0";
+
+    auto store_to_load_results_at_10 =
+        ModelResults_GetFlowForConnection(m, store_to_load_conn, 10.0, results);
+    EXPECT_TRUE(store_to_load_results_at_10.has_value())
+        << "should have results for store to load connection";
+    EXPECT_EQ(store_to_load_results_at_10.value().actual_W, 0)
+        << "store to load should be providing 0";
+    EXPECT_EQ(store_to_load_results_at_10.value().requested_W, 10)
+        << "store to load should be requesting 10";
+    EXPECT_EQ(store_to_load_results_at_10.value().available_W, 0)
+        << "store to load available should be 0";
 }
 
-TEST(ErinBasicsTest, CanReadComponentsFromToml)
+TEST(Erin, Test8)
 {
-  std::stringstream ss{};
-  ss << "[components.electric_utility]\n"
-        "type = \"source\"\n"
-        "# Point of Common Coupling for Electric Utility\n"
-        "output_stream = \"electricity\"\n"
-        "max_outflow = 10.0\n"
-        "min_outflow = 0.0\n"
-        "[components.cluster_01_electric]\n"
-        "type = \"load\"\n"
-        "input_stream = \"electricity\"\n"
-        "loads_by_scenario.blue_sky = \"load1\"\n"
-        "[components.bus]\n"
-        "type = \"muxer\"\n"
-        "stream = \"electricity\"\n"
-        "num_inflows = 2\n"
-        "num_outflows = 1\n"
-        "dispatch_strategy = \"in_order\"\n";
-  ERIN::TomlInputReader t{ss};
-  std::string stream_id{"electricity"};
-  std::string scenario_id{"blue_sky"};
-  std::unordered_map<std::string, std::vector<::ERIN::LoadItem>> loads_by_id{
-    {std::string{"load1"}, {ERIN::LoadItem{0,1.0},ERIN::LoadItem{4,0.0}}}
-  };
-  std::unordered_map<std::string, std::vector<::ERIN::LoadItem>> loads{
-    {scenario_id, {::ERIN::LoadItem{0,1.0},::ERIN::LoadItem{4,0.0}}}
-  };
-  std::unordered_map<std::string, std::unique_ptr<::ERIN::Component>> expected;
-  expected.emplace(std::make_pair(
-        std::string{"electric_utility"},
-        std::make_unique<::ERIN::SourceComponent>(
-          std::string{"electric_utility"},
-          stream_id,
-          10,
-          0)));
-  expected.emplace(std::make_pair(
-      std::string{"cluster_01_electric"},
-      std::make_unique<::ERIN::LoadComponent>(
-        std::string{"cluster_01_electric"},
-        stream_id,
-        loads)));
-  expected.emplace(std::make_pair(
-      std::string{"bus"},
-      std::make_unique<::ERIN::MuxerComponent>(
-        std::string{"bus"},
-        stream_id,
-        2,
-        1,
-        ERIN::MuxerDispatchStrategy::InOrder)));
-  auto pt = &t;
-  auto actual = pt->read_components(loads_by_id);
-  EXPECT_EQ(expected.size(), actual.size());
-  for (auto const& e_pair: expected) {
-    const auto& tag = e_pair.first;
-    const auto a_it = actual.find(tag);
-    ASSERT_TRUE(a_it != actual.end());
-    const auto& a = a_it->second;
-    const auto& e = e_pair.second;
-    EXPECT_EQ(e, a) << "tag = " << tag;
-  }
+    Model m = {};
+    m.final_time_s = 20.0;
+    auto src_id = Model_AddConstantSource(m, 5);
+    auto store_id = Model_AddStore(m, 100, 10, 10, 0, 100);
+    auto load_id = Model_AddConstantLoad(m, 10);
+    auto src_to_store_conn = Model_AddConnection(m, src_id, 0, store_id, 0);
+    auto store_to_load_conn = Model_AddConnection(m, store_id, 0, load_id, 0);
+    auto results = Simulate(m, false);
+    auto src_to_store_results =
+        ModelResults_GetFlowForConnection(m, src_to_store_conn, 0.0, results);
+    EXPECT_EQ(src_to_store_results.value().actual_W, 5) << "src to store should be providing 5";
+    EXPECT_EQ(src_to_store_results.value().requested_W, 10) << "src to store request is 10";
+    EXPECT_EQ(src_to_store_results.value().available_W, 5) << "src to store available is 5";
+
+    auto store_to_load_results =
+        ModelResults_GetFlowForConnection(m, store_to_load_conn, 0.0, results);
+    EXPECT_TRUE(store_to_load_results.has_value())
+        << "should have results for store to load connection";
+    EXPECT_EQ(store_to_load_results.value().actual_W, 10) << "store to load should be providing 10";
+    EXPECT_EQ(store_to_load_results.value().requested_W, 10)
+        << "store to load should be requesting 10";
+    EXPECT_EQ(store_to_load_results.value().available_W, 15)
+        << "store to load available should be 15";
+    EXPECT_EQ(results.size(), 2) << "there should be two time events in results";
+    EXPECT_TRUE((results[1].time_s > 20.0 - 1e-6) && (results[1].time_s < 20.0 + 1e-6))
+        << "time should be 20";
+
+    auto src_to_store_results_at_20 =
+        ModelResults_GetFlowForConnection(m, src_to_store_conn, 20.0, results);
+    EXPECT_EQ(src_to_store_results_at_20.value().actual_W, 5)
+        << "src to store should be providing 5";
+    EXPECT_EQ(src_to_store_results_at_20.value().requested_W, 20) << "src to store request is 20";
+    EXPECT_EQ(src_to_store_results_at_20.value().available_W, 5) << "src to store available is 5";
+
+    auto store_to_load_results_at_20 =
+        ModelResults_GetFlowForConnection(m, store_to_load_conn, 20.0, results);
+    EXPECT_TRUE(store_to_load_results_at_20.has_value())
+        << "should have results for store to load connection";
+    EXPECT_EQ(store_to_load_results_at_20.value().actual_W, 5)
+        << "store to load should be providing 5";
+    EXPECT_EQ(store_to_load_results_at_20.value().requested_W, 10)
+        << "store to load should be requesting 10";
+    EXPECT_EQ(store_to_load_results_at_20.value().available_W, 5)
+        << "store to load available should be 5";
 }
 
-TEST(ErinBasicsTest, CanReadLoadsFromToml)
+TEST(Erin, Test9)
 {
-  std::stringstream ss{};
-  ss << "[loads.load1]\n"
-        "time_unit = \"seconds\"\n"
-        "rate_unit = \"kW\"\n"
-        "time_rate_pairs = [[0.0,1.0],[4.0,0.0]]\n";
-  ERIN::TomlInputReader t{ss};
-  std::unordered_map<std::string, std::vector<::ERIN::LoadItem>> expected{
-    {std::string{"load1"}, {::ERIN::LoadItem{0,1.0},::ERIN::LoadItem{4,0.0}}}
-  };
-  auto actual = t.read_loads();
-  EXPECT_EQ(expected.size(), actual.size());
-  for (auto const& e: expected) {
-    const auto a = actual.find(e.first);
-    ASSERT_TRUE(a != actual.end());
-    EXPECT_EQ(e.second.size(), a->second.size());
-    for (std::vector<::ERIN::LoadItem>::size_type i{0}; i < e.second.size(); ++i) {
-      EXPECT_EQ(e.second[i].time, a->second[i].time);
-      EXPECT_EQ(e.second[i].value, a->second[i].value);
-    }
-  }
+    std::vector<TimeAndAmount> times_and_loads = {};
+    times_and_loads.push_back({0.0, 20});
+    times_and_loads.push_back({5.0, 5});
+    times_and_loads.push_back({10.0, 15});
+    Model m = {};
+    m.final_time_s = 25.0;
+    auto src_id = Model_AddConstantSource(m, 10);
+    auto store_id = Model_AddStore(m, 100, 10, 10, 80, 100);
+    auto load_id = Model_AddScheduleBasedLoad(m, times_and_loads);
+    auto src_to_store_conn = Model_AddConnection(m, src_id, 0, store_id, 0);
+    auto store_to_load_conn = Model_AddConnection(m, store_id, 0, load_id, 0);
+    auto results = Simulate(m, false);
+    EXPECT_EQ(results.size(), 5) << "expected 5 time steps";
+    EXPECT_EQ(round_it(results[0].time_s), 0.0) << "expect first time is 0.0";
+    EXPECT_EQ(round_it(results[1].time_s), 2.0) << "expect second time is 2.0";
+    EXPECT_EQ(round_it(results[2].time_s), 5.0) << "expect third time is 5.0";
+    EXPECT_EQ(round_it(results[3].time_s), 10.0) << "expect fourth time is 10.0";
+    EXPECT_EQ(round_it(results[4].time_s), 25.0) << "expect fifth time is 25.0";
+
+    auto src_to_store_results_at_0 =
+        ModelResults_GetFlowForConnection(m, src_to_store_conn, 0.0, results);
+    auto store_to_load_results_at_0 =
+        ModelResults_GetFlowForConnection(m, store_to_load_conn, 0.0, results);
+    auto store_amount_0 = ModelResults_GetStoreState(m, store_id, 0.0, results);
+    EXPECT_EQ(src_to_store_results_at_0.value().actual_W, 10);
+    EXPECT_EQ(src_to_store_results_at_0.value().requested_W, 20);
+    EXPECT_EQ(src_to_store_results_at_0.value().available_W, 10);
+    EXPECT_EQ(store_to_load_results_at_0.value().actual_W, 20);
+    EXPECT_EQ(store_to_load_results_at_0.value().requested_W, 20);
+    EXPECT_EQ(store_to_load_results_at_0.value().available_W, 20);
+    EXPECT_EQ(store_amount_0.value(), 100);
+
+    auto src_to_store_results_at_2 =
+        ModelResults_GetFlowForConnection(m, src_to_store_conn, 2.0, results);
+    auto store_to_load_results_at_2 =
+        ModelResults_GetFlowForConnection(m, store_to_load_conn, 2.0, results);
+    auto store_amount_2 = ModelResults_GetStoreState(m, store_id, 2.0, results);
+    EXPECT_EQ(src_to_store_results_at_2.value().actual_W, 10);
+    EXPECT_EQ(src_to_store_results_at_2.value().requested_W, 30);
+    EXPECT_EQ(src_to_store_results_at_2.value().available_W, 10);
+    EXPECT_EQ(store_to_load_results_at_2.value().actual_W, 20);
+    EXPECT_EQ(store_to_load_results_at_2.value().requested_W, 20);
+    EXPECT_EQ(store_to_load_results_at_2.value().available_W, 20);
+    EXPECT_EQ(store_amount_2.value(), 80);
+
+    auto src_to_store_results_at_5 =
+        ModelResults_GetFlowForConnection(m, src_to_store_conn, 5.0, results);
+    auto store_to_load_results_at_5 =
+        ModelResults_GetFlowForConnection(m, store_to_load_conn, 5.0, results);
+    auto store_amount_5 = ModelResults_GetStoreState(m, store_id, 5.0, results);
+    EXPECT_EQ(src_to_store_results_at_5.value().actual_W, 10);
+    EXPECT_EQ(src_to_store_results_at_5.value().requested_W, 15);
+    EXPECT_EQ(src_to_store_results_at_5.value().available_W, 10);
+    EXPECT_EQ(store_to_load_results_at_5.value().actual_W, 5);
+    EXPECT_EQ(store_to_load_results_at_5.value().requested_W, 5);
+    EXPECT_EQ(store_to_load_results_at_5.value().available_W, 20);
+    EXPECT_EQ(store_amount_5.value(), 50);
+
+    auto src_to_store_results_at_10 =
+        ModelResults_GetFlowForConnection(m, src_to_store_conn, 10.0, results);
+    auto store_to_load_results_at_10 =
+        ModelResults_GetFlowForConnection(m, store_to_load_conn, 10.0, results);
+    auto store_amount_10 = ModelResults_GetStoreState(m, store_id, 10.0, results);
+    EXPECT_EQ(src_to_store_results_at_10.value().actual_W, 10);
+    EXPECT_EQ(src_to_store_results_at_10.value().requested_W, 25);
+    EXPECT_EQ(src_to_store_results_at_10.value().available_W, 10);
+    EXPECT_EQ(store_to_load_results_at_10.value().actual_W, 15);
+    EXPECT_EQ(store_to_load_results_at_10.value().requested_W, 15);
+    EXPECT_EQ(store_to_load_results_at_10.value().available_W, 20);
+    EXPECT_EQ(store_amount_10.value(), 75);
+
+    auto src_to_store_results_at_25 =
+        ModelResults_GetFlowForConnection(m, src_to_store_conn, 25.0, results);
+    auto store_to_load_results_at_25 =
+        ModelResults_GetFlowForConnection(m, store_to_load_conn, 25.0, results);
+    auto store_amount_25 = ModelResults_GetStoreState(m, store_id, 25.0, results);
+    EXPECT_EQ(src_to_store_results_at_25.value().actual_W, 10);
+    EXPECT_EQ(src_to_store_results_at_25.value().requested_W, 25);
+    EXPECT_EQ(src_to_store_results_at_25.value().available_W, 10);
+    EXPECT_EQ(store_to_load_results_at_25.value().actual_W, 10);
+    EXPECT_EQ(store_to_load_results_at_25.value().requested_W, 15);
+    EXPECT_EQ(store_to_load_results_at_25.value().available_W, 10);
+    EXPECT_EQ(store_amount_25.value(), 0);
 }
 
-TEST(ErinBasicsTest, CanReadNetworksFromToml)
+TEST(Erin, Test10)
 {
-  namespace enw = ::erin::network;
-  namespace ep = ::erin::port;
-  std::stringstream ss{};
-  ss << "############################################################\n"
-        "[networks.normal_operations]\n"
-        "connections = [[\"electric_utility:OUT(0)\", \"cluster_01_electric:IN(0)\", \"electricity\"]]\n";
-  ERIN::TomlInputReader t{ss};
-  std::unordered_map<std::string, std::vector<enw::Connection>> expected{
-    { "normal_operations",
-      { enw::Connection{
-                         enw::ComponentAndPort{
-                           "electric_utility", ep::Type::Outflow, 0},
-                         enw::ComponentAndPort{
-                           "cluster_01_electric", ep::Type::Inflow, 0},
-                         "electricity"}}}};
-  auto pt = &t;
-  auto actual = pt->read_networks();
-  EXPECT_EQ(expected.size(), actual.size());
-  for (auto const& e: expected) {
-    const auto a = actual.find(e.first);
-    ASSERT_TRUE(a != actual.end());
-    const auto& e_conn = e.second.at(0);
-    const auto& a_conn = a->second.at(0);
-    ASSERT_EQ(e_conn.first.component_id, a_conn.first.component_id);
-    ASSERT_EQ(e_conn.first.port_type, a_conn.first.port_type);
-    ASSERT_EQ(e_conn.first.port_number, a_conn.first.port_number);
-    ASSERT_EQ(e_conn.second.component_id, a_conn.second.component_id);
-    ASSERT_EQ(e_conn.second.port_type, a_conn.second.port_type);
-    ASSERT_EQ(e_conn.second.port_number, a_conn.second.port_number);
-    ASSERT_EQ(e_conn.stream, a_conn.stream);
-  }
+    std::vector<TimeAndAmount> times_and_loads = {};
+    times_and_loads.push_back({0.0, 20});
+    times_and_loads.push_back({5.0, 5});
+    times_and_loads.push_back({10.0, 15});
+    Model m = {};
+    m.final_time_s = 12.5;
+    auto src1_id = Model_AddConstantSource(m, 20);
+    auto src2_id = Model_AddConstantSource(m, 5);
+    auto store_id = Model_AddStore(m, 100, 10, 10, 80, 100);
+    auto mux_id = Model_AddMux(m, 2, 2);
+    auto conv = Model_AddConstantEfficiencyConverter(m, 1, 2);
+    auto load1_id = Model_AddConstantLoad(m, 20);
+    auto load2_id = Model_AddScheduleBasedLoad(m, times_and_loads);
+    auto load3_id = Model_AddConstantLoad(m, 5);
+    auto src1_to_mux0_port0_conn = Model_AddConnection(m, src1_id, 0, mux_id, 0);
+    auto src2_to_store_conn = Model_AddConnection(m, src2_id, 0, store_id, 0);
+    auto store_to_mux0_port1_conn = Model_AddConnection(m, store_id, 0, mux_id, 1);
+    auto mux0_port0_to_load1_conn = Model_AddConnection(m, mux_id, 0, load1_id, 0);
+    auto mux0_port1_to_conv_conn = Model_AddConnection(m, mux_id, 1, conv.id, 0);
+    auto conv_to_load2_conn = Model_AddConnection(m, conv.id, 0, load2_id, 0);
+    auto conv_to_load3_conn = Model_AddConnection(m, conv.id, 1, load3_id, 0);
+    auto results = Simulate(m, false);
+    EXPECT_EQ(results.size(), 5) << "expect 5 events";
+
+    // time = 0.0
+    double t = 0.0;
+    size_t results_idx = 0;
+    EXPECT_EQ(results[results_idx].time_s, t);
+    auto conv_to_waste_results =
+        ModelResults_GetFlowForConnection(m, conv.waste_connection_id, t, results);
+    EXPECT_EQ(conv_to_waste_results.value().actual_W, 3);
+    EXPECT_EQ(conv_to_waste_results.value().requested_W, 3);
+    EXPECT_EQ(conv_to_waste_results.value().available_W, 3);
+
+    auto src1_to_mux_results =
+        ModelResults_GetFlowForConnection(m, src1_to_mux0_port0_conn, 0.0, results);
+    EXPECT_EQ(src1_to_mux_results.value().actual_W, 20);
+    EXPECT_EQ(src1_to_mux_results.value().available_W, 20);
+    EXPECT_EQ(src1_to_mux_results.value().requested_W, 60);
+
+    auto src2_to_store_results =
+        ModelResults_GetFlowForConnection(m, src2_to_store_conn, 0.0, results);
+    EXPECT_EQ(src2_to_store_results.value().actual_W, 5);
+    EXPECT_EQ(src2_to_store_results.value().available_W, 5);
+    EXPECT_EQ(src2_to_store_results.value().requested_W, 40);
+
+    auto store_to_mux_results =
+        ModelResults_GetFlowForConnection(m, store_to_mux0_port1_conn, 0.0, results);
+    EXPECT_EQ(store_to_mux_results.value().actual_W, 15);
+    EXPECT_EQ(store_to_mux_results.value().available_W, 15);
+    EXPECT_EQ(store_to_mux_results.value().requested_W, 40);
+
+    auto mux_to_load1_results =
+        ModelResults_GetFlowForConnection(m, mux0_port0_to_load1_conn, 0.0, results);
+    EXPECT_EQ(mux_to_load1_results.value().actual_W, 20);
+    EXPECT_EQ(mux_to_load1_results.value().available_W, 20);
+    EXPECT_EQ(mux_to_load1_results.value().requested_W, 20);
+
+    auto mux_to_conv_results =
+        ModelResults_GetFlowForConnection(m, mux0_port1_to_conv_conn, 0.0, results);
+    EXPECT_EQ(mux_to_conv_results.value().actual_W, 15);
+    EXPECT_EQ(mux_to_conv_results.value().available_W, 15);
+    EXPECT_EQ(mux_to_conv_results.value().requested_W, 40);
+
+    auto conv_to_load2_results =
+        ModelResults_GetFlowForConnection(m, conv_to_load2_conn, 0.0, results);
+    EXPECT_EQ(conv_to_load2_results.value().actual_W, 7);
+    EXPECT_EQ(conv_to_load2_results.value().available_W, 7);
+    EXPECT_EQ(conv_to_load2_results.value().requested_W, 20);
+
+    auto conv_to_load3_results =
+        ModelResults_GetFlowForConnection(m, conv_to_load3_conn, 0.0, results);
+    EXPECT_EQ(conv_to_load3_results.value().actual_W, 5);
+    EXPECT_EQ(conv_to_load3_results.value().available_W, 8);
+    EXPECT_EQ(conv_to_load3_results.value().requested_W, 5);
+
+    auto store_amount = ModelResults_GetStoreState(m, store_id, 0.0, results);
+    EXPECT_EQ(store_amount.value(), 100);
+
+    // time = 2.0
+    t = 2.0;
+    results_idx = 1;
+    EXPECT_EQ(results[results_idx].time_s, t);
+
+    conv_to_waste_results =
+        ModelResults_GetFlowForConnection(m, conv.waste_connection_id, t, results);
+    EXPECT_EQ(conv_to_waste_results.value().actual_W, 3);
+    EXPECT_EQ(conv_to_waste_results.value().requested_W, 3);
+    EXPECT_EQ(conv_to_waste_results.value().available_W, 3);
+
+    src1_to_mux_results = ModelResults_GetFlowForConnection(m, src1_to_mux0_port0_conn, t, results);
+    EXPECT_EQ(src1_to_mux_results.value().actual_W, 20);
+    EXPECT_EQ(src1_to_mux_results.value().available_W, 20);
+    EXPECT_EQ(src1_to_mux_results.value().requested_W, 60);
+
+    src2_to_store_results = ModelResults_GetFlowForConnection(m, src2_to_store_conn, t, results);
+    EXPECT_EQ(src2_to_store_results.value().actual_W, 5);
+    EXPECT_EQ(src2_to_store_results.value().available_W, 5);
+    EXPECT_EQ(src2_to_store_results.value().requested_W, 50);
+
+    store_to_mux_results =
+        ModelResults_GetFlowForConnection(m, store_to_mux0_port1_conn, t, results);
+    EXPECT_EQ(store_to_mux_results.value().actual_W, 15);
+    EXPECT_EQ(store_to_mux_results.value().available_W, 15);
+    EXPECT_EQ(store_to_mux_results.value().requested_W, 40);
+
+    mux_to_load1_results =
+        ModelResults_GetFlowForConnection(m, mux0_port0_to_load1_conn, t, results);
+    EXPECT_EQ(mux_to_load1_results.value().actual_W, 20);
+    EXPECT_EQ(mux_to_load1_results.value().available_W, 20);
+    EXPECT_EQ(mux_to_load1_results.value().requested_W, 20);
+
+    mux_to_conv_results = ModelResults_GetFlowForConnection(m, mux0_port1_to_conv_conn, t, results);
+    EXPECT_EQ(mux_to_conv_results.value().actual_W, 15);
+    EXPECT_EQ(mux_to_conv_results.value().available_W, 15);
+    EXPECT_EQ(mux_to_conv_results.value().requested_W, 40);
+
+    conv_to_load2_results = ModelResults_GetFlowForConnection(m, conv_to_load2_conn, t, results);
+    EXPECT_EQ(conv_to_load2_results.value().actual_W, 7);
+    EXPECT_EQ(conv_to_load2_results.value().available_W, 7);
+    EXPECT_EQ(conv_to_load2_results.value().requested_W, 20);
+
+    conv_to_load3_results = ModelResults_GetFlowForConnection(m, conv_to_load3_conn, t, results);
+    EXPECT_EQ(conv_to_load3_results.value().actual_W, 5);
+    EXPECT_EQ(conv_to_load3_results.value().available_W, 8);
+    EXPECT_EQ(conv_to_load3_results.value().requested_W, 5);
+
+    store_amount = ModelResults_GetStoreState(m, store_id, t, results);
+    EXPECT_EQ(store_amount.value(), 80);
+
+    // time = 5.0
+    t = 5.0;
+    results_idx = 2;
+    EXPECT_EQ(results[results_idx].time_s, t);
+
+    conv_to_waste_results =
+        ModelResults_GetFlowForConnection(m, conv.waste_connection_id, t, results);
+    EXPECT_EQ(conv_to_waste_results.value().actual_W, 0);
+    EXPECT_EQ(conv_to_waste_results.value().requested_W, 0);
+    EXPECT_EQ(conv_to_waste_results.value().available_W, 0);
+
+    src1_to_mux_results = ModelResults_GetFlowForConnection(m, src1_to_mux0_port0_conn, t, results);
+    EXPECT_EQ(src1_to_mux_results.value().actual_W, 20);
+    EXPECT_EQ(src1_to_mux_results.value().available_W, 20);
+    EXPECT_EQ(src1_to_mux_results.value().requested_W, 30);
+
+    src2_to_store_results = ModelResults_GetFlowForConnection(m, src2_to_store_conn, t, results);
+    EXPECT_EQ(src2_to_store_results.value().actual_W, 5);
+    EXPECT_EQ(src2_to_store_results.value().available_W, 5);
+    EXPECT_EQ(src2_to_store_results.value().requested_W, 20);
+
+    store_to_mux_results =
+        ModelResults_GetFlowForConnection(m, store_to_mux0_port1_conn, t, results);
+    EXPECT_EQ(store_to_mux_results.value().actual_W, 10);
+    EXPECT_EQ(store_to_mux_results.value().available_W, 15);
+    EXPECT_EQ(store_to_mux_results.value().requested_W, 10);
+
+    mux_to_load1_results =
+        ModelResults_GetFlowForConnection(m, mux0_port0_to_load1_conn, t, results);
+    EXPECT_EQ(mux_to_load1_results.value().actual_W, 20);
+    EXPECT_EQ(mux_to_load1_results.value().available_W, 25);
+    EXPECT_EQ(mux_to_load1_results.value().requested_W, 20);
+
+    mux_to_conv_results = ModelResults_GetFlowForConnection(m, mux0_port1_to_conv_conn, t, results);
+    EXPECT_EQ(mux_to_conv_results.value().actual_W, 10);
+    EXPECT_EQ(mux_to_conv_results.value().available_W, 10);
+    EXPECT_EQ(mux_to_conv_results.value().requested_W, 10);
+
+    conv_to_load2_results = ModelResults_GetFlowForConnection(m, conv_to_load2_conn, t, results);
+    EXPECT_EQ(conv_to_load2_results.value().actual_W, 5);
+    EXPECT_EQ(conv_to_load2_results.value().available_W, 5);
+    EXPECT_EQ(conv_to_load2_results.value().requested_W, 5);
+
+    conv_to_load3_results = ModelResults_GetFlowForConnection(m, conv_to_load3_conn, t, results);
+    EXPECT_EQ(conv_to_load3_results.value().actual_W, 5);
+    EXPECT_EQ(conv_to_load3_results.value().available_W, 5);
+    EXPECT_EQ(conv_to_load3_results.value().requested_W, 5);
+
+    store_amount = ModelResults_GetStoreState(m, store_id, t, results);
+    EXPECT_EQ(store_amount.value(), 50);
+
+    // time = 10.0
+    t = 10.0;
+    results_idx = 3;
+    EXPECT_EQ(results[results_idx].time_s, t);
+
+    conv_to_waste_results =
+        ModelResults_GetFlowForConnection(m, conv.waste_connection_id, t, results);
+    EXPECT_EQ(conv_to_waste_results.value().actual_W, 3);
+    EXPECT_EQ(conv_to_waste_results.value().requested_W, 3);
+    EXPECT_EQ(conv_to_waste_results.value().available_W, 3);
+
+    src1_to_mux_results = ModelResults_GetFlowForConnection(m, src1_to_mux0_port0_conn, t, results);
+    EXPECT_EQ(src1_to_mux_results.value().actual_W, 20);
+    EXPECT_EQ(src1_to_mux_results.value().available_W, 20);
+    EXPECT_EQ(src1_to_mux_results.value().requested_W, 50);
+
+    src2_to_store_results = ModelResults_GetFlowForConnection(m, src2_to_store_conn, t, results);
+    EXPECT_EQ(src2_to_store_results.value().actual_W, 5);
+    EXPECT_EQ(src2_to_store_results.value().available_W, 5);
+    EXPECT_EQ(src2_to_store_results.value().requested_W, 40);
+
+    store_to_mux_results =
+        ModelResults_GetFlowForConnection(m, store_to_mux0_port1_conn, t, results);
+    EXPECT_EQ(store_to_mux_results.value().actual_W, 15);
+    EXPECT_EQ(store_to_mux_results.value().available_W, 15);
+    EXPECT_EQ(store_to_mux_results.value().requested_W, 30);
+
+    mux_to_load1_results =
+        ModelResults_GetFlowForConnection(m, mux0_port0_to_load1_conn, t, results);
+    EXPECT_EQ(mux_to_load1_results.value().actual_W, 20);
+    EXPECT_EQ(mux_to_load1_results.value().available_W, 20);
+    EXPECT_EQ(mux_to_load1_results.value().requested_W, 20);
+
+    mux_to_conv_results = ModelResults_GetFlowForConnection(m, mux0_port1_to_conv_conn, t, results);
+    EXPECT_EQ(mux_to_conv_results.value().actual_W, 15);
+    EXPECT_EQ(mux_to_conv_results.value().available_W, 15);
+    EXPECT_EQ(mux_to_conv_results.value().requested_W, 30);
+
+    conv_to_load2_results = ModelResults_GetFlowForConnection(m, conv_to_load2_conn, t, results);
+    EXPECT_EQ(conv_to_load2_results.value().actual_W, 7);
+    EXPECT_EQ(conv_to_load2_results.value().available_W, 7);
+    EXPECT_EQ(conv_to_load2_results.value().requested_W, 15);
+
+    conv_to_load3_results = ModelResults_GetFlowForConnection(m, conv_to_load3_conn, t, results);
+    EXPECT_EQ(conv_to_load3_results.value().actual_W, 5);
+    EXPECT_EQ(conv_to_load3_results.value().available_W, 8);
+    EXPECT_EQ(conv_to_load3_results.value().requested_W, 5);
+
+    store_amount = ModelResults_GetStoreState(m, store_id, t, results);
+    EXPECT_EQ(store_amount.value(), 25);
+
+    // time = 12.5
+    t = 12.5;
+    results_idx = 4;
+    EXPECT_EQ(results[results_idx].time_s, t);
+
+    conv_to_waste_results =
+        ModelResults_GetFlowForConnection(m, conv.waste_connection_id, t, results);
+    EXPECT_EQ(conv_to_waste_results.value().actual_W, 0);
+    EXPECT_EQ(conv_to_waste_results.value().requested_W, 0);
+    EXPECT_EQ(conv_to_waste_results.value().available_W, 0);
+
+    src1_to_mux_results = ModelResults_GetFlowForConnection(m, src1_to_mux0_port0_conn, t, results);
+    EXPECT_EQ(src1_to_mux_results.value().actual_W, 20);
+    EXPECT_EQ(src1_to_mux_results.value().available_W, 20);
+    EXPECT_EQ(src1_to_mux_results.value().requested_W, 50);
+
+    src2_to_store_results = ModelResults_GetFlowForConnection(m, src2_to_store_conn, t, results);
+    EXPECT_EQ(src2_to_store_results.value().actual_W, 5);
+    EXPECT_EQ(src2_to_store_results.value().available_W, 5);
+    EXPECT_EQ(src2_to_store_results.value().requested_W, 40);
+
+    store_to_mux_results =
+        ModelResults_GetFlowForConnection(m, store_to_mux0_port1_conn, t, results);
+    EXPECT_EQ(store_to_mux_results.value().actual_W, 5);
+    EXPECT_EQ(store_to_mux_results.value().available_W, 5);
+    EXPECT_EQ(store_to_mux_results.value().requested_W, 30);
+
+    mux_to_load1_results =
+        ModelResults_GetFlowForConnection(m, mux0_port0_to_load1_conn, t, results);
+    EXPECT_EQ(mux_to_load1_results.value().actual_W, 20);
+    EXPECT_EQ(mux_to_load1_results.value().available_W, 20);
+    EXPECT_EQ(mux_to_load1_results.value().requested_W, 20);
+
+    mux_to_conv_results = ModelResults_GetFlowForConnection(m, mux0_port1_to_conv_conn, t, results);
+    EXPECT_EQ(mux_to_conv_results.value().actual_W, 5);
+    EXPECT_EQ(mux_to_conv_results.value().available_W, 5);
+    EXPECT_EQ(mux_to_conv_results.value().requested_W, 30);
+
+    conv_to_load2_results = ModelResults_GetFlowForConnection(m, conv_to_load2_conn, t, results);
+    EXPECT_EQ(conv_to_load2_results.value().actual_W, 2);
+    EXPECT_EQ(conv_to_load2_results.value().available_W, 2);
+    EXPECT_EQ(conv_to_load2_results.value().requested_W, 15);
+
+    conv_to_load3_results = ModelResults_GetFlowForConnection(m, conv_to_load3_conn, t, results);
+    EXPECT_EQ(conv_to_load3_results.value().actual_W, 3);
+    EXPECT_EQ(conv_to_load3_results.value().available_W, 3);
+    EXPECT_EQ(conv_to_load3_results.value().requested_W, 5);
+
+    store_amount = ModelResults_GetStoreState(m, store_id, t, results);
+    EXPECT_EQ(store_amount.value(), 0);
 }
 
-TEST(ErinBasicsTest, CanReadScenariosFromTomlForFixedDist)
+TEST(Erin, Test11)
 {
-  std::stringstream ss{};
-  ss << "[scenarios.blue_sky]\n"
-        "time_unit = \"hours\"\n"
-        "occurrence_distribution = \"immediately\"\n"
-        "duration = 8760\n"
-        "max_occurrences = 1\n"
-        "network = \"normal_operations\"\n";
-  ERIN::TomlInputReader t{ss};
-  const std::string scenario_id{"blue_sky"};
-  const auto expected_duration
-    = static_cast<::ERIN::RealTimeType>(8760 * ::ERIN::seconds_per_hour);
-  std::unordered_map<std::string, ERIN::Scenario> expected{{
-    scenario_id,
-    ERIN::Scenario{
-      scenario_id,
-      std::string{"normal_operations"},
-      expected_duration,
-      1,
-      0,
-      {},
-      false}}};
-  ERIN::size_type occurrence_distribution_id{0};
-  std::unordered_map<std::string,ERIN::size_type> dists{
-    {"immediately", occurrence_distribution_id}};
-  auto actual = t.read_scenarios(dists);
-  EXPECT_EQ(expected.size(), actual.size());
-  for (auto const& e: expected) {
-    const auto a = actual.find(e.first);
-    ASSERT_TRUE(a != actual.end());
-    EXPECT_EQ(e.second.get_name(), a->second.get_name());
-    EXPECT_EQ(e.second.get_network_id(), a->second.get_network_id());
-    EXPECT_EQ(e.second.get_duration(), a->second.get_duration());
-    EXPECT_EQ(
-        e.second.get_max_occurrences(),
-        a->second.get_max_occurrences());
-    EXPECT_EQ(
-        e.second.get_number_of_occurrences(),
-        a->second.get_number_of_occurrences());
-  }
-  ERIN::Time dt_expected{1, 0};
-  auto scenario = actual.at(scenario_id);
-  EXPECT_EQ(scenario.get_max_occurrences(), 1);
-  EXPECT_EQ(scenario.get_network_id(), "normal_operations");
-  EXPECT_EQ(scenario.get_occurrence_distribution_id(), occurrence_distribution_id);
-  EXPECT_EQ(scenario.get_duration(), 8760*3600);
-  EXPECT_EQ(scenario.get_name(), "blue_sky");
+    // create a model of src->conv->load and place a reliability dist on conv
+    // ensure the component goes down and comes back up (i.e., is repaired)
+    Model m = {};
+    m.random_function = []() { return 0.4; };
+    m.final_time_s = 50.0;
+    auto src_id = Model_AddConstantSource(m, 100);
+    auto load_id = Model_AddConstantLoad(m, 10);
+    auto conv_id = Model_AddConstantEfficiencyConverter(m, 1, 2);
+    auto src_to_conv_conn = Model_AddConnection(m, src_id, 0, conv_id.id, 0);
+    auto conv_to_load_conn = Model_AddConnection(m, conv_id.id, 0, load_id, 0);
+    auto fixed_dist_id = Model_AddFixedReliabilityDistribution(m, 10.0);
+    Model_AddFailureModeToComponent(m, conv_id.id, fixed_dist_id, fixed_dist_id);
+    auto results = Simulate(m, false);
+    EXPECT_EQ(results.size(), 6) << "Expect 6 times: 0.0, 10.0, 20.0, 30.0, 40.0, 50.0";
+
+    double t = 0.0;
+    auto src_to_conv_results = ModelResults_GetFlowForConnection(m, src_to_conv_conn, t, results);
+    EXPECT_EQ(src_to_conv_results.value().actual_W, 20) << "src -> conv actual should be 20";
+    EXPECT_EQ(src_to_conv_results.value().requested_W, 20) << "src -> conv requested should be 20";
+    EXPECT_EQ(src_to_conv_results.value().available_W, 100)
+        << "src -> conv available should be 100";
+
+    auto conv_to_load_results = ModelResults_GetFlowForConnection(m, conv_to_load_conn, t, results);
+    EXPECT_EQ(conv_to_load_results.value().actual_W, 10) << "conv -> load actual should be 10";
+    EXPECT_EQ(conv_to_load_results.value().requested_W, 10)
+        << "conv -> load requested should be 10";
+    EXPECT_EQ(conv_to_load_results.value().available_W, 50)
+        << "conv -> load available should be 50";
+
+    auto conv_to_waste_results =
+        ModelResults_GetFlowForConnection(m, conv_id.waste_connection_id, t, results);
+    EXPECT_EQ(conv_to_waste_results.value().actual_W, 10) << "conv -> waste actual should be 10";
+    EXPECT_EQ(conv_to_waste_results.value().requested_W, 10)
+        << "conv -> waste requested should be 10";
+    EXPECT_EQ(conv_to_waste_results.value().available_W, 10)
+        << "conv -> waste available should be 10";
+
+    // time = 10.0, failed
+    t = 10.0;
+    src_to_conv_results = ModelResults_GetFlowForConnection(m, src_to_conv_conn, t, results);
+    EXPECT_EQ(src_to_conv_results.value().actual_W, 0) << "src -> conv actual should be 0";
+    EXPECT_EQ(src_to_conv_results.value().requested_W, 0) << "src -> conv requested should be 0";
+    EXPECT_EQ(src_to_conv_results.value().available_W, 100)
+        << "src -> conv available should be 100";
+
+    conv_to_load_results = ModelResults_GetFlowForConnection(m, conv_to_load_conn, t, results);
+    EXPECT_EQ(conv_to_load_results.value().actual_W, 0) << "conv -> load actual should be 0";
+    EXPECT_EQ(conv_to_load_results.value().requested_W, 10)
+        << "conv -> load requested should be 10";
+    EXPECT_EQ(conv_to_load_results.value().available_W, 0) << "conv -> load available should be 0";
+
+    conv_to_waste_results =
+        ModelResults_GetFlowForConnection(m, conv_id.waste_connection_id, t, results);
+    EXPECT_EQ(conv_to_waste_results.value().actual_W, 0) << "conv -> waste actual should be 0";
+    EXPECT_EQ(conv_to_waste_results.value().requested_W, 0)
+        << "conv -> waste requested should be 0";
+    EXPECT_EQ(conv_to_waste_results.value().available_W, 0)
+        << "conv -> waste available should be 0";
+
+    // time = 20.0, fixed/restored
+    t = 20.0;
+    src_to_conv_results = ModelResults_GetFlowForConnection(m, src_to_conv_conn, t, results);
+    EXPECT_EQ(src_to_conv_results.value().actual_W, 20) << "src -> conv actual should be 20";
+    EXPECT_EQ(src_to_conv_results.value().requested_W, 20) << "src -> conv requested should be 20";
+    EXPECT_EQ(src_to_conv_results.value().available_W, 100)
+        << "src -> conv available should be 100";
+
+    conv_to_load_results = ModelResults_GetFlowForConnection(m, conv_to_load_conn, t, results);
+    EXPECT_EQ(conv_to_load_results.value().actual_W, 10) << "conv -> load actual should be 10";
+    EXPECT_EQ(conv_to_load_results.value().requested_W, 10)
+        << "conv -> load requested should be 10";
+    EXPECT_EQ(conv_to_load_results.value().available_W, 50) << "conv -> load available should be 0";
+
+    conv_to_waste_results =
+        ModelResults_GetFlowForConnection(m, conv_id.waste_connection_id, t, results);
+    EXPECT_EQ(conv_to_waste_results.value().actual_W, 10) << "conv -> waste actual should be 10";
+    EXPECT_EQ(conv_to_waste_results.value().requested_W, 10)
+        << "conv -> waste requested should be 10";
+    EXPECT_EQ(conv_to_waste_results.value().available_W, 10)
+        << "conv -> waste available should be 10";
+
+    // time = 30.0, failed
+    t = 30.0;
+    src_to_conv_results = ModelResults_GetFlowForConnection(m, src_to_conv_conn, t, results);
+    EXPECT_EQ(src_to_conv_results.value().actual_W, 0) << "src -> conv actual should be 0";
+    EXPECT_EQ(src_to_conv_results.value().requested_W, 0) << "src -> conv requested should be 0";
+    EXPECT_EQ(src_to_conv_results.value().available_W, 100)
+        << "src -> conv available should be 100";
+
+    conv_to_load_results = ModelResults_GetFlowForConnection(m, conv_to_load_conn, t, results);
+    EXPECT_EQ(conv_to_load_results.value().actual_W, 0) << "conv -> load actual should be 0";
+    EXPECT_EQ(conv_to_load_results.value().requested_W, 10)
+        << "conv -> load requested should be 10";
+    EXPECT_EQ(conv_to_load_results.value().available_W, 0) << "conv -> load available should be 0";
+
+    conv_to_waste_results =
+        ModelResults_GetFlowForConnection(m, conv_id.waste_connection_id, t, results);
+    EXPECT_EQ(conv_to_waste_results.value().actual_W, 0) << "conv -> waste actual should be 0";
+    EXPECT_EQ(conv_to_waste_results.value().requested_W, 0)
+        << "conv -> waste requested should be 0";
+    EXPECT_EQ(conv_to_waste_results.value().available_W, 0)
+        << "conv -> waste available should be 0";
+
+    // time = 40.0, fixed/restored
+    t = 40.0;
+    src_to_conv_results = ModelResults_GetFlowForConnection(m, src_to_conv_conn, t, results);
+    EXPECT_EQ(src_to_conv_results.value().actual_W, 20) << "src -> conv actual should be 20";
+    EXPECT_EQ(src_to_conv_results.value().requested_W, 20) << "src -> conv requested should be 20";
+    EXPECT_EQ(src_to_conv_results.value().available_W, 100)
+        << "src -> conv available should be 100";
+
+    conv_to_load_results = ModelResults_GetFlowForConnection(m, conv_to_load_conn, t, results);
+    EXPECT_EQ(conv_to_load_results.value().actual_W, 10) << "conv -> load actual should be 10";
+    EXPECT_EQ(conv_to_load_results.value().requested_W, 10)
+        << "conv -> load requested should be 10";
+    EXPECT_EQ(conv_to_load_results.value().available_W, 50) << "conv -> load available should be 0";
+
+    conv_to_waste_results =
+        ModelResults_GetFlowForConnection(m, conv_id.waste_connection_id, t, results);
+    EXPECT_EQ(conv_to_waste_results.value().actual_W, 10) << "conv -> waste actual should be 10";
+    EXPECT_EQ(conv_to_waste_results.value().requested_W, 10)
+        << "conv -> waste requested should be 10";
+    EXPECT_EQ(conv_to_waste_results.value().available_W, 10)
+        << "conv -> waste available should be 10";
+
+    // time = 50.0, failed
+    t = 50.0;
+    src_to_conv_results = ModelResults_GetFlowForConnection(m, src_to_conv_conn, t, results);
+    EXPECT_EQ(src_to_conv_results.value().actual_W, 0) << "src -> conv actual should be 0";
+    EXPECT_EQ(src_to_conv_results.value().requested_W, 0) << "src -> conv requested should be 0";
+    EXPECT_EQ(src_to_conv_results.value().available_W, 100)
+        << "src -> conv available should be 100";
+
+    conv_to_load_results = ModelResults_GetFlowForConnection(m, conv_to_load_conn, t, results);
+    EXPECT_EQ(conv_to_load_results.value().actual_W, 0) << "conv -> load actual should be 0";
+    EXPECT_EQ(conv_to_load_results.value().requested_W, 10)
+        << "conv -> load requested should be 10";
+    EXPECT_EQ(conv_to_load_results.value().available_W, 0) << "conv -> load available should be 0";
+
+    conv_to_waste_results =
+        ModelResults_GetFlowForConnection(m, conv_id.waste_connection_id, t, results);
+    EXPECT_EQ(conv_to_waste_results.value().actual_W, 0) << "conv -> waste actual should be 0";
+    EXPECT_EQ(conv_to_waste_results.value().requested_W, 0)
+        << "conv -> waste requested should be 0";
+    EXPECT_EQ(conv_to_waste_results.value().available_W, 0)
+        << "conv -> waste available should be 0";
 }
 
-TEST(ErinBasicsTest, CanReadScenariosFromTomlForRandIntDist)
+TEST(Erin, Test12)
 {
-  const std::string scenario_id{"blue_sky"};
-  std::stringstream ss{};
-  ss << "[scenarios." << scenario_id << "]\n"
-        "time_unit = \"hours\"\n"
-        "occurrence_distribution = \"1_to_10\"\n"
-        "duration = 8760\n"
-        "max_occurrences = 1\n"
-        "network = \"normal_operations\"\n";
-  ERIN::TomlInputReader t{ss};
-  std::unordered_map<std::string, ERIN::size_type> dists{{"1_to_10", 0}};
-  auto actual = t.read_scenarios(dists);
-  auto scenario = actual.at(scenario_id);
-  EXPECT_EQ(scenario.get_duration(), 8760*3600);
+    // Add a schedule-based source (availability, uncontrolled source)
+    // NOTE: it would be good to have a waste connection so that the component
+    // always "spills" (ullage) when not all available is used.
+    Model m = {};
+    m.random_function = []() { return 0.4; };
+    m.final_time_s = 20.0;
+    std::vector<TimeAndAmount> source_availability {};
+    source_availability.reserve(5);
+    source_availability.push_back(TimeAndAmount {0, 10});
+    source_availability.push_back(TimeAndAmount {10, 8});
+    source_availability.push_back(TimeAndAmount {20, 12});
+    auto src_id = Model_AddScheduleBasedSource(m, source_availability);
+    auto load_id = Model_AddConstantLoad(m, 10);
+    auto src_to_load_conn = Model_AddConnection(m, src_id.id, 0, load_id, 0);
+    auto results = Simulate(m, false);
+    EXPECT_EQ(results.size(), 3) << "should have 3 time results";
+    EXPECT_EQ(results[0].time_s, 0.0);
+    EXPECT_EQ(results[1].time_s, 10.0);
+    EXPECT_EQ(results[2].time_s, 20.0);
+    double t = 0.0;
+    auto src_to_load_results = ModelResults_GetFlowForConnection(m, src_to_load_conn, t, results);
+    EXPECT_EQ(src_to_load_results.value().actual_W, 10);
+    EXPECT_EQ(src_to_load_results.value().available_W, 10);
+    EXPECT_EQ(src_to_load_results.value().requested_W, 10);
+    auto src_to_waste_results =
+        ModelResults_GetFlowForConnection(m, src_id.waste_connection_id, t, results);
+    EXPECT_EQ(src_to_waste_results.value().actual_W, 0);
+    EXPECT_EQ(src_to_waste_results.value().available_W, 0);
+    EXPECT_EQ(src_to_waste_results.value().requested_W, 0);
+    t = 10.0;
+    src_to_load_results = ModelResults_GetFlowForConnection(m, src_to_load_conn, t, results);
+    EXPECT_EQ(src_to_load_results.value().actual_W, 8);
+    EXPECT_EQ(src_to_load_results.value().available_W, 8);
+    EXPECT_EQ(src_to_load_results.value().requested_W, 10);
+    src_to_waste_results =
+        ModelResults_GetFlowForConnection(m, src_id.waste_connection_id, t, results);
+    EXPECT_EQ(src_to_waste_results.value().actual_W, 0);
+    EXPECT_EQ(src_to_waste_results.value().available_W, 0);
+    EXPECT_EQ(src_to_waste_results.value().requested_W, 0);
+    t = 20.0;
+    src_to_load_results = ModelResults_GetFlowForConnection(m, src_to_load_conn, t, results);
+    EXPECT_EQ(src_to_load_results.value().actual_W, 10);
+    EXPECT_EQ(src_to_load_results.value().available_W, 12);
+    EXPECT_EQ(src_to_load_results.value().requested_W, 10);
+    src_to_waste_results =
+        ModelResults_GetFlowForConnection(m, src_id.waste_connection_id, t, results);
+    EXPECT_EQ(src_to_waste_results.value().actual_W, 2);
+    EXPECT_EQ(src_to_waste_results.value().available_W, 2);
+    EXPECT_EQ(src_to_waste_results.value().requested_W, 2);
 }
 
-TEST(ErinBasicsTest, CanReadScenariosIntensities)
+TEST(Erin, Test13)
 {
-  const std::string scenario_id{"class_4_hurricane"};
-  std::stringstream ss{};
-  ss << "[scenarios." << scenario_id << "]\n"
-        "time_unit = \"hours\"\n"
-        "occurrence_distribution = \"immediately\"\n"
-        "duration = 8760\n"
-        "max_occurrences = 1\n"
-        "network = \"emergency_operations\"\n"
-        "intensity.wind_speed_mph = 156\n"
-        "intensity.inundation_depth_ft = 4\n";
-  ERIN::TomlInputReader t{ss};
-  std::unordered_map<std::string, ERIN::size_type> cds{{"immediately",0}};
-  auto scenario_map = t.read_scenarios(cds);
-  const auto& scenario = scenario_map.at(scenario_id);
-  std::unordered_map<std::string,double> expected{
-    {"wind_speed_mph", 156.0},
-    {"inundation_depth_ft", 4.0}};
-  auto actual = scenario.get_intensities();
-  EXPECT_EQ(expected.size(), actual.size());
+    // SIMULATION INFO and INITIALIZATION
+    Model m = {};
+    m.random_function = []() { return 0.4; };
+    m.final_time_s = hours_as_seconds(48.0);
+    // LOADS
+    std::vector<TimeAndAmount> elecLoad {};
+    elecLoad.reserve(49);
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(0.0), kW_as_W(187.47)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(1.0), kW_as_W(146.271)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(2.0), kW_as_W(137.308)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(3.0), kW_as_W(170.276)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(4.0), kW_as_W(139.068)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(5.0), kW_as_W(171.944)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(6.0), kW_as_W(140.051)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(7.0), kW_as_W(173.406)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(8.0), kW_as_W(127.54)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(9.0), kW_as_W(135.751)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(10.0), kW_as_W(95.195)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(11.0), kW_as_W(107.644)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(12.0), kW_as_W(81.227)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(13.0), kW_as_W(98.928)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(14.0), kW_as_W(80.134)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(15.0), kW_as_W(97.222)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(16.0), kW_as_W(81.049)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(17.0), kW_as_W(114.29)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(18.0), kW_as_W(102.652)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(19.0), kW_as_W(125.672)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(20.0), kW_as_W(105.254)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(21.0), kW_as_W(125.047)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(22.0), kW_as_W(104.824)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(23.0), kW_as_W(126.488)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(24.0), kW_as_W(107.094)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(25.0), kW_as_W(135.559)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(26.0), kW_as_W(115.588)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(27.0), kW_as_W(137.494)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(28.0), kW_as_W(115.386)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(29.0), kW_as_W(133.837)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(30.0), kW_as_W(113.812)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(31.0), kW_as_W(343.795)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(32.0), kW_as_W(284.121)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(33.0), kW_as_W(295.434)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(34.0), kW_as_W(264.364)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(35.0), kW_as_W(247.33)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(36.0), kW_as_W(235.89)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(37.0), kW_as_W(233.43)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(38.0), kW_as_W(220.77)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(39.0), kW_as_W(213.825)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(40.0), kW_as_W(210.726)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(41.0), kW_as_W(223.706)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(42.0), kW_as_W(219.193)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(43.0), kW_as_W(186.31)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(44.0), kW_as_W(185.658)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(45.0), kW_as_W(173.137)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(46.0), kW_as_W(172.236)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(47.0), kW_as_W(47.676)});
+    elecLoad.push_back(TimeAndAmount {hours_as_seconds(48.0), kW_as_W(48.952)});
+    std::vector<TimeAndAmount> heat_load {};
+    heat_load.reserve(49);
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(0.0), kW_as_W(29.60017807)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(1.0), kW_as_W(16.70505099)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(2.0), kW_as_W(16.99812206)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(3.0), kW_as_W(23.4456856)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(4.0), kW_as_W(17.5842642)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(5.0), kW_as_W(23.73875667)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(6.0), kW_as_W(17.87733527)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(7.0), kW_as_W(24.03182774)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(8.0), kW_as_W(17.87733527)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(9.0), kW_as_W(23.4456856)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(10.0), kW_as_W(16.41197992)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(11.0), kW_as_W(18.75654848)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(12.0), kW_as_W(14.36048243)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(13.0), kW_as_W(16.11890885)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(14.0), kW_as_W(10.55055852)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(15.0), kW_as_W(13.77434029)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(16.0), kW_as_W(9.37827424)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(17.0), kW_as_W(13.18819815)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(18.0), kW_as_W(9.37827424)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(19.0), kW_as_W(13.48126922)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(20.0), kW_as_W(9.67134531)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(21.0), kW_as_W(12.30898494)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(22.0), kW_as_W(10.55055852)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(23.0), kW_as_W(13.48126922)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(24.0), kW_as_W(9.67134531)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(25.0), kW_as_W(13.48126922)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(26.0), kW_as_W(12.30898494)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(27.0), kW_as_W(14.06741136)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(28.0), kW_as_W(12.30898494)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(29.0), kW_as_W(13.48126922)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(30.0), kW_as_W(10.84362959)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(31.0), kW_as_W(4.10299498)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(32.0), kW_as_W(45.71908692)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(33.0), kW_as_W(38.97845231)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(34.0), kW_as_W(33.11703091)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(35.0), kW_as_W(26.96253844)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(36.0), kW_as_W(24.32489881)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(37.0), kW_as_W(22.85954346)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(38.0), kW_as_W(26.66946737)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(39.0), kW_as_W(29.89324914)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(40.0), kW_as_W(26.66946737)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(41.0), kW_as_W(24.32489881)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(42.0), kW_as_W(27.25560951)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(43.0), kW_as_W(26.66946737)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(44.0), kW_as_W(22.85954346)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(45.0), kW_as_W(21.10111704)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(46.0), kW_as_W(18.46347741)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(47.0), kW_as_W(0.0)});
+    heat_load.push_back(TimeAndAmount {hours_as_seconds(48.0), kW_as_W(3.22378177)});
+    std::vector<TimeAndAmount> pv_avail {};
+    pv_avail.reserve(49);
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(0.0), kW_as_W(0.0)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(1.0), kW_as_W(0.0)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(2.0), kW_as_W(0.0)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(3.0), kW_as_W(0.0)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(4.0), kW_as_W(0.0)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(5.0), kW_as_W(0.0)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(6.0), kW_as_W(0.0)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(7.0), kW_as_W(14.36)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(8.0), kW_as_W(671.759)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(9.0), kW_as_W(1265.933)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(10.0), kW_as_W(1583.21)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(11.0), kW_as_W(1833.686)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(12.0), kW_as_W(1922.872)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(13.0), kW_as_W(1749.437)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(14.0), kW_as_W(994.715)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(15.0), kW_as_W(468.411)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(16.0), kW_as_W(0.0)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(17.0), kW_as_W(0.0)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(18.0), kW_as_W(0.0)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(19.0), kW_as_W(0.0)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(20.0), kW_as_W(0.0)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(21.0), kW_as_W(0.0)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(22.0), kW_as_W(0.0)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(23.0), kW_as_W(0.0)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(24.0), kW_as_W(0.0)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(25.0), kW_as_W(0.0)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(26.0), kW_as_W(0.0)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(27.0), kW_as_W(0.0)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(28.0), kW_as_W(0.0)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(29.0), kW_as_W(0.0)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(30.0), kW_as_W(0.0)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(31.0), kW_as_W(10.591)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(32.0), kW_as_W(693.539)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(33.0), kW_as_W(1191.017)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(34.0), kW_as_W(1584.868)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(35.0), kW_as_W(1820.692)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(36.0), kW_as_W(1952.869)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(37.0), kW_as_W(1799.1)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(38.0), kW_as_W(1067.225)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(39.0), kW_as_W(396.023)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(40.0), kW_as_W(0.0)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(41.0), kW_as_W(0.0)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(42.0), kW_as_W(0.0)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(43.0), kW_as_W(0.0)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(44.0), kW_as_W(0.0)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(45.0), kW_as_W(0.0)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(46.0), kW_as_W(0.0)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(47.0), kW_as_W(0.0)});
+    pv_avail.push_back(TimeAndAmount {hours_as_seconds(48.0), kW_as_W(0.0)});
+    // COMPONENTS
+    auto pv_array_id = Model_AddScheduleBasedSource(m, pv_avail);
+    auto elec_util_id = Model_AddConstantSource(m, kW_as_W(10.0));
+    auto battery_id = Model_AddStore(m,
+                                     static_cast<uint64_t>(kWh_as_J(100.0)),
+                                     static_cast<uint64_t>(kW_as_W(10.0)),
+                                     static_cast<uint64_t>(kW_as_W(1'000.0)),
+                                     static_cast<uint64_t>(kWh_as_J(80.0)),
+                                     static_cast<uint64_t>(kWh_as_J(100.0)));
+    auto elec_source_mux_id = Model_AddMux(m, 2, 1);
+    auto elec_supply_mux_id = Model_AddMux(m, 2, 2);
+    auto ng_util_id = Model_AddConstantSource(m, std::numeric_limits<uint32_t>::max());
+    auto ng_source_mux_id = Model_AddMux(m, 1, 2);
+    auto ng_to_elec_conv_id = Model_AddConstantEfficiencyConverter(m, 42, 100);
+    auto elec_heat_pump_conv_id = Model_AddMover(m, 3.5);
+    auto ng_heater_conv_id = Model_AddConstantEfficiencyConverter(m, 98, 100);
+    auto heating_supply_mux_id = Model_AddMux(m, 3, 1);
+    auto elec_load_id = Model_AddScheduleBasedLoad(m, elecLoad);
+    auto heat_load_id = Model_AddScheduleBasedLoad(m, heat_load);
+    // NETWORK / CONNECTIONS
+    // - electricity
+    Model_AddConnection(m, pv_array_id.id, 0, elec_source_mux_id, 0);
+    Model_AddConnection(m, elec_util_id, 0, elec_source_mux_id, 1);
+    Model_AddConnection(m, elec_source_mux_id, 0, battery_id, 0);
+    Model_AddConnection(m, battery_id, 0, elec_supply_mux_id, 0);
+    Model_AddConnection(m, ng_to_elec_conv_id.id, 0, elec_supply_mux_id, 1);
+    Model_AddConnection(m, elec_supply_mux_id, 0, elec_load_id, 0);
+    Model_AddConnection(m, elec_supply_mux_id, 1, elec_heat_pump_conv_id.id, 0);
+    // - natural gas
+    Model_AddConnection(m, ng_util_id, 0, ng_source_mux_id, 0);
+    Model_AddConnection(m, ng_source_mux_id, 0, ng_to_elec_conv_id.id, 0);
+    Model_AddConnection(m, ng_source_mux_id, 1, ng_heater_conv_id.id, 0);
+    // - heating
+    Model_AddConnection(m, ng_to_elec_conv_id.id, 1, heating_supply_mux_id, 0);
+    Model_AddConnection(m, ng_heater_conv_id.id, 0, heating_supply_mux_id, 1);
+    Model_AddConnection(m, elec_heat_pump_conv_id.id, 0, heating_supply_mux_id, 2);
+    Model_AddConnection(m, heating_supply_mux_id, 0, heat_load_id, 0);
+    Simulate(m, false);
 }
 
-TEST(ErinBasicsTest, CanRunEx01FromTomlInput)
+TEST(Erin, Test14)
 {
-  std::stringstream ss;
-  ss << "[simulation_info]\n"
-        "# The commonality across all streams.\n"
-        "# We need to know what the common rate unit and quantity unit is.\n"
-        "# The rate unit should be the quantity unit per unit of time.\n"
-        "rate_unit = \"kW\"\n"
-        "quantity_unit = \"kJ\"\n"
-        "time_unit = \"years\"\n"
-        "max_time = 1000\n"
-        "############################################################\n"
-        "[loads.building_electrical]\n"
-        "time_unit = \"hours\"\n"
-        "rate_unit = \"kW\"\n"
-        "time_rate_pairs = [[0.0,1.0],[4.0,0.0]]\n"
-        "############################################################\n"
-        "[components.electric_utility]\n"
-        "type = \"source\"\n"
-        "# Point of Common Coupling for Electric Utility\n"
-        "output_stream = \"electricity\"\n"
-        "[components.cluster_01_electric]\n"
-        "type = \"load\"\n"
-        "input_stream = \"electricity\"\n"
-        "loads_by_scenario.blue_sky = \"building_electrical\"\n"
-        "############################################################\n"
-        "[networks.normal_operations]\n"
-        "connections=[[\"electric_utility:OUT(0)\", \"cluster_01_electric:IN(0)\", \"electricity\"]]\n"
-        "############################################################\n"
-        "[dist.every_hour]\n"
-        "type = \"fixed\"\n"
-        "value = 1\n"
-        "time_unit = \"hours\"\n"
-        "############################################################\n"
-        "[scenarios.blue_sky]\n"
-        "time_unit = \"hours\"\n"
-        "occurrence_distribution = \"every_hour\"\n"
-        "duration = 1\n"
-        "max_occurrences = 1\n"
-        "network = \"normal_operations\"\n";
-  ERIN::TomlInputReader r{ss};
-  auto si = r.read_simulation_info();
-  auto loads = r.read_loads();
-  auto components = r.read_components(loads);
-  auto networks = r.read_networks();
-  std::unordered_map<std::string, ERIN::size_type> cds{
-    {"every_hour", 0}};
-  auto scenarios = r.read_scenarios(cds);
-  std::unordered_map<std::string, std::vector<ERIN::TimeState>>
-    reliability_schedule{};
-  std::unordered_map<std::string, std::vector<ERIN::RealTimeType>>
-    scenario_schedules{
-      {"blue_sky", {3600}}};
-  ERIN::Main m{
-    si, components, networks, scenarios,
-    scenario_schedules, reliability_schedule};
-  auto out = m.run("blue_sky");
-  EXPECT_EQ(out.get_is_good(), true);
-  EXPECT_EQ(out.get_results().size(), 2);
-  std::unordered_set<std::string> expected_keys{
-    "cluster_01_electric", "electric_utility"};
-  // out.get_results() : Map String (Vector Datum)
-  for (const auto& item: out.get_results()) {
-    auto it = expected_keys.find(item.first);
-    EXPECT_TRUE(it != expected_keys.end());
-    ASSERT_EQ(item.second.size(), 2);
-    EXPECT_EQ(item.second.at(0).time, 0);
-    EXPECT_EQ(item.second.at(0).achieved_value, 1.0);
-    EXPECT_EQ(item.second.at(0).requested_value, 1.0);
-    EXPECT_EQ(item.second.at(1).time, 3600);
-    EXPECT_NEAR(item.second.at(1).achieved_value, 0.0, tolerance);
-    EXPECT_NEAR(item.second.at(1).requested_value, 0.0, tolerance);
-  }
+    Model m = {};
+    m.random_function = []() { return 0.4; };
+    m.final_time_s = 4.0;
+    std::vector<TimeAndAmount> available_power {
+        {0.0, 50},
+        {2.0, 10},
+    };
+    auto src01_id = Model_AddConstantSource(m, 50);
+    auto src02_id = Model_AddScheduleBasedSource(m, available_power);
+    auto mux_id = Model_AddMux(m, 2, 1);
+    auto load_id = Model_AddConstantLoad(m, 100);
+    Model_AddConnection(m, src01_id, 0, mux_id, 0);
+    Model_AddConnection(m, src02_id.id, 0, mux_id, 1);
+    Model_AddConnection(m, mux_id, 0, load_id, 0);
+    Simulate(m, false);
 }
 
-TEST(ErinBasicsTest, CanRunEx02FromTomlInput)
+TEST(Erin, Test15)
 {
-  std::stringstream ss;
-  ss << "[simulation_info]\n"
-        "rate_unit = \"kW\"\n"
-        "quantity_unit = \"kJ\"\n"
-        "time_unit = \"years\"\n"
-        "max_time = 1000\n"
-        "############################################################\n"
-        "[loads.building_electrical]\n"
-        "time_unit = \"hours\"\n"
-        "rate_unit = \"kW\"\n"
-        "time_rate_pairs = [[0.0,1.0],[4.0,0.0]]\n"
-        "############################################################\n"
-        "[components.electric_utility]\n"
-        "type = \"source\"\n"
-        "# Point of Common Coupling for Electric Utility\n"
-        "output_stream = \"electricity\"\n"
-        "[components.cluster_01_electric]\n"
-        "type = \"load\"\n"
-        "input_stream = \"electricity\"\n"
-        "loads_by_scenario.blue_sky = \"building_electrical\"\n"
-        "############################################################\n"
-        "[networks.normal_operations]\n"
-        "connections = [[\"electric_utility:OUT(0)\", \"cluster_01_electric:IN(0)\", \"electricity\"]]\n"
-        "############################################################\n"
-        "[dist.every_hour]\n"
-        "type = \"fixed\"\n"
-        "value = 1\n"
-        "time_unit = \"hours\"\n"
-        "############################################################\n"
-        "[scenarios.blue_sky]\n"
-        "time_unit = \"hours\"\n"
-        "occurrence_distribution = \"every_hour\"\n"
-        "duration = 4\n"
-        "max_occurrences = 1\n"
-        "network = \"normal_operations\"";
-  ERIN::TomlInputReader r{ss};
-  auto si = r.read_simulation_info();
-  auto loads = r.read_loads();
-  auto components = r.read_components(loads);
-  auto networks = r.read_networks();
-  std::unordered_map<std::string, ERIN::size_type> cds{{"every_hour", 0}};
-  auto scenarios = r.read_scenarios(cds);
-  std::unordered_map<std::string, std::vector<ERIN::TimeState>>
-    reliability_schedule{};
-  std::unordered_map<std::string, std::vector<ERIN::RealTimeType>>
-    scenario_schedules{{"blue_sky", {3600}}};
-  ERIN::Main m{
-    si, components, networks, scenarios,
-    scenario_schedules, reliability_schedule};
-  auto out = m.run("blue_sky");
-  EXPECT_EQ(out.get_is_good(), true);
-  EXPECT_EQ(out.get_results().size(), 2);
-  std::unordered_set<std::string> expected_keys{
-    "cluster_01_electric", "electric_utility"};
-  // out.get_results() : Map String (Vector Datum)
-  for (const auto& item: out.get_results()) {
-    auto it = expected_keys.find(item.first);
-    EXPECT_TRUE(it != expected_keys.end());
-    ASSERT_EQ(item.second.size(), 2);
-    EXPECT_EQ(item.second.at(0).time, 0);
-    EXPECT_EQ(item.second.at(0).achieved_value, 1.0);
-    EXPECT_EQ(item.second.at(0).requested_value, 1.0);
-    EXPECT_EQ(
-        item.second.at(1).time,
-        static_cast<::ERIN::RealTimeType>(4 * ::ERIN::seconds_per_hour));
-    EXPECT_NEAR(item.second.at(1).achieved_value, 0.0, tolerance);
-    EXPECT_NEAR(item.second.at(1).requested_value, 0.0, tolerance);
-  }
+    Model m = {};
+    m.random_function = []() { return 0.4; };
+    m.final_time_s = 2.0;
+    std::vector<TimeAndAmount> load_one {
+        {0.0, 50},
+        {2.0, 10},
+    };
+    auto src01_id = Model_AddConstantSource(m, 1'000);
+    auto src02_id = Model_AddConstantSource(m, 1'000);
+    auto conv_id = Model_AddConstantEfficiencyConverter(m, 1, 4);
+    auto mux_id = Model_AddMux(m, 2, 1);
+    auto load01_id = Model_AddScheduleBasedLoad(m, load_one);
+    auto load02_id = Model_AddConstantLoad(m, 100);
+    auto src1_to_conv_conn = Model_AddConnection(m, src01_id, 0, conv_id.id, 0);
+    auto conv_to_load_conn = Model_AddConnection(m, conv_id.id, 0, load01_id, 0);
+    auto conv_loss_to_mux_conn = Model_AddConnection(m, conv_id.id, 1, mux_id, 0);
+    auto src2_to_mux_conn = Model_AddConnection(m, src02_id, 0, mux_id, 1);
+    auto mux_to_load_conn = Model_AddConnection(m, mux_id, 0, load02_id, 0);
+    auto results = Simulate(m, false);
+    EXPECT_EQ(results.size(), 2);
+
+    double t = 0.0;
+    auto src1_to_conv_results = ModelResults_GetFlowForConnection(m, src1_to_conv_conn, t, results);
+    EXPECT_TRUE(src1_to_conv_results.has_value());
+    EXPECT_EQ(src1_to_conv_results.value().actual_W, 200);
+    EXPECT_EQ(src1_to_conv_results.value().requested_W, 200);
+    EXPECT_EQ(src1_to_conv_results.value().available_W, 1'000);
+
+    auto conv_to_load_results = ModelResults_GetFlowForConnection(m, conv_to_load_conn, t, results);
+    EXPECT_TRUE(conv_to_load_results.has_value());
+    EXPECT_EQ(conv_to_load_results.value().actual_W, 50);
+    EXPECT_EQ(conv_to_load_results.value().requested_W, 50);
+    EXPECT_EQ(conv_to_load_results.value().available_W, 250);
+
+    auto conv_loss_to_mux_results =
+        ModelResults_GetFlowForConnection(m, conv_loss_to_mux_conn, t, results);
+    EXPECT_TRUE(conv_loss_to_mux_results.has_value());
+    EXPECT_EQ(conv_loss_to_mux_results.value().actual_W, 100);
+    EXPECT_EQ(conv_loss_to_mux_results.value().requested_W, 100);
+    EXPECT_EQ(conv_loss_to_mux_results.value().available_W, 150);
+
+    auto src2_to_mux_results = ModelResults_GetFlowForConnection(m, src2_to_mux_conn, t, results);
+    EXPECT_TRUE(src2_to_mux_results.has_value());
+    EXPECT_EQ(src2_to_mux_results.value().actual_W, 0);
+    EXPECT_EQ(src2_to_mux_results.value().requested_W, 0);
+    EXPECT_EQ(src2_to_mux_results.value().available_W, 1'000);
+
+    auto mux_to_load_results = ModelResults_GetFlowForConnection(m, mux_to_load_conn, t, results);
+    EXPECT_TRUE(mux_to_load_results.has_value());
+    EXPECT_EQ(mux_to_load_results.value().actual_W, 100);
+    EXPECT_EQ(mux_to_load_results.value().requested_W, 100);
+    EXPECT_EQ(mux_to_load_results.value().available_W, 1'150);
+
+    t = 2.0;
+    src1_to_conv_results = ModelResults_GetFlowForConnection(m, src1_to_conv_conn, t, results);
+    EXPECT_TRUE(src1_to_conv_results.has_value());
+    EXPECT_EQ(src1_to_conv_results.value().actual_W, 40);
+    EXPECT_EQ(src1_to_conv_results.value().requested_W, 40);
+    EXPECT_EQ(src1_to_conv_results.value().available_W, 1'000);
+
+    conv_to_load_results = ModelResults_GetFlowForConnection(m, conv_to_load_conn, t, results);
+    EXPECT_TRUE(conv_to_load_results.has_value());
+    EXPECT_EQ(conv_to_load_results.value().actual_W, 10);
+    EXPECT_EQ(conv_to_load_results.value().requested_W, 10);
+    EXPECT_EQ(conv_to_load_results.value().available_W, 250);
+
+    conv_loss_to_mux_results =
+        ModelResults_GetFlowForConnection(m, conv_loss_to_mux_conn, t, results);
+    EXPECT_TRUE(conv_loss_to_mux_results.has_value());
+    EXPECT_EQ(conv_loss_to_mux_results.value().actual_W, 30);
+    EXPECT_EQ(conv_loss_to_mux_results.value().requested_W, 100);
+    EXPECT_EQ(conv_loss_to_mux_results.value().available_W, 30);
+
+    mux_to_load_results = ModelResults_GetFlowForConnection(m, mux_to_load_conn, t, results);
+    EXPECT_TRUE(mux_to_load_results.has_value());
+    EXPECT_EQ(mux_to_load_results.value().actual_W, 100);
+    EXPECT_EQ(mux_to_load_results.value().requested_W, 100);
+    EXPECT_EQ(mux_to_load_results.value().available_W, 1'030);
+
+    src2_to_mux_results = ModelResults_GetFlowForConnection(m, src2_to_mux_conn, t, results);
+    EXPECT_TRUE(src2_to_mux_results.has_value());
+    EXPECT_EQ(src2_to_mux_results.value().actual_W, 70);
+    EXPECT_EQ(src2_to_mux_results.value().requested_W, 70);
+    EXPECT_EQ(src2_to_mux_results.value().available_W, 1'000);
 }
 
-TEST(ErinBasicsTest, CanRun10ForSourceSink)
+TEST(Erin, Test16)
 {
-  namespace enw = ::erin::network;
-  namespace ep = ::erin::port;
-  std::string scenario_id{"blue_sky"};
-  std::string stream_id{"electricity"};
-  std::string source_id{"electric_utility"};
-  std::string load_id{"cluster_01_electric"};
-  std::string net_id{"normal_operations"};
-  const int N{10};
-  std::vector<::ERIN::LoadItem> loads;
-  for (int i{0}; i < N; ++i) {
-    loads.emplace_back(ERIN::LoadItem{i, 1.0});
-  }
-  std::unordered_map<std::string, std::vector<::ERIN::LoadItem>>
-    loads_by_scenario{{scenario_id, loads}};
-  ERIN::SimulationInfo si{};
-  std::unordered_map<std::string, std::vector<::ERIN::LoadItem>> loads_by_id{
-    {load_id, loads}
-  };
-  std::unordered_map<std::string, std::unique_ptr<::ERIN::Component>>
-    components;
-  components.insert(
-      std::make_pair(
-        source_id,
-        std::make_unique<::ERIN::SourceComponent>(
-          source_id, stream_id)));
-  components.insert(
-      std::make_pair(
-        load_id,
-        std::make_unique<::ERIN::LoadComponent>(
-          load_id,
-          stream_id,
-          loads_by_scenario)));
-  std::unordered_map<
-    std::string, std::vector<enw::Connection>> networks{
-      { net_id,
-        { enw::Connection{
-                           enw::ComponentAndPort{
-                             source_id, ep::Type::Outflow, 0},
-                           enw::ComponentAndPort{
-                             load_id, ep::Type::Inflow, 0},
-                           stream_id}}}};
-  std::unordered_map<std::string, ::ERIN::Scenario> scenarios{
+    Model m = {};
+    m.random_function = []() { return 0.4; };
+    m.final_time_s = 2.0;
+    size_t src_id = Model_AddConstantSource(m, 100);
+    size_t load_id = Model_AddConstantLoad(m, 50);
+    size_t pass_id = Model_AddPassThrough(m);
+    auto src_to_pass_conn = Model_AddConnection(m, src_id, 0, pass_id, 0);
+    auto pass_to_load_conn = Model_AddConnection(m, pass_id, 0, load_id, 0);
+    auto results = Simulate(m, false);
+    EXPECT_EQ(results.size(), 2);
+
+    double t = 0.0;
+    auto src_to_pass_results = ModelResults_GetFlowForConnection(m, src_to_pass_conn, t, results);
+    EXPECT_TRUE(src_to_pass_results.has_value());
+    EXPECT_EQ(src_to_pass_results.value().actual_W, 50);
+    EXPECT_EQ(src_to_pass_results.value().requested_W, 50);
+    EXPECT_EQ(src_to_pass_results.value().available_W, 100);
+
+    auto pass_to_load_results = ModelResults_GetFlowForConnection(m, pass_to_load_conn, t, results);
+    EXPECT_TRUE(pass_to_load_results.has_value());
+    EXPECT_EQ(pass_to_load_results.value().actual_W, 50);
+    EXPECT_EQ(pass_to_load_results.value().requested_W, 50);
+    EXPECT_EQ(pass_to_load_results.value().available_W, 100);
+}
+
+TEST(Erin, Test17)
+{
+    std::vector<TimeState> a {{0.0, true, {}, {}}, {10.0, false, {1}, {}}, {100.0, true, {}, {}}};
+    std::vector<TimeState> b {
+        {0.0, true, {}, {}}, {40.0, false, {2}, {}}, {90.0, true, {}, {}}, {150.0, false, {2}, {}}};
+    std::vector<TimeState> expected {{0.0, true, {}, {}},
+                                     {10.0, false, {1}, {}},
+                                     {40.0, false, {1, 2}, {}},
+                                     {90.0, false, {1}, {}},
+                                     {100.0, true, {}, {}},
+                                     {150.0, false, {2}, {}}};
+    std::vector<TimeState> actual = combine(a, b);
+    EXPECT_EQ(expected.size(), actual.size());
+    for (size_t i = 0; i < expected.size(); ++i)
     {
-      scenario_id,
-      ERIN::Scenario{
-        scenario_id,
-        net_id,
-        1,
-        -1,
-        0,
-        {},
-        false
-      }}};
-  std::unordered_map<std::string, std::vector<ERIN::TimeState>>
-    reliability_schedule{};
-  std::unordered_map<std::string, std::vector<ERIN::RealTimeType>>
-    scenario_schedules{{scenario_id, {0}}};
-  ERIN::Main m{
-    si, components, networks, scenarios,
-    scenario_schedules, reliability_schedule};
-  auto out = m.run(scenario_id);
-  EXPECT_EQ(out.get_is_good(), true);
+        EXPECT_EQ(expected[i], actual[i]);
+    }
 }
 
-TEST(ErinBasicsTest, ScenarioResultsMethods)
+TEST(Erin, Test18)
 {
-  namespace E = ::ERIN;
-  const E::RealTimeType start_time{0};
-  const E::RealTimeType duration{4};
-  const std::string elec_id{"electrical"};
-  const std::string A_id{"A"};
-  const std::string B_id{"B"};
-  const E::ScenarioResults sr{
-    true,
-    start_time,
-    duration,
-    { { A_id,
-        { E::Datum{0,2.0,1.0},
-          E::Datum{1,1.0,0.5},
-          E::Datum{2,0.0,0.0}}},
-      { B_id,
-        { E::Datum{0,10.0,10.0},
-          E::Datum{2,5.0,5.0},
-          E::Datum{4,0.0,0.0}}}},
-    { { A_id, elec_id}, { B_id, elec_id}},
-    { { A_id, E::ComponentType::Load},
-      { B_id, E::ComponentType::Source}},
-    { { A_id, E::PortRole::LoadInflow},
-      { B_id, E::PortRole::SourceOutflow}}};
-  using T_stream_name = std::string;
-  using T_total_requested_load_kJ = E::FlowValueType;
-  using T_total_energy_availability = E::FlowValueType;
-  // total requested loads by stream
-  std::unordered_map<T_stream_name, T_total_requested_load_kJ> trlbs_expected{
-    { elec_id, 3.0}};
-  auto trlbs_actual = sr.total_requested_loads_by_stream();
-  ASSERT_EQ(trlbs_expected.size(), trlbs_actual.size());
-  for (const auto& expected_pair : trlbs_expected) {
-    const auto& key = expected_pair.first;
-    const auto& value = expected_pair.second;
-    auto it = trlbs_actual.find(key);
-    ASSERT_TRUE(it != trlbs_actual.end());
-    EXPECT_NEAR(it->second, value, tolerance);
-  }
-  // total achieved loads by stream
-  std::unordered_map<T_stream_name, T_total_requested_load_kJ> talbs_expected{
-    { elec_id, 1.5}};
-  auto talbs_actual = sr.total_achieved_loads_by_stream();
-  ASSERT_EQ(talbs_expected.size(), talbs_actual.size());
-  for (const auto& expected_pair : talbs_expected) {
-    const auto& key = expected_pair.first;
-    const auto& value = expected_pair.second;
-    auto it = talbs_actual.find(key);
-    ASSERT_TRUE(it != talbs_actual.end());
-    EXPECT_NEAR(it->second, value, tolerance);
-  }
-  // total energy availability by stream
-  std::unordered_map<T_stream_name, T_total_energy_availability> tea_expected{
-    { elec_id, 0.5}};
-  auto tea_actual = sr.total_energy_availability_by_stream();
-  ASSERT_EQ(tea_expected.size(), tea_actual.size());
-  for (const auto& expected_pair : tea_expected) {
-    const auto& key = expected_pair.first;
-    const auto& value = expected_pair.second;
-    auto it = tea_actual.find(key);
-    ASSERT_TRUE(it != tea_actual.end());
-    EXPECT_NEAR(it->second, value, tolerance);
-  }
-}
-
-TEST(ErinBasicsTest, TestSumRequestedLoad)
-{
-  namespace E = ::ERIN;
-  std::vector<E::Datum> vs{
-    E::Datum{0,1.0,1.0}, E::Datum{1,0.5,0.5}, E::Datum{2,0.0,0.0}};
-  E::FlowValueType expected = 1.5;
-  auto actual = E::sum_requested_load(vs);
-  EXPECT_NEAR(expected, actual, tolerance);
-  vs = std::vector<E::Datum>{
-    E::Datum{10,100.0,100.0},E::Datum{20,10.0,10.0},E::Datum{22,0.0,0.0}};
-  expected = ((10.0 - 0.0) * 0.0) + ((20.0 - 10.0) * 100.0) + ((22.0 - 20.0) * 10.0);
-  actual = E::sum_requested_load(vs);
-  EXPECT_NEAR(expected, actual, tolerance);
-  vs = std::vector<E::Datum>(0);
-  expected = 0.0;
-  actual = E::sum_requested_load(vs);
-  EXPECT_NEAR(expected, actual, tolerance);
-  vs = std::vector<E::Datum>{ E::Datum{10,1.0,1.0}, E::Datum{5,0.0,0.0}};
-  ASSERT_THROW(E::sum_requested_load(vs), std::invalid_argument);
-}
-
-TEST(ErinBasicsTest, TestSumAchievedLoads)
-{
-  namespace E = ::ERIN;
-  std::vector<E::Datum> vs{
-    E::Datum{0,1.0,1.0}, E::Datum{1,0.5,0.5}, E::Datum{2,0.0,0.0}};
-  E::FlowValueType expected = 1.5;
-  auto actual = E::sum_achieved_load(vs);
-  EXPECT_NEAR(expected, actual, tolerance);
-  vs = std::vector<E::Datum>{
-    E::Datum{10,200.0,100.0},E::Datum{20,20.0,10.0},E::Datum{22,0.0,0.0}};
-  expected = ((10.0 - 0.0) * 0.0) + ((20.0 - 10.0) * 100.0) + ((22.0 - 20.0) * 10.0);
-  actual = E::sum_achieved_load(vs);
-  EXPECT_NEAR(expected, actual, tolerance);
-  vs = std::vector<E::Datum>(0);
-  expected = 0.0;
-  actual = E::sum_achieved_load(vs);
-  EXPECT_NEAR(expected, actual, tolerance);
-  vs = std::vector<E::Datum>{ E::Datum{10,1.0,1.0}, E::Datum{5,0.0,0.0}};
-  ASSERT_THROW(E::sum_achieved_load(vs), std::invalid_argument);
-}
-
-TEST(ErinBasicsTest, ScenarioResultsToCSV)
-{
-  ERIN::RealTimeType start_time{0};
-  ERIN::RealTimeType duration{4};
-  std::string elec_stream_id{"electrical"};
-  ERIN::ScenarioResults out{
-    true,
-    start_time,
-    duration,
-    {{std::string{"A"},
-      {
-        ::ERIN::Datum{0,1.0,1.0},
-        ::ERIN::Datum{1,0.5,0.5},
-        ::ERIN::Datum{2,0.0,0.0}}},
-     {std::string{"B"},
-       {
-         ::ERIN::Datum{0,10.0,10.0},
-         ::ERIN::Datum{2,5.0,5.0},
-         ::ERIN::Datum{4,0.0,0.0}}}},
-    {{std::string{"A"}, elec_stream_id},
-     {std::string{"B"}, elec_stream_id}},
-    {{std::string{"A"}, ::ERIN::ComponentType::Load},
-     {std::string{"B"}, ::ERIN::ComponentType::Source}},
-    {{std::string{"A"}, ::ERIN::PortRole::LoadInflow},
-     {std::string{"B"}, ::ERIN::PortRole::SourceOutflow}},
-  };
-  auto actual = out.to_csv(::ERIN::TimeUnits::Seconds);
-  std::string expected{
-    "time (seconds),A:achieved (kW),A:requested (kW),"
-      "B:achieved (kW),B:requested (kW)\n"
-    "0,1,1,10,10\n1,0.5,0.5,10,10\n2,0,0,5,5\n4,0,0,0,0\n"};
-  EXPECT_EQ(expected, actual);
-  duration = 4;
-  ERIN::ScenarioResults out2{
-    true,
-    start_time,
-    duration,
-    {{std::string{"A"}, {::ERIN::Datum{0,1.0,1.0}}}},
-    {{std::string{"A"}, elec_stream_id}},
-    {{std::string{"A"}, ::ERIN::ComponentType::Load}},
-    {{std::string{"A"}, ::ERIN::PortRole::LoadInflow}},
-  };
-  auto actual2 = out2.to_csv(::ERIN::TimeUnits::Seconds);
-  std::string expected2{
-    "time (seconds),A:achieved (kW),A:requested (kW)\n0,1,1\n4,0,0\n"};
-  EXPECT_EQ(expected2, actual2);
-}
-
-TEST(ErinBasicsTest, TestMaxTimeByScenario)
-{
-  namespace enw = ::erin::network;
-  namespace ep = ::erin::port;
-  std::string scenario_id{"blue_sky"};
-  std::string stream_id{"electricity"};
-  std::string source_id{"electric_utility"};
-  std::string load_id{"cluster_01_electric"};
-  std::string net_id{"normal_operations"};
-  const ::ERIN::RealTimeType max_time{10};
-  std::vector<::ERIN::LoadItem> loads;
-  for (::ERIN::RealTimeType i{0}; i < max_time; ++i) {
-    loads.emplace_back(::ERIN::LoadItem{i, 1.0});
-  }
-  std::unordered_map<std::string, std::vector<::ERIN::LoadItem>>
-    loads_by_scenario{{scenario_id, loads}};
-  ERIN::SimulationInfo si{};
-  std::unordered_map<std::string, std::vector<::ERIN::LoadItem>> loads_by_id{
-    {load_id, loads}
-  };
-  std::unordered_map<std::string, std::unique_ptr<::ERIN::Component>>
-    components;
-  components.insert(
-      std::make_pair(
-        source_id,
-        std::make_unique<ERIN::SourceComponent>(
-          source_id,
-          stream_id)));
-  components.insert(
-      std::make_pair(
-        load_id,
-        std::make_unique<ERIN::LoadComponent>(
-          load_id,
-          stream_id,
-          loads_by_scenario)));
-  std::unordered_map<
-    std::string, std::vector<enw::Connection>> networks{
-      { net_id,
-        { enw::Connection{
-                           enw::ComponentAndPort{source_id, ep::Type::Outflow, 0},
-                           enw::ComponentAndPort{load_id, ep::Type::Inflow, 0},
-                           stream_id}}}};
-  std::unordered_map<std::string, ERIN::Scenario> scenarios{
+    std::vector<TimeState> input {{0.0, true, {}, {}},
+                                  {10.0, false, {1}, {}},
+                                  {40.0, false, {1, 2}, {}},
+                                  {90.0, false, {1}, {}},
+                                  {100.0, true, {}, {}},
+                                  {150.0, false, {2}, {}}};
+    std::vector<TimeState> expected {
+        {50.0, false, {1, 2}, {}},
+        {90.0, false, {1}, {}},
+        {100.0, true, {}, {}},
+    };
+    std::vector<TimeState> actual = clip(input, 50.0, 120.0, false);
+    EXPECT_EQ(expected.size(), actual.size());
+    for (size_t i = 0; i < expected.size(); ++i)
     {
-      scenario_id,
-      ERIN::Scenario{
-        scenario_id,
-        net_id,
-        max_time,
-        -1,
-        0,
-        {},
-        false
-      }}};
-  std::unordered_map<std::string, std::vector<ERIN::TimeState>>
-    reliability_schedule{};
-  ERIN::Main m{si, components, networks, scenarios, {}, {}};
-  auto actual = m.max_time_for_scenario(scenario_id);
-  ERIN::RealTimeType expected = max_time;
-  EXPECT_EQ(expected, actual);
-}
-
-TEST(ErinBasicsTest, TestScenarioResultsMetrics)
-{
-  // ## Example 0
-  ERIN::RealTimeType start_time{0};
-  ERIN::RealTimeType duration{4};
-  ERIN::ScenarioResults sr0{
-    true,
-    start_time,
-    duration,
-    {{ std::string{"A0"},
-       { ERIN::Datum{0,1.0,1.0},
-         ERIN::Datum{4,0.0,0.0}}}},
-    {{ std::string{"A0"},
-       std::string{"electrical"}}},
-    {{ std::string{"A0"},
-       ERIN::ComponentType::Source}},
-    {{ std::string{"A0"},
-       ERIN::PortRole::SourceOutflow}},
-  };
-  // energy_availability
-  std::unordered_map<std::string,double> expected0{{"A0",1.0}};
-  auto actual0 = sr0.calc_energy_availability();
-  erin_test_utils::compare_maps<double>(
-      expected0, actual0, "energy_availability_with_sr0");
-  // max_downtime
-  std::unordered_map<std::string,::ERIN::RealTimeType> expected0_max_downtime{
-    {"A0",0}};
-  auto actual0_max_downtime = sr0.calc_max_downtime();
-  erin_test_utils::compare_maps_exact<::ERIN::RealTimeType>(
-      expected0_max_downtime, actual0_max_downtime, "max_downtime_with_sr0");
-  // load_not_served
-  std::unordered_map<std::string,::ERIN::FlowValueType> expected0_lns{
-    {"A0",0.0}};
-  auto actual0_lns = sr0.calc_load_not_served();
-  erin_test_utils::compare_maps<::ERIN::FlowValueType>(
-      expected0_lns, actual0_lns, "load_not_served_with_sr0");
-  // energy_usage_by_stream
-  std::unordered_map<std::string,::ERIN::FlowValueType> expected0_eubs{
-    {"electrical", 4.0}};
-  auto actual0_eubs = sr0.calc_energy_usage_by_stream(
-      ERIN::ComponentType::Source);
-  erin_test_utils::compare_maps<::ERIN::FlowValueType>(
-      expected0_eubs, actual0_eubs, "energy_usage_by_stream_with_sr0");
-  // ## Example 1
-  ERIN::ScenarioResults sr1{
-    true,
-    start_time,
-    duration,
-    {{ std::string{"A1"},
-       { ERIN::Datum{0,2.0,1.0},
-         ERIN::Datum{2,0.5,0.5},
-         ERIN::Datum{4,0.0,0.0}}}},
-    {{ std::string{"A1"},
-       std::string{"electrical"}}},
-    {{ std::string{"A1"},
-       ERIN::ComponentType::Source}},
-    {{ std::string{"A1"},
-       ERIN::PortRole::SourceOutflow}},
-  };
-  // energy_availability
-  std::unordered_map<std::string,double> expected1{{"A1",0.5}};
-  auto actual1 = sr1.calc_energy_availability();
-  ::erin_test_utils::compare_maps<double>(
-      expected1, actual1, "energy_availability_with_sr1");
-  // max_downtime
-  std::unordered_map<std::string,::ERIN::RealTimeType> expected1_max_downtime{
-    {"A1",2}};
-  auto actual1_max_downtime = sr1.calc_max_downtime();
-  ::erin_test_utils::compare_maps<::ERIN::RealTimeType>(
-      expected1_max_downtime, actual1_max_downtime, "max_downtime_with_sr1");
-  // load_not_served
-  std::unordered_map<std::string,::ERIN::FlowValueType> expected1_lns{
-    {"A1",2.0}};
-  auto actual1_lns = sr1.calc_load_not_served();
-  ::erin_test_utils::compare_maps<::ERIN::FlowValueType>(
-      expected1_lns, actual1_lns, "load_not_served_with_sr1");
-  // energy_usage_by_stream
-  std::unordered_map<std::string,::ERIN::FlowValueType> expected1_eubs{
-    {"electrical", 3.0}};
-  auto actual1_eubs = sr1.calc_energy_usage_by_stream(
-      ::ERIN::ComponentType::Source);
-  ::erin_test_utils::compare_maps<::ERIN::FlowValueType>(
-      expected1_eubs, actual1_eubs, "energy_usage_by_stream_with_sr1");
-}
-
-TEST(ErinBasicsTest, Test_calc_scenario_stats)
-{
-  std::vector<ERIN::Datum> ds{
-    { ERIN::Datum{0,1.0,1.0},
-      ERIN::Datum{4,0.0,0.0}}
-  };
-  // RealTimeType uptime;
-  // RealTimeType downtime;
-  // FlowValueType load_not_served;
-  // FlowValueType total_energy;
-  ERIN::ScenarioStats expected{
-    4,    // RealTimeType uptime
-    0,    // RealTimeType downtime
-    0,    // RealTimeType max_downtime
-    0.0,  // FlowValueType load_not_served
-    4.0}; // FlowValueType total_energy
-  auto actual = ERIN::calc_scenario_stats(ds);
-  EXPECT_EQ(expected.uptime, actual.uptime);
-  EXPECT_EQ(expected.downtime, actual.downtime);
-  EXPECT_EQ(expected.max_downtime, actual.max_downtime);
-  EXPECT_NEAR(expected.load_not_served, actual.load_not_served, tolerance);
-  EXPECT_NEAR(expected.total_energy, actual.total_energy, tolerance);
-}
-
-TEST(ErinBasicsTest, Test_calc_scenario_stats_for_max_single_event_downtime)
-{
-  std::vector<ERIN::Datum> ds{
+        EXPECT_EQ(expected[i], actual[i]);
+    }
+    std::vector<TimeState> expected2 {
+        {0.0, false, {1, 2}, {}},
+        {40.0, false, {1}, {}},
+        {50.0, true, {}, {}},
+    };
+    std::vector<TimeState> actual2 = clip(input, 50.0, 120.0, true);
+    EXPECT_EQ(expected2.size(), actual2.size());
+    for (size_t i = 0; i < expected2.size(); ++i)
     {
-      // time, requested, achieved
-      ERIN::Datum{0,1.0,1.0},
-      ERIN::Datum{4,1.0,0.0},
-      ERIN::Datum{6,1.0,1.0},
-      ERIN::Datum{20,1.0,0.0},
-      ERIN::Datum{28,1.0,1.0},
-      ERIN::Datum{30,0.0,0.0}
+        EXPECT_EQ(expected2[i], actual2[i]);
     }
-  };
-  // RealTimeType uptime;
-  // RealTimeType downtime;
-  // FlowValueType load_not_served;
-  // FlowValueType total_energy;
-  ERIN::ScenarioStats expected{
-    20,    // RealTimeType uptime
-    10,    // RealTimeType downtime
-    8,    // RealTimeType max_downtime
-    10.0,  // FlowValueType load_not_served
-    20.0}; // FlowValueType total_energy
-  auto actual = ERIN::calc_scenario_stats(ds);
-  EXPECT_EQ(expected.uptime, actual.uptime);
-  EXPECT_EQ(expected.downtime, actual.downtime);
-  EXPECT_EQ(expected.max_downtime, actual.max_downtime);
-  EXPECT_NEAR(expected.load_not_served, actual.load_not_served, tolerance);
-  EXPECT_NEAR(expected.total_energy, actual.total_energy, tolerance);
 }
 
-
-TEST(ErinBasicsTest, BasicScenarioTest)
+TEST(Erin, Test18a_TimeState_Combine_issue)
 {
-  // We want to create one or more scenarios and simulate them in DEVS
-  // each scenario should be autonomous and not interact with each other.
-  // The entire simulation has a max time limit.
-  // This is where we may need to switch to long or int64_t if we go with
-  // seconds for the time unit and 1000 years of simulation...
-  namespace enw = erin::network;
-  namespace ep = erin::port;
-  std::string scenario_id{"blue_sky"};
-  std::string stream_id{"electricity_medium_voltage"};
-  std::string source_id{"electric_utility"};
-  std::string load_id{"cluster_01_electric"};
-  std::string net_id{"normal_operations"};
-  const ERIN::RealTimeType scenario_duration_s{10};
-  std::vector<::ERIN::LoadItem> loads;
-  for (ERIN::RealTimeType i{0}; i < scenario_duration_s; ++i) {
-    loads.emplace_back(ERIN::LoadItem{i, 1.0});
-  }
-  std::unordered_map<std::string, std::vector<ERIN::LoadItem>>
-    loads_by_scenario{{scenario_id, loads}};
-  const ERIN::RealTimeType max_simulation_time_s{1000LL * 8760LL * 3600LL};
-  ERIN::SimulationInfo si{
-    "kW", "kJ", ERIN::TimeUnits::Seconds, max_simulation_time_s};
-  std::unordered_map<std::string, std::vector<ERIN::LoadItem>> loads_by_id{
-    {load_id, loads}
-  };
-  std::unordered_map<std::string, std::unique_ptr<::ERIN::Component>>
-    components;
-  components.insert(
-      std::make_pair(
-        source_id,
-        std::make_unique<ERIN::SourceComponent>(
-          source_id,
-          stream_id)));
-  components.insert(
-      std::make_pair(
-        load_id,
-        std::make_unique<ERIN::LoadComponent>(
-          load_id,
-          stream_id,
-          loads_by_scenario)));
-  std::unordered_map<
-    std::string, std::vector<enw::Connection>> networks{
-      { net_id,
-        { enw::Connection{
-                           { source_id, ep::Type::Outflow, 0},
-                           { load_id, ep::Type::Inflow, 0},
-                           stream_id}}}};
-  erin::distribution::DistributionSystem cds{};
-  auto dist_id = cds.add_fixed("every_100_seconds", 100);
-  std::unordered_map<std::string, ERIN::Scenario> scenarios{
+    std::vector<TimeState> a = {
+        {.time = 43'800 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {1},
+         .fragility_mode_causes = {}},
+        {.time = 43'896 * 3600.0,
+         .state = 1,
+         .failure_mode_causes = {},
+         .fragility_mode_causes = {}},
+        {.time = 87'696 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {1},
+         .fragility_mode_causes = {}},
+    };
+    std::vector<TimeState> b = {
+        {.time = 2'520 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {0},
+         .fragility_mode_causes = {}},
+        {.time = 3'000 * 3600.0,
+         .state = 1,
+         .failure_mode_causes = {},
+         .fragility_mode_causes = {}},
+        {.time = 5'520 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {1},
+         .fragility_mode_causes = {}},
+        {.time = 6'000 * 3600.0,
+         .state = 1,
+         .failure_mode_causes = {},
+         .fragility_mode_causes = {}},
+        {.time = 8'520 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {1},
+         .fragility_mode_causes = {}},
+        {.time = 9'000 * 3600.0,
+         .state = 1,
+         .failure_mode_causes = {},
+         .fragility_mode_causes = {}},
+    };
+    std::vector<TimeState> expected = {
+        {.time = 2'520 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {0},
+         .fragility_mode_causes = {}},
+        {.time = 3'000 * 3600.0,
+         .state = 1,
+         .failure_mode_causes = {},
+         .fragility_mode_causes = {}},
+        {.time = 5'520 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {1},
+         .fragility_mode_causes = {}},
+        {.time = 6'000 * 3600.0,
+         .state = 1,
+         .failure_mode_causes = {},
+         .fragility_mode_causes = {}},
+        {.time = 8'520 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {1},
+         .fragility_mode_causes = {}},
+        {.time = 9'000 * 3600.0,
+         .state = 1,
+         .failure_mode_causes = {},
+         .fragility_mode_causes = {}},
+        {.time = 43'800 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {1},
+         .fragility_mode_causes = {}},
+        {.time = 43'896 * 3600.0,
+         .state = 1,
+         .failure_mode_causes = {},
+         .fragility_mode_causes = {}},
+        {.time = 87'696 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {1},
+         .fragility_mode_causes = {}},
+    };
+    std::vector<TimeState> actual = combine(a, b);
+    EXPECT_EQ(actual.size(), expected.size());
+    for (size_t i = 0; i < expected.size(); ++i)
     {
-      scenario_id,
-      ERIN::Scenario{
-        scenario_id,
-        net_id,
-        scenario_duration_s,
-        1,
-        dist_id,
-        {},
-        false
-      }}};
-  std::unordered_map<std::string, std::vector<ERIN::TimeState>>
-    reliability_schedule{};
-  auto rand_fn = []()->double { return 0.5; };
-  auto scenario_schedules = ERIN::calc_scenario_schedule(
-      max_simulation_time_s, scenarios, cds, rand_fn);
-  ERIN::Main m{
-    si, components, networks, scenarios,
-    scenario_schedules, reliability_schedule};
-  auto actual = m.run_all();
-  EXPECT_TRUE(actual.get_is_good());
-  EXPECT_TRUE(actual.get_results().size() > 0);
-  for (const auto& r: actual.get_results()) {
-    EXPECT_TRUE(r.second.size() > 0);
-  }
-}
-
-TEST(ErinBasicsTest, DistributionTest)
-{
-  const int k{1};
-  auto d_fixed = ::erin::distribution::make_fixed<int>(k);
-  EXPECT_EQ(d_fixed(), k);
-  const int lower_bound{0};
-  const int upper_bound{10};
-  std::default_random_engine g{};
-  auto d_rand = ::erin::distribution::make_random_integer<int>(
-      g, lower_bound, upper_bound);
-  const int max_times{1000};
-  for (int i{0}; i < max_times; ++i) {
-    auto v{d_rand()};
-    EXPECT_TRUE((v >= lower_bound) && (v <= upper_bound))
-      << "expected v to be between (" << lower_bound << ", "
-      << upper_bound << "] " << "but was " << v;
-  }
-}
-
-TEST(ErinBasicsTest, FragilityCurves)
-{
-  const double lb{120.0};
-  const double ub{180.0};
-  erin::fragility::Linear f{lb, ub};
-  EXPECT_EQ(0.0, f.apply(lb - 10.0));
-  EXPECT_EQ(1.0, f.apply(ub + 10.0));
-  auto probability_of_failure{f.apply((lb + ub) / 2.0)};
-  EXPECT_TRUE(
-      (probability_of_failure > 0.0) && (probability_of_failure < 1.0));
-}
-
-TEST(ErinBasicsTest, TestGetFragilityCurves)
-{
-  namespace E = ERIN;
-  namespace ef = erin::fragility;
-  std::string st{"electricity"};
-  ERIN::fragility_map fragilities;
-  std::vector<E::FragilityCurveAndRepair> vs;
-  vs.emplace_back(
-    E::FragilityCurveAndRepair{
-      std::make_unique<::erin::fragility::Linear>(120.0, 180.0),
-      ef::no_repair_distribution});
-  fragilities.insert(std::make_pair("wind_speed_mph", std::move(vs)));
-  ERIN::SourceComponent c{"source", st, std::move(fragilities)};
-  std::unordered_map<std::string,double> intensities{
-    {"wind_speed_mph", 150.0}};
-  auto probs = c.apply_intensities(intensities);
-  EXPECT_EQ(probs.size(), 1);
-  EXPECT_NEAR(probs.at(0).failure_probability, 0.5, 1e-6);
-}
-
-TEST(ErinBasicsTest, TestFailureChecker)
-{
-  ::erin::fragility::FailureChecker fc{};
-  std::vector<double> probs_1 = {0.0};
-  EXPECT_FALSE(fc.is_failed(probs_1));
-  std::vector<double> probs_2 = {1.0};
-  EXPECT_TRUE(fc.is_failed(probs_2));
-  std::vector<double> probs_3 = {0.5};
-  bool at_least_one_false{false};
-  bool at_least_one_true{false};
-  int max{100};
-  for (int i{0}; i < max; ++i) {
-    auto result = fc.is_failed(probs_3);
-    if (result) {
-      at_least_one_true = true;
+        EXPECT_EQ(actual[i], expected[i]);
     }
-    if (!result) {
-      at_least_one_false = true;
+    actual = combine(b, a);
+    EXPECT_EQ(actual.size(), expected.size());
+    for (size_t i = 0; i < expected.size(); ++i)
+    {
+        EXPECT_EQ(actual[i], expected[i]);
     }
-    if (at_least_one_false && at_least_one_true) {
-      break;
-    }
-  }
-  EXPECT_TRUE(at_least_one_false && at_least_one_true);
 }
 
-TEST(ErinBasicsTest, TestFragilityWorksForNetworkSim)
+TEST(Erin, Test18b_TimeState_Combine_issue)
 {
-  namespace E = ERIN;
-  namespace enw = erin::network;
-  namespace ep = erin::port;
-  namespace ef = erin::fragility;
-  E::SimulationInfo si{};
-  const auto elec_id = std::string{"electrical"};
-  const auto elec_stream_id = std::string{elec_id};
-  const auto pcc_id = std::string{"electric_utility"};
-  const auto load_id = std::string{"cluster_01_electric"};
-  const auto gen_id = std::string{"emergency_generator"};
-  const auto inundation_depth_ft_lower_bound{6.0};
-  const auto inundation_depth_ft_upper_bound{14.0};
-  const auto wind_speed_mph_lower_bound{80.0};
-  const auto wind_speed_mph_upper_bound{160.0};
-  const auto intensity_wind_speed = std::string{"wind_speed_mph"};
-  const auto intensity_flood = std::string{"inundation_depth_ft"};
-  const auto blue_sky = std::string{"blue_sky"};
-  const auto class_4_hurricane = std::string{"class_4_hurricane"};
-  const auto normal = std::string{"normal_operations"};
-  const auto emergency = std::string{"emergency"};
-  std::unique_ptr<ef::Curve> fc_inundation =
-    std::make_unique<ef::Linear>(
-        inundation_depth_ft_lower_bound, inundation_depth_ft_upper_bound);
-  std::unique_ptr<ef::Curve> fc_wind =
-    std::make_unique<ef::Linear>(
-        wind_speed_mph_lower_bound, wind_speed_mph_upper_bound);
-  E::fragility_map fs_pcc, fs_load, fs_gen;
-  std::vector<E::FragilityCurveAndRepair> vs_pcc, vs_gen;
-  vs_pcc.emplace_back(
-    E::FragilityCurveAndRepair{fc_wind->clone(), ef::no_repair_distribution});
-  vs_gen.emplace_back(
-    E::FragilityCurveAndRepair{fc_inundation->clone(), ef::no_repair_distribution});
-  fs_pcc.emplace(std::make_pair(intensity_wind_speed, std::move(vs_pcc)));
-  fs_gen.emplace(std::make_pair(intensity_flood, std::move(vs_gen)));
-  std::vector<E::LoadItem>
-    loads{E::LoadItem{0,100.0}, E::LoadItem{100,0.0}};
-  std::unordered_map<std::string, std::vector<E::LoadItem>>
-    loads_by_scenario{{blue_sky, loads}, {class_4_hurricane, loads}};
-  std::unordered_map<std::string, std::unique_ptr<E::Component>> comps;
-  comps.emplace(
-      std::make_pair(
-        pcc_id,
-        std::make_unique<E::SourceComponent>(
-          pcc_id, elec_stream_id, std::move(fs_pcc))));
-  comps.emplace(
-      std::make_pair(
-        load_id,
-        std::make_unique<E::LoadComponent>(
-          load_id, elec_stream_id, loads_by_scenario, std::move(fs_load))));
-  comps.emplace(
-      std::make_pair(
-        gen_id,
-        std::make_unique<E::SourceComponent>(
-          gen_id, elec_stream_id, std::move(fs_gen))));
-  std::unordered_map<
-  std::string, std::vector<enw::Connection>> networks{
-    { normal,
-      { enw::Connection{ { pcc_id, ep::Type::Outflow, 0},
-                         { load_id, ep::Type::Inflow, 0},
-                         elec_id}}},
-    { emergency,
-      { enw::Connection{ { gen_id, ep::Type::Outflow, 0},
-                         { load_id, ep::Type::Inflow, 0},
-                         elec_id}}}};
-  // test 1: simulate with a fragility curve that never fails
-  // - confirm the statistics show load always met
-  std::unordered_map<std::string, double> intensities_low{
-    { intensity_wind_speed, 0.0},
-    { intensity_flood, 0.0}};
-  std::unordered_map<std::string, E::Scenario> scenarios_low{
-    { blue_sky, // 0
-      E::Scenario{blue_sky, normal, 10, 1, 0, {}, false}},
-    { class_4_hurricane,
-      E::Scenario{
-        class_4_hurricane, // 100
-        emergency, 10, -1, 0, intensities_low, false}}};
-  std::unordered_map<std::string, std::vector<ERIN::RealTimeType>>
-    scenario_schedules{
-      {blue_sky, {0}},
-      {class_4_hurricane, { 100LL  * 8760LL * 3600LL,
-                            200LL  * 8760LL * 3600LL,
-                            300LL  * 8760LL * 3600LL,
-                            400LL  * 8760LL * 3600LL,
-                            500LL  * 8760LL * 3600LL,
-                            600LL  * 8760LL * 3600LL,
-                            700LL  * 8760LL * 3600LL,
-                            800LL  * 8760LL * 3600LL,
-                            900LL  * 8760LL * 3600LL,
-                            1000LL * 8760LL * 3600LL}}};
-  if (false) {
-    std::cout << "scenario_schedules before m_low constructor\n";
-    for (const auto& ss : scenario_schedules) {
-      std::cout << "- " << ss.first << "\n";
-      for (const auto& start_time_s : ss.second) {
-        std::cout << "  - " << (start_time_s / (3600LL * 8760LL)) << " years\n";
-      }
+    std::vector<TimeState> a = {
+        {.time = 43'800 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {1},
+         .fragility_mode_causes = {}},
+        {.time = 43'896 * 3600.0,
+         .state = 1,
+         .failure_mode_causes = {},
+         .fragility_mode_causes = {}},
+        {.time = 87'696 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {1},
+         .fragility_mode_causes = {}},
+    };
+    std::vector<TimeState> b = {
+        {.time = 2'520 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {0},
+         .fragility_mode_causes = {}},
+        {.time = 3'000 * 3600.0,
+         .state = 1,
+         .failure_mode_causes = {},
+         .fragility_mode_causes = {}},
+        {.time = 5'520 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {0},
+         .fragility_mode_causes = {}},
+        {.time = 6'000 * 3600.0,
+         .state = 1,
+         .failure_mode_causes = {},
+         .fragility_mode_causes = {}},
+        {.time = 8'520 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {0},
+         .fragility_mode_causes = {}},
+        {.time = 9'000 * 3600.0,
+         .state = 1,
+         .failure_mode_causes = {},
+         .fragility_mode_causes = {}},
+        {.time = 11'520 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {0},
+         .fragility_mode_causes = {}},
+        {.time = 12'000 * 3600.0,
+         .state = 1,
+         .failure_mode_causes = {},
+         .fragility_mode_causes = {}},
+        {.time = 14'520 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {0},
+         .fragility_mode_causes = {}},
+        {.time = 15'000 * 3600.0,
+         .state = 1,
+         .failure_mode_causes = {},
+         .fragility_mode_causes = {}},
+        {.time = 17'520 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {0},
+         .fragility_mode_causes = {}},
+        {.time = 18'000 * 3600.0,
+         .state = 1,
+         .failure_mode_causes = {},
+         .fragility_mode_causes = {}},
+        {.time = 20'520 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {0},
+         .fragility_mode_causes = {}},
+        {.time = 21'000 * 3600.0,
+         .state = 1,
+         .failure_mode_causes = {},
+         .fragility_mode_causes = {}},
+        {.time = 23'520 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {0},
+         .fragility_mode_causes = {}},
+        {.time = 24'000 * 3600.0,
+         .state = 1,
+         .failure_mode_causes = {},
+         .fragility_mode_causes = {}},
+        {.time = 26'520 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {0},
+         .fragility_mode_causes = {}},
+        {.time = 27'000 * 3600.0,
+         .state = 1,
+         .failure_mode_causes = {},
+         .fragility_mode_causes = {}},
+        {.time = 29'520 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {0},
+         .fragility_mode_causes = {}},
+        {.time = 30'000 * 3600.0,
+         .state = 1,
+         .failure_mode_causes = {},
+         .fragility_mode_causes = {}},
+        {.time = 32'520 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {0},
+         .fragility_mode_causes = {}},
+        {.time = 33'000 * 3600.0,
+         .state = 1,
+         .failure_mode_causes = {},
+         .fragility_mode_causes = {}},
+        {.time = 35'520 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {0},
+         .fragility_mode_causes = {}},
+        {.time = 36'000 * 3600.0,
+         .state = 1,
+         .failure_mode_causes = {},
+         .fragility_mode_causes = {}},
+        {.time = 38'520 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {0},
+         .fragility_mode_causes = {}},
+        {.time = 39'000 * 3600.0,
+         .state = 1,
+         .failure_mode_causes = {},
+         .fragility_mode_causes = {}},
+        {.time = 41'520 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {0},
+         .fragility_mode_causes = {}},
+        {.time = 42'000 * 3600.0,
+         .state = 1,
+         .failure_mode_causes = {},
+         .fragility_mode_causes = {}},
+        {.time = 44'520 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {0},
+         .fragility_mode_causes = {}},
+        {.time = 45'000 * 3600.0,
+         .state = 1,
+         .failure_mode_causes = {},
+         .fragility_mode_causes = {}},
+        {.time = 47'520 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {0},
+         .fragility_mode_causes = {}},
+    };
+    std::vector<TimeState> expected = {
+        {.time = 2'520 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {0},
+         .fragility_mode_causes = {}},
+        {.time = 3'000 * 3600.0,
+         .state = 1,
+         .failure_mode_causes = {},
+         .fragility_mode_causes = {}},
+        {.time = 5'520 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {0},
+         .fragility_mode_causes = {}},
+        {.time = 6'000 * 3600.0,
+         .state = 1,
+         .failure_mode_causes = {},
+         .fragility_mode_causes = {}},
+        {.time = 8'520 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {0},
+         .fragility_mode_causes = {}},
+        {.time = 9'000 * 3600.0,
+         .state = 1,
+         .failure_mode_causes = {},
+         .fragility_mode_causes = {}},
+        {.time = 11'520 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {0},
+         .fragility_mode_causes = {}},
+        {.time = 12'000 * 3600.0,
+         .state = 1,
+         .failure_mode_causes = {},
+         .fragility_mode_causes = {}},
+        {.time = 14'520 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {0},
+         .fragility_mode_causes = {}},
+        {.time = 15'000 * 3600.0,
+         .state = 1,
+         .failure_mode_causes = {},
+         .fragility_mode_causes = {}},
+        {.time = 17'520 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {0},
+         .fragility_mode_causes = {}},
+        {.time = 18'000 * 3600.0,
+         .state = 1,
+         .failure_mode_causes = {},
+         .fragility_mode_causes = {}},
+        {.time = 20'520 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {0},
+         .fragility_mode_causes = {}},
+        {.time = 21'000 * 3600.0,
+         .state = 1,
+         .failure_mode_causes = {},
+         .fragility_mode_causes = {}},
+        {.time = 23'520 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {0},
+         .fragility_mode_causes = {}},
+        {.time = 24'000 * 3600.0,
+         .state = 1,
+         .failure_mode_causes = {},
+         .fragility_mode_causes = {}},
+        {.time = 26'520 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {0},
+         .fragility_mode_causes = {}},
+        {.time = 27'000 * 3600.0,
+         .state = 1,
+         .failure_mode_causes = {},
+         .fragility_mode_causes = {}},
+        {.time = 29'520 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {0},
+         .fragility_mode_causes = {}},
+        {.time = 30'000 * 3600.0,
+         .state = 1,
+         .failure_mode_causes = {},
+         .fragility_mode_causes = {}},
+        {.time = 32'520 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {0},
+         .fragility_mode_causes = {}},
+        {.time = 33'000 * 3600.0,
+         .state = 1,
+         .failure_mode_causes = {},
+         .fragility_mode_causes = {}},
+        {.time = 35'520 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {0},
+         .fragility_mode_causes = {}},
+        {.time = 36'000 * 3600.0,
+         .state = 1,
+         .failure_mode_causes = {},
+         .fragility_mode_causes = {}},
+        {.time = 38'520 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {0},
+         .fragility_mode_causes = {}},
+        {.time = 39'000 * 3600.0,
+         .state = 1,
+         .failure_mode_causes = {},
+         .fragility_mode_causes = {}},
+        {.time = 41'520 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {0},
+         .fragility_mode_causes = {}},
+        {.time = 42'000 * 3600.0,
+         .state = 1,
+         .failure_mode_causes = {},
+         .fragility_mode_causes = {}},
+        {.time = 43'800 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {1},
+         .fragility_mode_causes = {}}, // *
+        {.time = 43'896 * 3600.0,
+         .state = 1,
+         .failure_mode_causes = {},
+         .fragility_mode_causes = {}}, // *
+        {.time = 44'520 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {0},
+         .fragility_mode_causes = {}},
+        {.time = 45'000 * 3600.0,
+         .state = 1,
+         .failure_mode_causes = {},
+         .fragility_mode_causes = {}},
+        {.time = 47'520 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {0},
+         .fragility_mode_causes = {}},
+        {.time = 87'696 * 3600.0,
+         .state = 0,
+         .failure_mode_causes = {0, 1},
+         .fragility_mode_causes = {}}, // *
+    };
+    std::vector<TimeState> actual = combine(a, b);
+    EXPECT_EQ(actual.size(), expected.size());
+    for (size_t i = 0; i < expected.size(); ++i)
+    {
+        EXPECT_EQ(actual[i], expected[i]);
     }
-  }
-  E::Main m_low{
-    si, comps, networks, scenarios_low, scenario_schedules};
-  auto results_low = m_low.run(class_4_hurricane);
-  if (false) {
-    std::cout << "results_low:\n";
-    for (const auto& pair : results_low.get_results())
-      std::cout << "... " << pair.first << ": "
-                << E::vec_to_string<E::Datum>(pair.second) << "\n";
-  }
-  ASSERT_NEAR(
-      results_low.calc_energy_availability().at(load_id),
-      1.0,
-      tolerance);
+    actual = combine(b, a);
+    EXPECT_EQ(actual.size(), expected.size());
+    for (size_t i = 0; i < expected.size(); ++i)
+    {
+        EXPECT_EQ(actual[i], expected[i]);
+    }
+}
 
-  // test 2: simulate with a fragility curve that always fails
-  // - confirm the statistics show 100% load not served
-  std::unordered_map<std::string, double> intensities_high{
-    { intensity_wind_speed, 300.0},
-    { intensity_flood, 20.0}};
-  std::unordered_map<std::string, E::Scenario> scenarios_high{
-    { blue_sky,
-      E::Scenario{
-        blue_sky, normal, 10, 1, 0, {}, false}},
-    { class_4_hurricane,
-      E::Scenario{
-        class_4_hurricane,
-        emergency, 10, -1, 0, intensities_high, false}}};
-  
-  std::unordered_map<std::string, std::vector<std::unordered_map<std::string, erin::fragility::FragilityInfo>>>
-    fi{
-      {blue_sky, {}},
-      {class_4_hurricane, {
+TEST(Erin, Test19)
+{
+    std::vector<TimeState> A {
+        {0.0, false, {}, {0}},
+        {100.0, true, {}, {}},
+    };
+    std::vector<TimeState> B {
+        {0.0, true, {}, {}},
+        {120.0, false, {0}, {}},
+        {180.0, true, {}, {}},
+    };
+    std::vector<TimeState> C {
+        {0.0, true, {}, {}},
+        {60.0, false, {1}, {}},
+        {140.0, true, {}, {}},
+    };
+    std::vector<TimeState> expected {
+        {0.0, false, {}, {0}},
+        {60.0, false, {1}, {0}},
+        {100.0, false, {1}, {}},
+        {120.0, false, {0, 1}, {}},
+        {140.0, false, {0}, {}},
+        {180.0, true, {}, {}},
+    };
+    std::vector<TimeState> rel_sch;
+    rel_sch = combine(rel_sch, A);
+    rel_sch = combine(rel_sch, B);
+    std::vector<TimeState> actual = combine(rel_sch, C);
+    EXPECT_EQ(expected.size(), actual.size());
+    for (size_t i = 0; i < expected.size(); ++i)
+    {
+        EXPECT_EQ(expected[i], actual[i]);
+    }
+}
+
+TEST(Erin, Test20)
+{
+    std::vector<TimeState> input {
+        {5.0, false, {}, {}},
+        {7.0, true, {}, {}},
+        {12.0, false, {}, {}},
+        {14.0, true, {}, {}},
+        {19.0, false, {}, {}},
+        {21.0, true, {}, {}},
+    };
+    std::vector<TimeState> expected {
+        {5.0, false, {}, {}},
+        {7.0, true, {}, {}},
+    };
+    std::vector<TimeState> actual = clip(input, 0.0, 10.0, true);
+    EXPECT_EQ(expected.size(), actual.size());
+}
+
+TEST(Erin, Test21)
+{
+    std::vector<TimeState> input {
+        {0.0, true, {}, {}},
+        {10.0, false, {1}, {}},
+        {20.0, true, {}, {}},
+        {100.0, false, {}, {1}},
+        {180.0, true, {}, {}},
+    };
+    std::map<size_t, size_t> count_by_fail_mode_id;
+    std::map<size_t, size_t> count_by_frag_mode_id;
+    std::map<size_t, double> time_by_fail_mode_id;
+    std::map<size_t, double> time_by_frag_mode_id;
+    count_and_time_failure_events(input,
+                                  200.0,
+                                  count_by_fail_mode_id,
+                                  count_by_frag_mode_id,
+                                  time_by_fail_mode_id,
+                                  time_by_frag_mode_id);
+    std::map<size_t, size_t> expected_count_by_fail_mode_id {{1, 1}};
+    std::map<size_t, size_t> expected_count_by_frag_mode_id {{1, 1}};
+    std::map<size_t, double> expected_time_by_fail_mode_id {{1, 10.0}};
+    std::map<size_t, double> expected_time_by_frag_mode_id {{1, 80.0}};
+    EXPECT_EQ(expected_count_by_fail_mode_id.size(), count_by_fail_mode_id.size());
+    EXPECT_EQ(expected_count_by_frag_mode_id.size(), count_by_frag_mode_id.size());
+    EXPECT_EQ(expected_time_by_fail_mode_id.size(), time_by_fail_mode_id.size());
+    EXPECT_EQ(expected_time_by_frag_mode_id.size(), time_by_frag_mode_id.size());
+    for (auto const& p : expected_count_by_fail_mode_id)
+    {
+        EXPECT_TRUE(count_by_fail_mode_id.contains(p.first));
+        EXPECT_EQ(p.second, count_by_fail_mode_id[p.first]);
+    }
+    for (auto const& p : expected_count_by_frag_mode_id)
+    {
+        EXPECT_TRUE(count_by_frag_mode_id.contains(p.first));
+        EXPECT_EQ(p.second, count_by_frag_mode_id[p.first]);
+    }
+    for (auto const& p : expected_time_by_fail_mode_id)
+    {
+        EXPECT_TRUE(time_by_fail_mode_id.contains(p.first));
+        EXPECT_EQ(p.second, time_by_fail_mode_id[p.first]);
+    }
+    for (auto const& p : expected_time_by_frag_mode_id)
+    {
+        EXPECT_TRUE(time_by_frag_mode_id.contains(p.first));
+        EXPECT_EQ(p.second, time_by_frag_mode_id[p.first]);
+    }
+    count_by_fail_mode_id.clear();
+    count_by_frag_mode_id.clear();
+    time_by_fail_mode_id.clear();
+    time_by_frag_mode_id.clear();
+    input = {
+        {10.0, false, {1}, {}},
+        {20.0, true, {}, {}},
+        {100.0, false, {}, {1}},
+    };
+    count_and_time_failure_events(input,
+                                  180.0,
+                                  count_by_fail_mode_id,
+                                  count_by_frag_mode_id,
+                                  time_by_fail_mode_id,
+                                  time_by_frag_mode_id);
+    EXPECT_EQ(expected_count_by_fail_mode_id.size(), count_by_fail_mode_id.size());
+    EXPECT_EQ(expected_count_by_frag_mode_id.size(), count_by_frag_mode_id.size());
+    EXPECT_EQ(expected_time_by_fail_mode_id.size(), time_by_fail_mode_id.size());
+    EXPECT_EQ(expected_time_by_frag_mode_id.size(), time_by_frag_mode_id.size());
+    for (auto const& p : expected_count_by_fail_mode_id)
+    {
+        EXPECT_TRUE(count_by_fail_mode_id.contains(p.first));
+        EXPECT_EQ(p.second, count_by_fail_mode_id[p.first]);
+    }
+    for (auto const& p : expected_count_by_frag_mode_id)
+    {
+        EXPECT_TRUE(count_by_frag_mode_id.contains(p.first));
+        EXPECT_EQ(p.second, count_by_frag_mode_id[p.first]);
+    }
+    for (auto const& p : expected_time_by_fail_mode_id)
+    {
+        EXPECT_TRUE(time_by_fail_mode_id.contains(p.first));
+        EXPECT_EQ(p.second, time_by_fail_mode_id[p.first]);
+    }
+    for (auto const& p : expected_time_by_frag_mode_id)
+    {
+        EXPECT_TRUE(time_by_frag_mode_id.contains(p.first));
+        EXPECT_EQ(p.second, time_by_frag_mode_id[p.first]);
+    }
+}
+
+TEST(Erin, Test22)
+{
+    TabularFragilityCurve tfc {};
+    tfc.vulnerability_id = 0;
+    tfc.intensity = std::vector<double> {0.0, 1.0, 4.0, 6.0, 9.0, 10.0};
+    tfc.failure_fraction = std::vector<double> {0.0, 0.3, 0.7, 0.8, 0.95, 1.0};
+    double level = 7.0;
+    double result = TabularFragilityCurve_GetFailureFraction(tfc, level);
+    EXPECT_EQ(result, 0.85);
+}
+
+TEST(Erin, TestDoubleToString)
+{
+    double a = 1.5005;
+    std::string expected_a_at_p0 = "2";
+    std::string actual_a_at_p0 = erin::double_to_string(a, 0);
+    EXPECT_EQ(expected_a_at_p0, actual_a_at_p0);
+    std::string expected_a_at_p1 = "1.5";
+    std::string actual_a_at_p1 = erin::double_to_string(a, 1);
+    EXPECT_EQ(expected_a_at_p1, actual_a_at_p1);
+    std::string expected_a_at_p2 = "1.5";
+    std::string actual_a_at_p2 = erin::double_to_string(a, 2);
+    EXPECT_EQ(expected_a_at_p2, actual_a_at_p2);
+    std::string expected_a_at_p3 = "1.501";
+    std::string actual_a_at_p3 = erin::double_to_string(a, 3);
+    EXPECT_EQ(expected_a_at_p3, actual_a_at_p3);
+    std::string expected_a_at_p4 = "1.5005";
+    std::string actual_a_at_p4 = erin::double_to_string(a, 4);
+    EXPECT_EQ(expected_a_at_p4, actual_a_at_p4);
+    std::string expected_a_at_p5 = "1.5005";
+    std::string actual_a_at_p5 = erin::double_to_string(a, 5);
+    EXPECT_EQ(expected_a_at_p5, actual_a_at_p5);
+    double b = 4.0;
+    std::string expected_b_at_p0 = "4";
+    std::string actual_b_at_p0 = erin::double_to_string(b, 0);
+    EXPECT_EQ(expected_b_at_p0, actual_b_at_p0);
+    std::string expected_b_at_p1 = "4";
+    std::string actual_b_at_p1 = erin::double_to_string(b, 1);
+    EXPECT_EQ(expected_b_at_p1, actual_b_at_p1);
+    std::string expected_b_at_p2 = "4";
+    std::string actual_b_at_p2 = erin::double_to_string(b, 2);
+    EXPECT_EQ(expected_b_at_p2, actual_b_at_p2);
+    double c = 1500.0;
+    std::string expected_c_at_p0 = "1500";
+    std::string actual_c_at_p0 = erin::double_to_string(c, 0);
+    EXPECT_EQ(expected_c_at_p0, actual_c_at_p0);
+    double d = 1.5009;
+    std::string expected_d_at_p3 = "1.501";
+    std::string actual_d_at_p3 = erin::double_to_string(d, 3);
+    EXPECT_EQ(expected_d_at_p3, actual_d_at_p3);
+    double e = 1.5006;
+    std::string expected_e_at_p3 = "1.501";
+    std::string actual_e_at_p3 = erin::double_to_string(e, 3);
+    EXPECT_EQ(expected_e_at_p3, actual_e_at_p3);
+    double f = 1.50051;
+    std::string expected_f_at_p3 = "1.501";
+    std::string actual_f_at_p3 = erin::double_to_string(f, 3);
+    EXPECT_EQ(expected_f_at_p3, actual_f_at_p3);
+    double g = static_cast<double>(std::numeric_limits<flow_t>::max()) / 5.0;
+    EXPECT_EQ(3689348814741910500.0, g);
+    g /= 1000.0;
+    EXPECT_EQ(3689348814741910.5, g);
+    std::string expected_g_at_p1 = "3689348814741910.5";
+    std::string actual_g_at_p1 = erin::double_to_string(g, 1);
+    EXPECT_EQ(expected_g_at_p1, actual_g_at_p1);
+}
+
+TEST(Erin, TestTimeConversion)
+{
+    double time_s = 8760.0 * 3600.0;
+    double time_yr = time_in_seconds_to_desired_unit(time_s, TimeUnit::year);
+    EXPECT_NEAR(1.0, time_yr, 1e-6);
+    double time_wk = time_in_seconds_to_desired_unit(time_s, TimeUnit::week);
+    EXPECT_NEAR(8760.0 / (24.0 * 7.0), time_wk, 1e-6);
+    double time_day = time_in_seconds_to_desired_unit(time_s, TimeUnit::day);
+    EXPECT_NEAR(365.0, time_day, 1e-6);
+    double time_hr = time_in_seconds_to_desired_unit(time_s, TimeUnit::hour);
+    EXPECT_NEAR(8760.0, time_hr, 1e-6);
+    double time_min = time_in_seconds_to_desired_unit(time_s, TimeUnit::minute);
+    EXPECT_NEAR(8760.0 * 60.0, time_min, 1e-6);
+    double output_time_s = time_in_seconds_to_desired_unit(time_s, TimeUnit::second);
+    EXPECT_NEAR(8760.0 * 60.0 * 60.0, output_time_s, 1e-6);
+}
+
+TEST(Erin, TestParseTagAndPort)
+{
+    std::string input = "electric_utility:OUT(0)";
+    auto output = ParseTagAndPort(input, "");
+    EXPECT_TRUE(output.has_value());
+    EXPECT_EQ(output.value().tag, "electric_utility");
+    EXPECT_EQ(output.value().port, 0);
+    input = "bus:IN(1)";
+    output = ParseTagAndPort(input, "");
+    EXPECT_TRUE(output.has_value());
+    EXPECT_EQ(output.value().tag, "bus");
+    EXPECT_EQ(output.value().port, 1);
+    input = "my_place:OUT(123)";
+    output = ParseTagAndPort(input, "");
+    EXPECT_TRUE(output.has_value());
+    EXPECT_EQ(output.value().tag, "my_place");
+    EXPECT_EQ(output.value().port, 123);
+}
+
+TEST(Erin, TestParsingComponentsInUse)
+{
+    std::vector<toml::value> conns {
+        {"a:OUT(0)", "b:IN(0)", "electricity"},
+        {"b:OUT(0)", "c:IN(0)", "electricity"},
+        {"c:OUT(0)", "d:IN(0)", "electricity"},
+    };
+    std::unordered_map<std::string, toml::value> conn_table {
         {
-          { pcc_id, ef::FragilityInfo{class_4_hurricane, 100LL  * 8760LL * 3600LL, true} },
-          { load_id, ef::FragilityInfo{class_4_hurricane, 100LL  * 8760LL * 3600LL, true} },
-          { gen_id, ef::FragilityInfo{class_4_hurricane, 100LL  * 8760LL * 3600LL, true} }
-        }
-      }},
+            "connections",
+            conns,
+        },
     };
-  E::Main m_high{
-    si, comps, networks, scenarios_high, scenario_schedules, {}, fi};
-  auto results_high = m_high.run(class_4_hurricane);
-  if (false) {
-    std::cout << "results_high:\n";
-    for (const auto& pair : results_high.get_results())
-      std::cout << "... " << pair.first << ": "
-                << E::vec_to_string<E::Datum>(pair.second) << "\n";
-  }
-  ASSERT_NEAR(
-      results_high.calc_energy_availability().at(load_id),
-      0.0,
-      tolerance);
-}
-
-TEST(ErinBasicsTest, TestTimeUnits)
-{
-  const std::string tag_for_seconds{"seconds"};
-  auto expected_tu_s = ::ERIN::TimeUnits::Seconds;
-  auto actual_tu_s = ::ERIN::tag_to_time_units(tag_for_seconds);
-  EXPECT_EQ(expected_tu_s, actual_tu_s);
-  EXPECT_EQ(::ERIN::time_units_to_tag(actual_tu_s), tag_for_seconds);
-  const std::string tag_for_minutes{"minutes"};
-  auto expected_tu_min = ::ERIN::TimeUnits::Minutes;
-  auto actual_tu_min = ::ERIN::tag_to_time_units(tag_for_minutes);
-  EXPECT_EQ(expected_tu_min, actual_tu_min);
-  EXPECT_EQ(::ERIN::time_units_to_tag(actual_tu_min), tag_for_minutes);
-  const std::string tag_for_hours{"hours"};
-  auto expected_tu_hrs = ::ERIN::TimeUnits::Hours;
-  auto actual_tu_hrs = ::ERIN::tag_to_time_units(tag_for_hours);
-  EXPECT_EQ(expected_tu_hrs, actual_tu_hrs);
-  EXPECT_EQ(::ERIN::time_units_to_tag(actual_tu_hrs), tag_for_hours);
-  const std::string tag_for_days{"days"};
-  auto expected_tu_days = ::ERIN::TimeUnits::Days;
-  auto actual_tu_days = ::ERIN::tag_to_time_units(tag_for_days);
-  EXPECT_EQ(expected_tu_days, actual_tu_days);
-  EXPECT_EQ(::ERIN::time_units_to_tag(actual_tu_days), tag_for_days);
-  const std::string tag_for_years{"years"};
-  auto expected_tu_years = ::ERIN::TimeUnits::Years;
-  auto actual_tu_years = ::ERIN::tag_to_time_units(tag_for_years);
-  EXPECT_EQ(expected_tu_years, actual_tu_years);
-  EXPECT_EQ(::ERIN::time_units_to_tag(actual_tu_years), tag_for_years);
-}
-
-TEST(ErinBasicsTest, TestTimeUnitConversion)
-{
-  namespace E = ERIN;
-  E::RealTimeType t{1};
-  EXPECT_EQ(
-      E::time_to_seconds(t, E::TimeUnits::Years),
-      E::rtt_seconds_per_year);
-  EXPECT_EQ(
-      E::time_to_seconds(t, E::TimeUnits::Days),
-      E::rtt_seconds_per_day);
-  EXPECT_EQ(
-      E::time_to_seconds(t, E::TimeUnits::Hours),
-      E::rtt_seconds_per_hour);
-  EXPECT_EQ(
-      E::time_to_seconds(t, E::TimeUnits::Minutes),
-      E::rtt_seconds_per_minute);
-  EXPECT_EQ(
-      E::time_to_seconds(t, E::TimeUnits::Seconds),
-      1);
-}
-
-TEST(ErinBasicsTest, TestMuxerComponent)
-{
-  namespace E = ERIN;
-  namespace enw = erin::network; 
-  namespace ep = erin::port;
-  const std::string s1_id{"s1"};
-  const E::FlowValueType s1_max{12.0};
-  const E::FlowValueType s2_max{4.0};
-  const std::string s2_id{"s2"};
-  const std::string muxer_id{"bus"};
-  const std::string l1_id{"l1"};
-  const std::string l2_id{"l2"};
-  const int num_inflows{2};
-  const int num_outflows{2};
-  const std::string stream{"electrical"};
-  const std::string scenario_id{"blue_sky"};
-  const E::RealTimeType t_max{12};
-  std::unique_ptr<E::Component> m =
-    std::make_unique<E::MuxerComponent>(
-        muxer_id, stream, num_inflows, num_outflows,
-        E::MuxerDispatchStrategy::Distribute);
-  std::unordered_map<std::string, std::vector<E::LoadItem>>
-    l1_loads_by_scenario{
-      { scenario_id,
-        { E::LoadItem{0,10},
-          E::LoadItem{t_max, 0.0}}}};
-  std::unique_ptr<E::Component> l1 =
-    std::make_unique<E::LoadComponent>(
-        l1_id,
-        stream,
-        l1_loads_by_scenario);
-  std::unordered_map<std::string, std::vector<E::LoadItem>>
-    l2_loads_by_scenario{
-      { scenario_id,
-        { E::LoadItem{0,0},
-          E::LoadItem{5,5},
-          E::LoadItem{8,10},
-          E::LoadItem{10,5},
-          E::LoadItem{t_max,0}}}};
-  std::unique_ptr<E::Component> l2 =
-    std::make_unique<E::LoadComponent>(
-        l2_id,
-        stream,
-        l2_loads_by_scenario);
-  std::unique_ptr<E::Component> s1 =
-    std::make_unique<E::SourceComponent>(
-        s1_id,
-        stream,
-        s1_max);
-  std::unique_ptr<E::Component> s2 =
-    std::make_unique<E::SourceComponent>(
-        s2_id,
-        stream,
-        s2_max);
-  std::unordered_map<std::string, std::unique_ptr<E::Component>>
-    components;
-  components.insert(std::make_pair(muxer_id, std::move(m)));
-  components.insert(std::make_pair(l1_id, std::move(l1)));
-  components.insert(std::make_pair(l2_id, std::move(l2)));
-  components.insert(std::make_pair(s1_id, std::move(s1)));
-  components.insert(std::make_pair(s2_id, std::move(s2)));
-  adevs::Digraph<E::FlowValueType, E::Time> network;
-  const std::vector<enw::Connection> connections{
-    {{l1_id, ep::Type::Inflow, 0}, {muxer_id, ep::Type::Outflow, 0}, "electrical"},
-    {{l2_id, ep::Type::Inflow, 0}, {muxer_id, ep::Type::Outflow, 1}, "electrical"},
-    {{muxer_id, ep::Type::Inflow, 0}, {s1_id, ep::Type::Outflow, 0}, "electrical"},
-    {{muxer_id, ep::Type::Inflow, 1}, {s2_id, ep::Type::Outflow, 0}, "electrical"}};
-  bool two_way{true};
-  auto elements = enw::build(
-      scenario_id, network, connections, components,
-      {}, []()->double{ return 0.0; },
-      two_way);
-  std::shared_ptr<E::FlowWriter> fw =
-    std::make_shared<E::DefaultFlowWriter>();
-  std::vector<E::FlowElement*>::size_type expected_num_elements{5};
-  EXPECT_EQ(elements.size(), expected_num_elements);
-  for (auto e: elements)
-    e->set_flow_writer(fw);
-  adevs::Simulator<E::PortValue, E::Time> sim;
-  network.add(&sim);
-  const auto duration{t_max};
-  const int max_no_advance{static_cast<int>(elements.size()) * 10};
-  auto is_good = E::run_devs(sim, duration, max_no_advance, "test");
-  EXPECT_TRUE(is_good);
-  fw->finalize_at_time(t_max);
-  auto fw_results = fw->get_results();
-  auto fw_stream_ids = fw->get_stream_ids();
-  auto fw_comp_types = fw->get_component_types();
-  auto fw_port_roles = fw->get_port_roles();
-  E::RealTimeType scenario_start_time_s{0};
-  auto sr = E::process_single_scenario_results(
-      is_good, duration, scenario_start_time_s,
-      fw_results, fw_stream_ids, fw_comp_types, fw_port_roles);
-  EXPECT_TRUE(sr.get_is_good());
-  auto results = sr.get_results();
-  EXPECT_EQ(results, fw_results);
-  fw->clear();
-  const std::vector<std::string> expected_keys{
-    "s1", "s2", "l1", "l2",
-    "bus-inflow(0)", "bus-inflow(1)", "bus-outflow(0)", "bus-outflow(1)"};
-  const auto expected_num_keys{expected_keys.size()};
-  EXPECT_EQ(expected_num_keys, results.size());
-  for (const auto& k: expected_keys) {
-    auto it = results.find(k);
-    ASSERT_FALSE(it == results.end())
-      << "key \"" << k << "\" not found in results";
-  }
-  if (false) {
-    std::cout << "RESULTS DUMP:\n";
-    for (const auto& r : results) {
-      const auto& k = r.first;
-      const auto& vs = r.second;
-      auto n = vs.size();
-      for (std::vector<E::Datum>::size_type i{0}; i < n; ++i) {
-        const auto& v = vs[i];
-        std::cout << k << "[" << i << "]{t=" << v.time
-                  << ",r=" << v.requested_value
-                  << ",a=" << v.achieved_value << "}\n";
-      }
-    }
-  }
-  // bus-inflow(0)
-  const std::vector<E::Datum> expected_bus_inflow0{
-    E::Datum{0,10.0,10.0},
-    E::Datum{5,15.0,12.0},
-    E::Datum{8,20.0,12.0},
-    E::Datum{10,15.0,12.0},
-    E::Datum{t_max,0.0,0.0}};
-  const auto n_bus_inflow0 = expected_bus_inflow0.size();
-  const auto& actual_bus_inflow0 = results.at("bus-inflow(0)");
-  EXPECT_EQ(n_bus_inflow0, actual_bus_inflow0.size());
-  using size_type = std::vector<E::Datum>::size_type;
-  size_type min_bus_inflow_0_size{std::min(n_bus_inflow0, actual_bus_inflow0.size())};
-  for (size_type i{0}; i < min_bus_inflow_0_size; ++i) {
-    const auto& e = expected_bus_inflow0[i];
-    const auto& a = actual_bus_inflow0[i];
-    EXPECT_EQ(e.time, a.time)
-      << "bus-inflow(0):"
-      << "expected[" << i << "]{t=" << e.time
-      << ",r=" << e.requested_value
-      << ",a=" << e.achieved_value << "} "
-      << "!= actual[" << i << "]{t=" << a.time
-      << ",r=" << a.requested_value
-      << ",a=" << a.achieved_value << "}";
-    EXPECT_NEAR(e.requested_value, a.requested_value, tolerance)
-      << "bus-inflow(0):"
-      << "expected[" << i << "]{t=" << e.time
-      << ",r=" << e.requested_value
-      << ",a=" << e.achieved_value << "} "
-      << "!= actual[" << i << "]{t=" << a.time
-      << ",r=" << a.requested_value
-      << ",a=" << a.achieved_value << "}";
-    EXPECT_NEAR(e.achieved_value, a.achieved_value, tolerance)
-      << "bus-inflow(0):"
-      << "expected[" << i << "]{t=" << e.time
-      << ",r=" << e.requested_value
-      << ",a=" << e.achieved_value << "} "
-      << "!= actual[" << i << "]{t=" << a.time
-      << ",r=" << a.requested_value
-      << ",a=" << a.achieved_value << "}";
-    if (true && (n_bus_inflow0 != actual_bus_inflow0.size())) {
-      std::cout << "bus-inflow(0):"
-                << "expected[" << std::setw(2) << i << "]{t=" << std::setw(4) << e.time
-                << ",r=" << std::setw(6) << e.requested_value
-                << ",a=" << std::setw(6) << e.achieved_value << "} "
-                << "| actual[" << std::setw(2) << i << "]{t=" << std::setw(4) << a.time
-                << ",r=" << std::setw(6) << a.requested_value
-                << ",a=" << std::setw(6) << a.achieved_value << "}\n";
-    }
-  }
-  // bus-inflow(1)
-  const std::vector<E::Datum> expected_bus_inflow1{
-    E::Datum{0,0.0,0.0},
-    E::Datum{5,3.0,3.0},
-    E::Datum{8,8.0,4.0},
-    E::Datum{10,3.0,3.0},
-    E::Datum{t_max,0.0,0.0}};
-  const auto n_bus_inflow1 = expected_bus_inflow1.size();
-  const auto& actual_bus_inflow1 = results.at("bus-inflow(1)");
-  EXPECT_EQ(n_bus_inflow1, actual_bus_inflow1.size());
-  size_type min_bus_inflow_1_size{std::min(n_bus_inflow1, actual_bus_inflow1.size())};
-  for (size_type i{0}; i < min_bus_inflow_1_size; ++i) {
-    const auto& e = expected_bus_inflow1[i];
-    const auto& a = actual_bus_inflow1[i];
-    EXPECT_EQ(e.time, a.time)
-      << "bus-inflow(1):"
-      << "expected[" << i << "]{t=" << e.time
-      << ",r=" << e.requested_value
-      << ",a=" << e.achieved_value << "} "
-      << "!= actual[" << i << "]{t=" << a.time
-      << ",r=" << a.requested_value
-      << ",a=" << a.achieved_value << "}";
-    EXPECT_NEAR(e.requested_value, a.requested_value, tolerance)
-      << "bus-inflow(1):"
-      << "expected[" << i << "]{t=" << e.time
-      << ",r=" << e.requested_value
-      << ",a=" << e.achieved_value << "} "
-      << "!= actual[" << i << "]{t=" << a.time
-      << ",r=" << a.requested_value
-      << ",a=" << a.achieved_value << "}";
-    EXPECT_NEAR(e.achieved_value, a.achieved_value, tolerance)
-      << "bus-inflow(1):"
-      << "expected[" << i << "]{t=" << e.time
-      << ",r=" << e.requested_value
-      << ",a=" << e.achieved_value << "} "
-      << "!= actual[" << i << "]{t=" << a.time
-      << ",r=" << a.requested_value
-      << ",a=" << a.achieved_value << "}";
-    if (true && (n_bus_inflow1 != actual_bus_inflow1.size())) {
-      std::cout << "bus-inflow(1):"
-                << "expected[" << std::setw(2) << i << "]{t=" << std::setw(4) << e.time
-                << ",r=" << std::setw(6) << e.requested_value
-                << ",a=" << std::setw(6) << e.achieved_value << "} "
-                << "| actual[" << std::setw(2) << i << "]{t=" << std::setw(4) << a.time
-                << ",r=" << std::setw(6) << a.requested_value
-                << ",a=" << std::setw(6) << a.achieved_value << "}\n";
-    }
-  }
-  // bus-outflow(0)
-  const std::vector<E::Datum> expected_bus_outflow0{
-    E::Datum{0,10.0,10.0},
-    E::Datum{5,10.0,10.0},
-    E::Datum{8,10.0,8.0},
-    E::Datum{10,10.0,10.0},
-    E::Datum{t_max,0.0,0.0}};
-  const auto n_bus_outflow0 = expected_bus_outflow0.size();
-  const auto& actual_bus_outflow0 = results.at("bus-outflow(0)");
-  EXPECT_EQ(n_bus_outflow0, actual_bus_outflow0.size());
-  size_type min_bus_outflow_0{
-    std::min(n_bus_outflow0, actual_bus_outflow0.size())};
-  for (size_type i{0}; i < min_bus_outflow_0; ++i) {
-    const auto& e = expected_bus_outflow0[i];
-    const auto& a = actual_bus_outflow0[i];
-    EXPECT_EQ(e.time, a.time)
-      << "bus-outflow(0):"
-      << "expected[" << i << "]{t=" << e.time
-      << ",r=" << e.requested_value
-      << ",a=" << e.achieved_value << "} "
-      << "!= actual[" << i << "]{t=" << a.time
-      << ",r=" << a.requested_value
-      << ",a=" << a.achieved_value << "}";
-    EXPECT_NEAR(e.requested_value, a.requested_value, tolerance)
-      << "bus-outflow(0):"
-      << "expected[" << i << "]{t=" << e.time
-      << ",r=" << e.requested_value
-      << ",a=" << e.achieved_value << "} "
-      << "!= actual[" << i << "]{t=" << a.time
-      << ",r=" << a.requested_value
-      << ",a=" << a.achieved_value << "}";
-    EXPECT_NEAR(e.achieved_value, a.achieved_value, tolerance)
-      << "bus-outflow(0):"
-      << "expected[" << i << "]{t=" << e.time
-      << ",r=" << e.requested_value
-      << ",a=" << e.achieved_value << "} "
-      << "!= actual[" << i << "]{t=" << a.time
-      << ",r=" << a.requested_value
-      << ",a=" << a.achieved_value << "}";
-    if (true && (n_bus_outflow0 != actual_bus_outflow0.size())) {
-      std::cout << "bus-outflow(0):"
-                << "expected[" << std::setw(2) << i << "]{t=" << std::setw(4) << e.time
-                << ",r=" << std::setw(6) << e.requested_value
-                << ",a=" << std::setw(6) << e.achieved_value << "} "
-                << "| actual[" << std::setw(2) << i << "]{t=" << std::setw(4) << a.time
-                << ",r=" << std::setw(6) << a.requested_value
-                << ",a=" << std::setw(6) << a.achieved_value << "}\n";
-    }
-  }
-  // bus-outflow(1)
-  const std::vector<E::Datum> expected_bus_outflow1{
-    E::Datum{0,0.0,0.0},
-    E::Datum{5,5.0,5.0},
-    E::Datum{8,10.0,8.0},
-    E::Datum{10,5.0,5.0},
-    E::Datum{t_max,0.0,0.0}};
-  const auto n_bus_outflow1 = expected_bus_outflow1.size();
-  const auto& actual_bus_outflow1 = results.at("bus-outflow(1)");
-  EXPECT_EQ(n_bus_outflow1, actual_bus_outflow1.size());
-  size_type min_bus_outflow_1{std::min(n_bus_outflow1, actual_bus_outflow1.size())};
-  for (size_type i{0}; i < min_bus_outflow_1; ++i) {
-    const auto& e = expected_bus_outflow1[i];
-    const auto& a = actual_bus_outflow1[i];
-    EXPECT_EQ(e.time, a.time)
-      << "bus-outflow(1):"
-      << "expected[" << i << "]{t=" << e.time
-      << ",r=" << e.requested_value
-      << ",a=" << e.achieved_value << "} "
-      << "!= actual[" << i << "]{t=" << a.time
-      << ",r=" << a.requested_value
-      << ",a=" << a.achieved_value << "}";
-    EXPECT_NEAR(e.requested_value, a.requested_value, tolerance)
-      << "bus-outflow(1):"
-      << "expected[" << i << "]{t=" << e.time
-      << ",r=" << e.requested_value
-      << ",a=" << e.achieved_value << "} "
-      << "!= actual[" << i << "]{t=" << a.time
-      << ",r=" << a.requested_value
-      << ",a=" << a.achieved_value << "}";
-    EXPECT_NEAR(e.achieved_value, a.achieved_value, tolerance)
-      << "bus-outflow(1):"
-      << "expected[" << i << "]{t=" << e.time
-      << ",r=" << e.requested_value
-      << ",a=" << e.achieved_value << "} "
-      << "!= actual[" << i << "]{t=" << a.time
-      << ",r=" << a.requested_value
-      << ",a=" << a.achieved_value << "}";
-    if (true && (n_bus_outflow1 != actual_bus_outflow1.size())) {
-      std::cout << "bus-outflow(1):"
-                << "expected[" << std::setw(2) << i << "]{t=" << std::setw(4) << e.time
-                << ",r=" << std::setw(6) << e.requested_value
-                << ",a=" << std::setw(6) << e.achieved_value << "} "
-                << "| actual[" << std::setw(2) << i << "]{t=" << std::setw(4) << a.time
-                << ",r=" << std::setw(6) << a.requested_value
-                << ",a=" << std::setw(6) << a.achieved_value << "}\n";
-    }
-  }
-}
-
-TEST(ErinBasicsTest, TestAddMultipleFragilitiesToAComponent)
-{
-  namespace E = ERIN;
-  namespace ef = erin::fragility;
-  std::string id{"source"};
-  const std::string stream{"electricity"};
-  E::fragility_map frags;
-  std::vector<E::FragilityCurveAndRepair> v1, v2;
-  v1.emplace_back(
-    E::FragilityCurveAndRepair{
-      std::make_unique<ef::Linear>(80, 160.0),
-      ef::no_repair_distribution});
-  v1.emplace_back(
-    E::FragilityCurveAndRepair{
-      std::make_unique<ef::Linear>(40.0, 220.0),
-      ef::no_repair_distribution});
-  v2.emplace_back(
-    E::FragilityCurveAndRepair{
-      std::make_unique<ef::Linear>(4.0, 12.0),
-      ef::no_repair_distribution});
-  frags.emplace(std::make_pair("wind_speed_mph", std::move(v1)));
-  frags.emplace(std::make_pair("flood_depth_ft", std::move(v2)));
-  auto comp = ERIN::SourceComponent(id, stream, std::move(frags));
-}
-
-TEST(ErinBasicsTest, CanRunEx03FromTomlInput)
-{
-  namespace enw = ::erin::network;
-  namespace ef = ::erin::fragility;
-  namespace ep = ::erin::port;
-  std::stringstream ss;
-  ss << "[simulation_info]\n"
-        "rate_unit = \"kW\"\n"
-        "quantity_unit = \"kJ\"\n"
-        "time_unit = \"years\"\n"
-        "max_time = 1000\n"
-        "[loads.building_electrical]\n"
-        "time_unit = \"hours\"\n"
-        "rate_unit = \"kW\"\n"
-        "time_rate_pairs = [[0.0,1.0],[4.0,0.0]]\n"
-        "[components.electric_utility]\n"
-        "type = \"source\"\n"
-        "output_stream = \"electricity\"\n"
-        "fragility_modes = [\"highly_vulnerable_to_wind\"]\n"
-        "[components.cluster_01_electric]\n"
-        "type = \"load\"\n"
-        "input_stream = \"electricity\"\n"
-        "loads_by_scenario.blue_sky = \"building_electrical\"\n"
-        "loads_by_scenario.class_4_hurricane = \"building_electrical\"\n"
-        "fragility_modes = [\"somewhat_vulnerable_to_flooding\"]\n"
-        "[components.emergency_generator]\n"
-        "type = \"source\"\n"
-        "output_stream = \"electricity\"\n"
-        "fragility_modes = [\"somewhat_vulnerable_to_flooding\"]\n"
-        "[components.bus]\n"
-        "type = \"muxer\"\n"
-        "stream = \"electricity\"\n"
-        "num_inflows = 2\n"
-        "num_outflows = 1\n"
-        "dispatch_strategy = \"in_order\"\n"
-        "fragility_modes = ["
-          "\"highly_vulnerable_to_wind\", "
-          "\"somewhat_vulnerable_to_flooding\"]\n"
-        "[fragility_mode.highly_vulnerable_to_wind]\n"
-        "fragility_curve = \"highly_vulnerable_to_wind_curve\"\n"
-        "[fragility_mode.somewhat_vulnerable_to_flooding]\n"
-        "fragility_curve = \"somewhat_vulnerable_to_flooding_curve\"\n"
-        "[fragility_curve.somewhat_vulnerable_to_flooding_curve]\n"
-        "vulnerable_to = \"inundation_depth_ft\"\n"
-        "type = \"linear\"\n"
-        "lower_bound = 6.0\n"
-        "upper_bound = 14.0\n"
-        "[fragility_curve.highly_vulnerable_to_wind_curve]\n"
-        "vulnerable_to = \"wind_speed_mph\"\n"
-        "type = \"linear\"\n"
-        "lower_bound = 80.0\n"
-        "upper_bound = 160.0\n"
-        "[networks.normal_operations]\n"
-        "connections = [[\"electric_utility:OUT(0)\", \"cluster_01_electric:IN(0)\", \"electricity\"]]\n"
-        "[networks.emergency_operations]\n"
-        "connections = [\n"
-        "  [\"electric_utility:OUT(0)\", \"bus:IN(0)\", \"electricity\"],\n"
-        "  [\"emergency_generator:OUT(0)\", \"bus:IN(1)\", \"electricity\"],\n"
-        "  [\"bus:OUT(0)\", \"cluster_01_electric:IN(0)\", \"electricity\"]]\n"
-        "[dist.immediately]\n"
-        "type = \"fixed\"\n"
-        "value = 0\n"
-        "time_unit = \"hours\"\n"
-        "[dist.every_10_years]\n"
-        "type = \"fixed\"\n"
-        "value = 87600\n"
-        "time_unit = \"hours\"\n"
-        "[scenarios.blue_sky]\n"
-        "time_unit = \"hours\"\n"
-        "occurrence_distribution = \"immediately\"\n"
-        "duration = 8760\n"
-        "max_occurrences = 1\n"
-        "network = \"normal_operations\"\n"
-        "[scenarios.class_4_hurricane]\n"
-        "time_unit = \"hours\"\n"
-        "occurrence_distribution = \"every_10_years\"\n"
-        "duration = 336\n"
-        "max_occurrences = -1\n"
-        "network = \"emergency_operations\"\n"
-        "intensity.wind_speed_mph = 156\n"
-        "intensity.inundation_depth_ft = 8\n";
-  const std::vector<int>::size_type num_comps{4};
-  const std::vector<int>::size_type num_networks{2};
-  ERIN::TomlInputReader r{ss};
-  erin::distribution::DistributionSystem ds{};
-  auto si = r.read_simulation_info();
-  auto loads = r.read_loads();
-  auto read_dists = r.read_distributions(ds);
-  auto fragility_curves = r.read_fragility_curve_data();
-  auto fragility_modes = r.read_fragility_modes(read_dists, fragility_curves);
-  ERIN::ReliabilityCoordinator rc{};
-  auto components = r.read_components(loads, fragility_curves, fragility_modes, {}, rc);
-  EXPECT_EQ(num_comps, components.size());
-  // Test that components have fragility curves
-  for (const auto& c_pair : components) {
-    const auto& c_id = c_pair.first; 
-    const auto& c = c_pair.second;
-    EXPECT_TRUE(c->is_fragile())
-      << "component '" << c_id << "' should be fragile but is not";
-  }
-  auto networks = r.read_networks();
-  ASSERT_EQ(num_networks, networks.size());
-  const auto& normal_nw = networks["normal_operations"];
-  const std::vector<enw::Connection> expected_normal_nw{
-    enw::Connection{
-      enw::ComponentAndPort{"electric_utility", ep::Type::Outflow, 0},
-      enw::ComponentAndPort{"cluster_01_electric", ep::Type::Inflow, 0},
-      "electricity"}};
-  ASSERT_EQ(expected_normal_nw.size(), normal_nw.size());
-  ASSERT_EQ(expected_normal_nw, normal_nw);
-  const std::vector<enw::Connection> expected_eo{
-    enw::Connection{
-      enw::ComponentAndPort{"electric_utility", ep::Type::Outflow, 0},
-      enw::ComponentAndPort{"bus", ep::Type::Inflow, 0},
-      "electricity"},
-    enw::Connection{
-      enw::ComponentAndPort{"emergency_generator", ep::Type::Outflow, 0},
-      enw::ComponentAndPort{"bus", ep::Type::Inflow, 1},
-      "electricity"},
-    enw::Connection{
-      enw::ComponentAndPort{"bus", ep::Type::Outflow, 0},
-      enw::ComponentAndPort{"cluster_01_electric", ep::Type::Inflow, 0},
-      "electricity"}};
-  const auto& actual_eo = networks["emergency_operations"];
-  ASSERT_EQ(expected_eo.size(), actual_eo.size());
-  ASSERT_EQ(expected_eo, actual_eo);
-  std::unordered_map<std::string, ERIN::size_type> dists{
-    {"immediately", 0},
-    {"every_10_years", 1}};
-  auto scenarios = r.read_scenarios(dists);
-  constexpr ERIN::RealTimeType blue_sky_duration
-    = 8760 * ERIN::rtt_seconds_per_hour;
-  constexpr int blue_sky_max_occurrence = 1;
-  constexpr ERIN::RealTimeType hurricane_duration
-    = 336 * ERIN::rtt_seconds_per_hour;
-  constexpr int hurricane_max_occurrence = -1;
-  const std::unordered_map<std::string, ERIN::Scenario> expected_scenarios{
-    { "blue_sky",
-      ERIN::Scenario{
-        "blue_sky",
-        "normal_operations",
-        blue_sky_duration, 
-        blue_sky_max_occurrence,
-        0,
-        {},
-        false}},
-    { "class_4_hurricane",
-      ERIN::Scenario{
-        "class_4_hurricane",
-        "emergency_operations",
-        hurricane_duration,
-        hurricane_max_occurrence,
-        1,
-        {{"wind_speed_mph", 156.0}, {"inundation_depth_ft", 8.0}},
-        false}}};
-  ASSERT_EQ(expected_scenarios.size(), scenarios.size());
-  for (const auto& scenario_pair : expected_scenarios) {
-    auto scenario_it = scenarios.find(scenario_pair.first);
-    ASSERT_TRUE(scenario_it != scenarios.end());
-    const auto& es = scenario_pair.second;
-    const auto& as = scenario_it->second;
-    EXPECT_EQ(es.get_name(), as.get_name());
-    EXPECT_EQ(es.get_network_id(), as.get_network_id());
-    EXPECT_EQ(es.get_duration(), as.get_duration());
-    EXPECT_EQ(es.get_max_occurrences(), as.get_max_occurrences());
-    EXPECT_EQ(es.get_intensities(), as.get_intensities());
-  }
-  EXPECT_EQ(expected_scenarios, scenarios);
-  ERIN::Main m{si, components, networks, scenarios, {}};
-  auto out = m.run("blue_sky");
-  EXPECT_EQ(out.get_is_good(), true);
-  EXPECT_EQ(out.get_results().size(), 2);
-  std::unordered_set<std::string> expected_keys{
-    "cluster_01_electric", "electric_utility"};
-  // out.get_results() : Map String (Vector Datum)
-  for (const auto& item: out.get_results()) {
-    auto it = expected_keys.find(item.first);
-    ASSERT_TRUE(it != expected_keys.end());
-    const auto& results = item.second;
-    int i{0};
-    for (const auto& x : results) {
-      if constexpr (::ERIN::debug_level >= ::ERIN::debug_level_high) {
-        std::cout << "id: " << item.first << "\n";
-        std::cout << "x[" << i << "].time            = " << x.time << "\n"
-          << "x[" << i << "].achieved_value  = " << x.achieved_value
-          << "\n"
-          << "x[" << i << "].requested_value = " << x.requested_value
-          << "\n";
-      }
-      ++i;
-    }
-    ASSERT_EQ(item.second.size(), 3);
-    EXPECT_EQ(item.second.at(0).time, 0);
-    EXPECT_EQ(item.second.at(0).achieved_value, 1.0);
-    EXPECT_EQ(item.second.at(0).requested_value, 1.0);
-    EXPECT_EQ(item.second.at(1).time, 4 * 3'600);
-    EXPECT_NEAR(item.second.at(1).achieved_value, 0.0, tolerance);
-    EXPECT_NEAR(item.second.at(1).requested_value, 0.0, tolerance);
-    EXPECT_EQ(item.second.at(2).time, 31'536'000);
-    EXPECT_NEAR(item.second.at(2).achieved_value, 0.0, tolerance);
-    EXPECT_NEAR(item.second.at(2).requested_value, 0.0, tolerance);
-  }
-}
-
-TEST(ErinBasicsTest, CanRunEx03Class4HurricaneFromTomlInput)
-{
-  namespace enw = ::erin::network;
-  namespace ef = ::erin::fragility;
-  namespace ep = ::erin::port;
-  std::string input =
-        "[simulation_info]\n"
-        "rate_unit = \"kW\"\n"
-        "quantity_unit = \"kJ\"\n"
-        "time_unit = \"years\"\n"
-        "max_time = 1000\n"
-        "[loads.building_electrical]\n"
-        "time_unit = \"hours\"\n"
-        "rate_unit = \"kW\"\n"
-        "time_rate_pairs = [[0.0,1.0],[4.0,0.0]]\n"
-        "[components.electric_utility]\n"
-        "type = \"source\"\n"
-        "output_stream = \"electricity\"\n"
-        "fragility_modes = [\"highly_vulnerable_to_wind\"]\n"
-        "[components.cluster_01_electric]\n"
-        "type = \"load\"\n"
-        "input_stream = \"electricity\"\n"
-        "loads_by_scenario.blue_sky = \"building_electrical\"\n"
-        "loads_by_scenario.class_4_hurricane = \"building_electrical\"\n"
-        "fragility_modes = [\"somewhat_vulnerable_to_flooding\"]\n"
-        "[components.emergency_generator]\n"
-        "type = \"source\"\n"
-        "output_stream = \"electricity\"\n"
-        "fragility_modes = [\"somewhat_vulnerable_to_flooding\"]\n"
-        "[components.bus]\n"
-        "type = \"muxer\"\n"
-        "stream = \"electricity\"\n"
-        "num_inflows = 2\n"
-        "num_outflows = 1\n"
-        "dispatch_strategy = \"in_order\"\n"
-        "fragility_modes = ["
-          "\"highly_vulnerable_to_wind\", "
-          "\"somewhat_vulnerable_to_flooding\"]\n"
-        "[fragility_mode.somewhat_vulnerable_to_flooding]\n"
-        "fragility_curve = \"somewhat_vulnerable_to_flooding_curve\"\n"
-        "[fragility_mode.highly_vulnerable_to_wind]\n"
-        "fragility_curve = \"highly_vulnerable_to_wind_curve\"\n"
-        "[fragility_curve.somewhat_vulnerable_to_flooding_curve]\n"
-        "vulnerable_to = \"inundation_depth_ft\"\n"
-        "type = \"linear\"\n"
-        "lower_bound = 6.0\n"
-        "upper_bound = 14.0\n"
-        "[fragility_curve.highly_vulnerable_to_wind_curve]\n"
-        "vulnerable_to = \"wind_speed_mph\"\n"
-        "type = \"linear\"\n"
-        "lower_bound = 80.0\n"
-        "upper_bound = 160.0\n"
-        "[networks.normal_operations]\n"
-        "connections = [[\"electric_utility:OUT(0)\", \"cluster_01_electric:IN(0)\", \"electricity\"]]\n"
-        "[networks.emergency_operations]\n"
-        "connections = [\n"
-        "  [\"electric_utility:OUT(0)\", \"bus:IN(0)\", \"electricity\"],\n"
-        "  [\"emergency_generator:OUT(0)\", \"bus:IN(1)\", \"electricity\"],\n"
-        "  [\"bus:OUT(0)\", \"cluster_01_electric:IN(0)\", \"electricity\"]]\n"
-        "[dist.immediately]\n"
-        "type = \"fixed\"\n"
-        "value = 0\n"
-        "time_unit = \"hours\"\n"
-        "[dist.every_10_years]\n"
-        "type = \"fixed\"\n"
-        "value = 87600\n"
-        "time_unit = \"hours\"\n"
-        "[scenarios.blue_sky]\n"
-        "time_unit = \"hours\"\n"
-        "occurrence_distribution = \"immediately\"\n"
-        "duration = 8760\n"
-        "max_occurrences = 1\n"
-        "network = \"normal_operations\"\n"
-        "[scenarios.class_4_hurricane]\n"
-        "time_unit = \"hours\"\n"
-        "occurrence_distribution = \"every_10_years\"\n"
-        "duration = 336\n"
-        "max_occurrences = -1\n"
-        "network = \"emergency_operations\"\n"
-        "intensity.wind_speed_mph = 200.0\n"
-        "intensity.inundation_depth_ft = 20.0\n";
-  const std::vector<int>::size_type num_comps{4};
-  const std::vector<int>::size_type num_networks{2};
-  std::stringstream ss{};
-  ss << input;
-  ERIN::InputReader reader{ss};
-  auto si = reader.get_simulation_info();
-  auto components = reader.get_components();
-  EXPECT_EQ(num_comps, components.size());
-  // Test that components have fragilities
-  for (const auto& c_pair : components) {
-    const auto& c_id = c_pair.first; 
-    const auto& c = c_pair.second;
-    EXPECT_TRUE(c->is_fragile())
-      << "component '" << c_id << "' should be fragile but is not";
-  }
-  auto networks = reader.get_networks();
-  ASSERT_EQ(num_networks, networks.size());
-  const auto& normal_nw = networks["normal_operations"];
-  const std::vector<enw::Connection> expected_normal_nw{
-  enw::Connection{
-    enw::ComponentAndPort{"electric_utility", ep::Type::Outflow, 0},
-    enw::ComponentAndPort{"cluster_01_electric", ep::Type::Inflow, 0},
-    "electricity"}};
-  ASSERT_EQ(expected_normal_nw.size(), normal_nw.size());
-  ASSERT_EQ(expected_normal_nw, normal_nw);
-  const std::vector<enw::Connection> expected_eo{
-    enw::Connection{
-      enw::ComponentAndPort{"electric_utility", ep::Type::Outflow, 0},
-      enw::ComponentAndPort{"bus", ep::Type::Inflow, 0},
-      "electricity"},
-    enw::Connection{
-      enw::ComponentAndPort{"emergency_generator", ep::Type::Outflow, 0},
-      enw::ComponentAndPort{"bus", ep::Type::Inflow, 1},
-      "electricity"},
-    enw::Connection{
-      enw::ComponentAndPort{"bus", ep::Type::Outflow, 0},
-      enw::ComponentAndPort{"cluster_01_electric", ep::Type::Inflow, 0},
-      "electricity"}};
-  const auto& actual_eo = networks["emergency_operations"];
-  ASSERT_EQ(expected_eo.size(), actual_eo.size());
-  ASSERT_EQ(expected_eo, actual_eo);
-  std::unordered_map<std::string, ERIN::size_type>
-    dists{{"immediately",0}, {"every_10_years", 1}};
-  auto scenarios = reader.get_scenarios();
-  constexpr ERIN::RealTimeType blue_sky_duration
-    = 8760LL * ERIN::rtt_seconds_per_hour;
-  constexpr int blue_sky_max_occurrence = 1;
-  constexpr ERIN::RealTimeType hurricane_duration
-    = 336LL * ERIN::rtt_seconds_per_hour;
-  constexpr int hurricane_max_occurrence = -1;
-  const std::unordered_map<std::string, ::ERIN::Scenario> expected_scenarios{
-    { "blue_sky",
-      ERIN::Scenario{
-        "blue_sky",
-        "normal_operations",
-        blue_sky_duration, 
-        blue_sky_max_occurrence,
-        0,
-        {},
-        false}},
-    { "class_4_hurricane",
-      ERIN::Scenario{
-        "class_4_hurricane",
-        "emergency_operations",
-        hurricane_duration,
-        hurricane_max_occurrence,
-        1,
-        {{"wind_speed_mph", 200.0}, {"inundation_depth_ft", 20.0}},
-        false}}};
-  ASSERT_EQ(expected_scenarios.size(), scenarios.size());
-  for (const auto& scenario_pair : expected_scenarios) {
-    auto scenario_it = scenarios.find(scenario_pair.first);
-    ASSERT_TRUE(scenario_it != scenarios.end());
-    const auto& es = scenario_pair.second;
-    const auto& as = scenario_it->second;
-    EXPECT_EQ(es.get_name(), as.get_name());
-    EXPECT_EQ(es.get_network_id(), as.get_network_id());
-    EXPECT_EQ(es.get_duration(), as.get_duration());
-    EXPECT_EQ(es.get_max_occurrences(), as.get_max_occurrences());
-    EXPECT_EQ(es.get_intensities(), as.get_intensities());
-  }
- 
-  std::unordered_map<std::string, std::vector<ERIN::TimeState>>
-    reliability_schedule{};
-  std::unordered_map<std::string, std::vector<ERIN::RealTimeType>>
-    scenario_schedules{
-      {"blue_sky", {0LL}},
-      {"class_4_hurricane",
-       {
-         1LL * 10LL * 8760LL * 3600LL,
-       },
-      }
+    toml::value example_input = std::unordered_map<std::string, toml::value> {
+        {
+            "network",
+            conn_table,
+        },
     };
-  const auto& fi_data = reader.get_fragility_info_by_comp_by_inst_by_scenario();
-  ERIN::Main m{
-    si, components, networks, scenarios,
-    scenario_schedules, reliability_schedule, fi_data};
-  auto out = m.run("class_4_hurricane");
-  EXPECT_EQ(out.get_is_good(), true);
-  std::unordered_set<std::string> expected_keys{
-    "cluster_01_electric", "electric_utility",
-    "bus-inflow(0)", "bus-inflow(1)", "bus-outflow(0)",
-    "emergency_generator"};
-  std::unordered_map<std::string,std::vector<::ERIN::Datum>> expected_results;
-  expected_results.emplace(
-      std::make_pair(
-        std::string{"cluster_01_electric"},
-        std::vector<::ERIN::Datum>{
-          ERIN::Datum{0LL            , 1.0, 0.0},
-          ERIN::Datum{4LL   * 3'600LL, 0.0, 0.0},
-          ERIN::Datum{336LL * 3'600LL, 0.0, 0.0}}));
-  expected_results.emplace(
-      std::make_pair(
-        std::string{"electric_utility"},
-        std::vector<::ERIN::Datum>{
-          ERIN::Datum{0LL            , 0.0, 0.0},
-          ERIN::Datum{4LL   * 3'600LL, 0.0, 0.0},
-          ERIN::Datum{336LL * 3'600LL, 0.0, 0.0}}));
-  expected_results.emplace(
-      std::make_pair(
-        std::string{"emergency_generator"},
-        std::vector<::ERIN::Datum>{
-          ERIN::Datum{0LL            , 0.0, 0.0},
-          ERIN::Datum{4LL   * 3'600LL, 0.0, 0.0},
-          ERIN::Datum{336LL * 3'600LL, 0.0, 0.0}}));
-  expected_results.emplace(
-      std::make_pair(
-        std::string{"bus-inflow(0)"},
-        std::vector<::ERIN::Datum>{
-          ERIN::Datum{0          , 0.0, 0.0},
-          ERIN::Datum{4   * 3'600, 0.0, 0.0},
-          ERIN::Datum{336 * 3'600, 0.0, 0.0}}));
-  expected_results.emplace(
-      std::make_pair(
-        std::string{"bus-inflow(1)"},
-        std::vector<::ERIN::Datum>{
-          ERIN::Datum{0LL            , 0.0, 0.0},
-          ERIN::Datum{4LL   * 3'600LL, 0.0, 0.0},
-          ERIN::Datum{336LL * 3'600LL, 0.0, 0.0}}));
-  expected_results.emplace(
-      std::make_pair(
-        std::string{"bus-outflow(0)"},
-        std::vector<::ERIN::Datum>{
-          ERIN::Datum{0LL            , 0.0, 0.0},
-          ERIN::Datum{4LL   * 3'600LL, 0.0, 0.0},
-          ERIN::Datum{336LL * 3'600LL, 0.0, 0.0}}));
-  EXPECT_EQ(out.get_results().size(), expected_results.size());
-  // out.get_results() : Map String (Vector Datum)
-  for (const auto& item: out.get_results()) {
-    const auto& tag = item.first;
-    auto it = expected_results.find(tag);
-    ASSERT_TRUE(it != expected_results.end());
-    const auto& a_results = item.second;
-    const auto& e_results = it->second;
-    ASSERT_EQ(a_results.size(), e_results.size())
-      << "tag = " << tag << "\n"
-      << "a_results = " << ::ERIN::vec_to_string<::ERIN::Datum>(a_results)
-      << "\n"
-      << "e_results = " << ::ERIN::vec_to_string<::ERIN::Datum>(e_results)
-      << "\n";
-    for (std::size_t i{0}; i < a_results.size(); ++i) {
-      const auto& a = a_results.at(i);
-      const auto& e = e_results.at(i);
-      ASSERT_EQ(a, e)
-        << "tag = " << tag << "\n"
-        << "i = " << i << "\n"
-        << "a = " << a << "\n"
-        << "e = " << e << "\n";
-    }
-  }
-}
-
-TEST(ErinBasicsTest, AllResultsToCsv0)
-{
-  namespace E = ::ERIN;
-  const bool is_good{true};
-  std::unordered_map<std::string,std::vector<E::ScenarioResults>> results{};
-  E::AllResults ar{is_good, results};
-  const std::string expected_csv{
-    "scenario id,scenario start time (P[YYYY]-[MM]-[DD]T[hh]:[mm]:[ss]),"
-    "elapsed (hours)\n"};
-  auto actual_csv = ar.to_csv();
-  EXPECT_EQ(expected_csv, actual_csv);
-  const std::string expected_stats_csv{
-    "scenario id,number of occurrences,total time in scenario (hours),"
-    "component id,type,stream,energy availability,max downtime (hours),"
-    "load not served (kJ)\n"};
-  auto actual_stats_csv = ar.to_stats_csv();
-  EXPECT_EQ(expected_stats_csv, actual_stats_csv);
-}
-
-TEST(ErinBasicsTest, AllResultsToCsv)
-{
-  namespace E = ::ERIN;
-  const E::RealTimeType hours_to_seconds{3600};
-  const bool is_good{true};
-  const std::string id_cluster_01_electric{"cluster_01_electric"};
-  const std::string id_electric_utility{"electric_utility"};
-  const std::string id_electricity{"electricity"};
-  const std::string id_blue_sky{"blue_sky"};
-  std::unordered_map<std::string,std::vector<E::Datum>> data{
-    { id_cluster_01_electric,
-      std::vector<E::Datum>{
-        E::Datum{0 * hours_to_seconds, 1.0, 1.0},
-        E::Datum{4 * hours_to_seconds, 0.0, 0.0}}},
-    { id_electric_utility,
-      std::vector<E::Datum>{
-        E::Datum{0 * hours_to_seconds, 1.0, 1.0},
-        E::Datum{4 * hours_to_seconds, 0.0, 0.0}}}};
-  std::unordered_map<std::string,std::string> stream_types{
-    { id_cluster_01_electric, id_electricity},
-    { id_electric_utility, id_electricity}};
-  std::unordered_map<std::string, E::ComponentType> comp_types{
-    { id_cluster_01_electric, E::ComponentType::Load},
-    { id_electric_utility, E::ComponentType::Source}};
-  std::unordered_map<std::string, E::PortRole> port_roles{
-    { id_cluster_01_electric, E::PortRole::LoadInflow},
-    { id_electric_utility, E::PortRole::SourceOutflow}};
-  E::RealTimeType scenario_start{0 * hours_to_seconds};
-  E::RealTimeType duration{4 * hours_to_seconds};
-  E::ScenarioResults sr{
-    is_good, scenario_start, duration, data,
-    stream_types, comp_types, port_roles};
-  EXPECT_EQ(scenario_start, sr.get_start_time_in_seconds());
-  EXPECT_EQ(duration, sr.get_duration_in_seconds());
-  std::unordered_map<std::string,std::vector<E::ScenarioResults>> results{
-    { id_blue_sky, { sr }}};
-  E::AllResults ar{is_good, results};
-  const std::string expected_csv{
-    "scenario id,scenario start time (P[YYYY]-[MM]-[DD]T[hh]:[mm]:[ss]),"
-    "elapsed (hours),cluster_01_electric:achieved (kW),"
-    "cluster_01_electric:requested (kW),electric_utility:achieved (kW),"
-    "electric_utility:requested (kW)\n"
-    "blue_sky,P0000-00-00T00:00:00,0,1,1,1,1\n"
-    "blue_sky,P0000-00-00T00:00:00,4,0,0,0,0\n"};
-  auto actual_csv = ar.to_csv();
-  EXPECT_EQ(expected_csv, actual_csv);
-  const std::string expected_stats_csv{
-    "scenario id,number of occurrences,total time in scenario (hours),"
-    "component id,type,stream,energy availability,max downtime (hours),"
-    "load not served (kJ),electricity energy used (kJ)\n"
-    "blue_sky,1,4,cluster_01_electric,load,electricity,"
-    "1,0,0,14400\n"
-    "blue_sky,1,4,electric_utility,source,electricity,"
-    "1,0,0,14400\n"
-    "blue_sky,1,4,TOTAL (source),,,,,,14400\n"
-    "blue_sky,1,4,TOTAL (load),,,,,,14400\n"
-    "blue_sky,1,4,TOTAL (storage),,,,,,0.0\n"
-    "blue_sky,1,4,TOTAL (waste),,,,,,0.0\n"
-    "blue_sky,1,4,ENERGY BALANCE (source-(load+storage+waste)),0,,,,,\n"
-  };
-  auto actual_stats_csv = ar.to_stats_csv();
-  EXPECT_EQ(expected_stats_csv, actual_stats_csv);
-}
-
-TEST(ErinBasicsTest, ScenarioStatsAddAndAddEq)
-{
-  ERIN::ScenarioStats a{1,2,2,1.0,1.0};
-  ERIN::ScenarioStats b{10,20,10,10.0,10.0};
-  ERIN::ScenarioStats expected{11,22,10,11.0,11.0};
-  auto c = a + b;
-  EXPECT_EQ(c.uptime, expected.uptime);
-  EXPECT_EQ(c.downtime, expected.downtime);
-  EXPECT_EQ(c.max_downtime, expected.max_downtime);
-  EXPECT_EQ(c.load_not_served, expected.load_not_served);
-  EXPECT_EQ(c.total_energy, expected.total_energy);
-  a += b;
-  EXPECT_EQ(a.uptime, expected.uptime);
-  EXPECT_EQ(a.downtime, expected.downtime);
-  EXPECT_EQ(a.max_downtime, expected.max_downtime);
-  EXPECT_EQ(a.load_not_served, expected.load_not_served);
-  EXPECT_EQ(a.total_energy, expected.total_energy);
-}
-
-TEST(ErinBasicsTest, AllResultsToCsv2)
-{
-  namespace E = ::ERIN;
-  const E::RealTimeType hours_to_seconds{3600};
-  const bool is_good{true};
-  const std::string id_cluster_01_electric{"cluster_01_electric"};
-  const std::string id_electric_utility{"electric_utility"};
-  const std::string id_electricity{"electricity"};
-  const std::string id_blue_sky{"blue_sky"};
-  std::unordered_map<std::string,std::vector<E::Datum>> data{
-    { id_cluster_01_electric,
-      std::vector<E::Datum>{
-        E::Datum{0 * hours_to_seconds, 1.0, 1.0},
-        E::Datum{4 * hours_to_seconds, 0.0, 0.0}}},
-    { id_electric_utility,
-      std::vector<E::Datum>{
-        E::Datum{0 * hours_to_seconds, 1.0, 1.0},
-        E::Datum{4 * hours_to_seconds, 0.0, 0.0}}}};
-  std::unordered_map<std::string,std::string> stream_types{
-    { id_cluster_01_electric, id_electricity},
-    { id_electric_utility, id_electricity}};
-  std::unordered_map<std::string, E::ComponentType> comp_types{
-    { id_cluster_01_electric, E::ComponentType::Load},
-    { id_electric_utility, E::ComponentType::Source}};
-  std::unordered_map<std::string, E::PortRole> port_roles{
-    { id_cluster_01_electric, E::PortRole::LoadInflow},
-    { id_electric_utility, E::PortRole::SourceOutflow}};
-  E::RealTimeType scenario_start{10 * hours_to_seconds};
-  E::RealTimeType duration{4 * hours_to_seconds};
-  E::ScenarioResults sr{
-    is_good, scenario_start, duration, data,
-    stream_types, comp_types, port_roles};
-  std::unordered_map<std::string,std::vector<E::ScenarioResults>> results{
-    { id_blue_sky, { sr }}};
-  E::AllResults ar{is_good, results};
-  const std::string expected_csv{
-    "scenario id,scenario start time (P[YYYY]-[MM]-[DD]T[hh]:[mm]:[ss]),"
-    "elapsed (hours),cluster_01_electric:achieved (kW),"
-    "cluster_01_electric:requested (kW),electric_utility:achieved (kW),"
-    "electric_utility:requested (kW)\n"
-    "blue_sky,P0000-00-00T10:00:00,0,1,1,1,1\n"
-    "blue_sky,P0000-00-00T10:00:00,4,0,0,0,0\n"};
-  auto actual_csv = ar.to_csv();
-  EXPECT_EQ(expected_csv, actual_csv);
-}
-
-TEST(ErinBasicsTest, AllResultsToCsv3)
-{
-  namespace E = ::ERIN;
-  const E::RealTimeType hours_to_seconds{3600};
-  const bool is_good{true};
-  const std::string id_cluster_01_electric{"cluster_01_electric"};
-  const std::string id_electric_utility{"electric_utility"};
-  const std::string id_electricity{"electricity"};
-  const std::string id_blue_sky{"blue_sky"};
-  std::unordered_map<std::string,std::vector<E::Datum>> data{
-    { id_cluster_01_electric,
-      std::vector<E::Datum>{
-        E::Datum{0 * hours_to_seconds, 1.0, 1.0},
-        E::Datum{8 * hours_to_seconds, 0.0, 0.0}}},
-    { id_electric_utility,
-      std::vector<E::Datum>{
-        E::Datum{0 * hours_to_seconds, 1.0, 1.0},
-        E::Datum{8 * hours_to_seconds, 0.0, 0.0}}}};
-  std::unordered_map<std::string,std::string> stream_types{
-    { id_cluster_01_electric, id_electricity},
-    { id_electric_utility, id_electricity}};
-  std::unordered_map<std::string, E::ComponentType> comp_types{
-    { id_cluster_01_electric, E::ComponentType::Load},
-    { id_electric_utility, E::ComponentType::Source}};
-  std::unordered_map<std::string, E::PortRole> port_roles{
-    { id_cluster_01_electric, E::PortRole::LoadInflow},
-    { id_electric_utility, E::PortRole::SourceOutflow}};
-  E::RealTimeType scenario_start{10 * hours_to_seconds};
-  E::RealTimeType duration{8 * hours_to_seconds};
-  E::ScenarioResults sr{
-    is_good, scenario_start, duration, data,
-    stream_types, comp_types, port_roles};
-  EXPECT_EQ(duration, sr.get_duration_in_seconds());
-  std::unordered_map<std::string,std::vector<E::ScenarioResults>> results{
-    { id_blue_sky, { sr }}};
-  E::AllResults ar{is_good, results};
-  const std::string expected_csv{
-    "scenario id,scenario start time (P[YYYY]-[MM]-[DD]T[hh]:[mm]:[ss]),"
-    "elapsed (hours),cluster_01_electric:achieved (kW),"
-    "cluster_01_electric:requested (kW),electric_utility:achieved (kW),"
-    "electric_utility:requested (kW)\n"
-    "blue_sky,P0000-00-00T10:00:00,0,1,1,1,1\n"
-    "blue_sky,P0000-00-00T10:00:00,8,0,0,0,0\n"};
-  auto actual_csv = ar.to_csv();
-  EXPECT_EQ(expected_csv, actual_csv);
-}
-
-TEST(ErinBasicsTest, TimeToIso8601Period)
-{
-  namespace eu = erin::utils;
-  std::string expected{"P0000-00-00T00:00:00"};
-  auto achieved = eu::time_to_iso_8601_period(0);
-  EXPECT_EQ(expected, achieved);
-  expected = "";
-  achieved = eu::time_to_iso_8601_period(-10);
-  EXPECT_EQ(expected, achieved);
-  expected = "P0000-00-00T00:00:01";
-  achieved = eu::time_to_iso_8601_period(1);
-  EXPECT_EQ(expected, achieved);
-  expected = "P0000-00-00T00:01:00";
-  achieved = eu::time_to_iso_8601_period(60);
-  EXPECT_EQ(expected, achieved);
-  expected = "P0000-00-00T00:01:30";
-  achieved = eu::time_to_iso_8601_period(90);
-  EXPECT_EQ(expected, achieved);
-  expected = "P0000-00-00T01:00:00";
-  achieved = eu::time_to_iso_8601_period(3600);
-  EXPECT_EQ(expected, achieved);
-  expected = "P0000-00-00T01:30:30";
-  achieved = eu::time_to_iso_8601_period(3600 + (30 * 60) + 30);
-  EXPECT_EQ(expected, achieved);
-  expected = "P0000-00-01T00:00:00";
-  achieved = eu::time_to_iso_8601_period(3600 * 24);
-  EXPECT_EQ(expected, achieved);
-  expected = "P0000-00-30T00:30:30";
-  achieved = eu::time_to_iso_8601_period((30 * 3600 * 24) + (30 * 60) + 30);
-  EXPECT_EQ(expected, achieved);
-  expected = "P0000-01-00T00:30:30";
-  achieved = eu::time_to_iso_8601_period((31 * 3600 * 24) + (30 * 60) + 30);
-  EXPECT_EQ(expected, achieved);
-  expected = "P0001-00-00T00:00:00";
-  achieved = eu::time_to_iso_8601_period(365 * 3600 * 24);
-  EXPECT_EQ(expected, achieved);
-  expected = "P0010-06-04T05:42:15";
-  achieved = eu::time_to_iso_8601_period(
-      (10 * 365 * 3600 * 24) //  10 years
-      + (185 * 3600 * 24)    // 185 days
-      + (5 * 3600)           //   5 hours
-      + (42 * 60)            //  42 minutes
-      + 15);                 //  15 seconds
-  EXPECT_EQ(expected, achieved);
-}
-
-TEST(ErinBasicsTest, DayOfYearToDayOfMonth)
-{
-  namespace eu = erin::utils;
-  eu::Months_days_elapsed expected{0, 0};
-  auto achieved = eu::day_of_year_to_months_days_elapsed(0);
-  EXPECT_EQ(expected, achieved);
-  expected = eu::Months_days_elapsed{0, 1};
-  achieved = eu::day_of_year_to_months_days_elapsed(1);
-  EXPECT_EQ(expected, achieved);
-  expected = eu::Months_days_elapsed{0,1};
-  achieved = eu::day_of_year_to_months_days_elapsed(-364);
-  EXPECT_EQ(expected, achieved);
-  expected = eu::Months_days_elapsed{0,0};
-  achieved = eu::day_of_year_to_months_days_elapsed(365);
-  EXPECT_EQ(expected, achieved);
-  expected = eu::Months_days_elapsed{0,0};
-  achieved = eu::day_of_year_to_months_days_elapsed(-365);
-  EXPECT_EQ(expected, achieved);
-  expected = eu::Months_days_elapsed{0,0};
-  achieved = eu::day_of_year_to_months_days_elapsed(365*2);
-  EXPECT_EQ(expected, achieved);
-  expected = eu::Months_days_elapsed{1,0};
-  achieved = eu::day_of_year_to_months_days_elapsed(31);
-  EXPECT_EQ(expected, achieved);
-  expected = eu::Months_days_elapsed{1,1};
-  achieved = eu::day_of_year_to_months_days_elapsed(32);
-  EXPECT_EQ(expected, achieved);
-  expected = eu::Months_days_elapsed{6,2};
-  achieved = eu::day_of_year_to_months_days_elapsed(183);
-  EXPECT_EQ(expected, achieved);
-}
-
-TEST(ErinBasicsTest, TestIsSuperset)
-{
-  std::vector<std::string> a(0);
-  std::vector<std::string> b(0);
-  EXPECT_TRUE(::erin::utils::is_superset(a, b));
-  a = {"A", "B", "C"};
-  b = {"B", "C"};
-  EXPECT_TRUE(::erin::utils::is_superset(a, a));
-  EXPECT_TRUE(::erin::utils::is_superset(b, b));
-  EXPECT_TRUE(::erin::utils::is_superset(a, b));
-  EXPECT_FALSE(::erin::utils::is_superset(b, a));
-}
-
-TEST(ErinBasicsTest, TestRepeatableRandom)
-{
-  std::string input =
-    "[simulation_info]\n"
-    "rate_unit = \"kW\"\n"
-    "quantity_unit = \"kJ\"\n"
-    "time_unit = \"seconds\"\n"
-    "max_time = 100\n"
-    "fixed_random = 0.5\n"
-    "#random_seed = 1\n"
-    "[loads.default]\n"
-    "time_unit = \"hours\"\n"
-    "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,100.0],[4.0,0.0]]\n"
-    "[components.electric_utility]\n"
-    "type = \"source\"\n"
-    "output_stream = \"electricity\"\n"
-    "max_outflow = 100.0\n"
-    "fragility_modes = [\"highly_vulnerable_to_wind\"]\n"
-    "[components.cluster_01_electric]\n"
-    "type = \"load\"\n"
-    "input_stream = \"electricity\"\n"
-    "loads_by_scenario.blue_sky = \"default\"\n"
-    "loads_by_scenario.class_4_hurricane = \"default\"\n"
-    "[components.emergency_generator]\n"
-    "type = \"source\"\n"
-    "output_stream = \"electricity\"\n"
-    "max_outflow = 50.0\n"
-    "fragility_modes = [\"somewhat_vulnerable_to_flooding\"]\n"
-    "[components.bus]\n"
-    "type = \"muxer\"\n"
-    "stream = \"electricity\"\n"
-    "num_inflows = 2\n"
-    "num_outflows = 1\n"
-    "dispatch_strategy = \"in_order\"\n"
-    "[fragility_mode.somewhat_vulnerable_to_flooding]\n"
-    "fragility_curve = \"somewhat_vulnerable_to_flooding_curve\"\n"
-    "[fragility_mode.highly_vulnerable_to_wind]\n"
-    "fragility_curve = \"highly_vulnerable_to_wind_curve\"\n"
-    "[fragility_curve.somewhat_vulnerable_to_flooding_curve]\n"
-    "vulnerable_to = \"inundation_depth_ft\"\n"
-    "type = \"linear\"\n"
-    "lower_bound = 6.0\n"
-    "upper_bound = 14.0\n"
-    "[fragility_curve.highly_vulnerable_to_wind_curve]\n"
-    "vulnerable_to = \"wind_speed_mph\"\n"
-    "type = \"linear\"\n"
-    "lower_bound = 80.0\n"
-    "upper_bound = 160.0\n"
-    "[networks.normal_operations]\n"
-    "connections = [[\"electric_utility:OUT(0)\", \"cluster_01_electric:IN(0)\", \"electricity\"]]\n"
-    "[networks.emergency_operations]\n"
-    "connections = [\n"
-    "  [\"electric_utility:OUT(0)\", \"bus:IN(0)\", \"electricity\"],\n"
-    "  [\"emergency_generator:OUT(0)\", \"bus:IN(1)\", \"electricity\"],\n"
-    "  [\"bus:OUT(0)\", \"cluster_01_electric:IN(0)\", \"electricity\"]]\n"
-    "[dist.immediately]\n"
-    "type = \"fixed\"\n"
-    "value = 0\n"
-    "time_unit = \"hours\"\n"
-    "[dist.every_10_seconds]\n"
-    "type = \"fixed\"\n"
-    "value = 10\n"
-    "time_unit = \"seconds\"\n"
-    "[scenarios.blue_sky]\n"
-    "time_unit = \"seconds\"\n"
-    "occurrence_distribution = \"immediately\"\n"
-    "duration = 4\n"
-    "max_occurrences = 1\n"
-    "network = \"normal_operations\"\n"
-    "[scenarios.class_4_hurricane]\n"
-    "time_unit = \"seconds\"\n"
-    "occurrence_distribution = \"every_10_seconds\"\n"
-    "duration = 4\n"
-    "max_occurrences = -1\n"
-    "network = \"emergency_operations\"\n"
-    "intensity.wind_speed_mph = 156\n"
-    "intensity.inundation_depth_ft = 8\n";
-  namespace E = ERIN;
-  auto m = E::make_main_from_string(input);
-  auto results = m.run_all();
-  std::vector<std::string> expected_scenario_ids{
-    "blue_sky", "class_4_hurricane"};
-  std::unordered_map<
-    std::string,
-    E::size_type> expected_num_results{
-      {"blue_sky", 1},
-      {"class_4_hurricane", 10}};
-  EXPECT_EQ(
-      expected_scenario_ids.size(),
-      results.number_of_scenarios());
-  EXPECT_EQ(expected_scenario_ids, results.get_scenario_ids());
-  EXPECT_EQ(expected_num_results, results.get_num_results());
-  std::unordered_map<
-    std::string,
-    std::unordered_map<std::string, std::vector<double>>> expected_teas;
-  expected_teas.emplace(
-      std::make_pair(
-        std::string{"blue_sky"},
-        std::unordered_map<
-          std::string,
-          std::vector<double>>{{std::string{"electricity"}, {1.0}}}));
-  const std::vector<E::FlowValueType> ten_halves(10, 0.5);
-  expected_teas.emplace(
-      std::make_pair(
-        std::string{"class_4_hurricane"},
-        std::unordered_map<std::string, std::vector<double>>{
-          {std::string{"electricity"}, ten_halves}}));
-  auto actual_teas = results.get_total_energy_availabilities();
-  ASSERT_EQ(expected_teas.size(), actual_teas.size());
-  for (const auto& pair : expected_teas) {
-    const auto& scenario_id = pair.first;
-    const auto& expected_stream_to_teas_map = pair.second;
-    auto it = actual_teas.find(scenario_id);
-    ASSERT_TRUE(it != actual_teas.end());
-    const auto& actual_stream_to_teas_map = it->second;
-    ASSERT_EQ(
-        expected_stream_to_teas_map.size(),
-        actual_stream_to_teas_map.size());
-    for (const auto& sub_pair : expected_stream_to_teas_map) {
-      const auto& stream_name = sub_pair.first;
-      const auto& expected_teas = sub_pair.second;
-      auto sub_it = actual_stream_to_teas_map.find(stream_name);
-      ASSERT_TRUE(sub_it != actual_stream_to_teas_map.end());
-      const auto& actual_teas = sub_it->second;
-      auto num_teas = expected_teas.size();
-      ASSERT_EQ(num_teas, actual_teas.size());
-      for (decltype(num_teas) i{0}; i < num_teas; ++i) {
-        auto actual_val = actual_teas.at(i);
-        EXPECT_NEAR(expected_teas[i], actual_val, tolerance)
-          << scenario_id << ":" << stream_name << "[" << i << "]"
-          << " expected_teas = " << expected_teas[i]
-          << " actual_teas = " << actual_val << "\n";
-      }
-    }
-  }
-}
-
-TEST(ErinBasicsTest, TestRepeatableRandom2)
-{
-  std::string input =
-    "[simulation_info]\n"
-    "rate_unit = \"kW\"\n"
-    "quantity_unit = \"kJ\"\n"
-    "time_unit = \"seconds\"\n"
-    "max_time = 100\n"
-    "fixed_random = 0.1\n"
-    "#random_seed = 1\n"
-    "[loads.default]\n"
-    "time_unit = \"hours\"\n"
-    "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,100.0],[4.0,0.0]]\n"
-    "[components.electric_utility]\n"
-    "type = \"source\"\n"
-    "output_stream = \"electricity\"\n"
-    "max_outflow = 100.0\n"
-    "fragility_modes = [\"highly_vulnerable_to_wind\"]\n"
-    "[components.cluster_01_electric]\n"
-    "type = \"load\"\n"
-    "input_stream = \"electricity\"\n"
-    "loads_by_scenario.blue_sky = \"default\"\n"
-    "loads_by_scenario.class_4_hurricane = \"default\"\n"
-    "[components.emergency_generator]\n"
-    "type = \"source\"\n"
-    "output_stream = \"electricity\"\n"
-    "max_outflow = 50.0\n"
-    "fragility_modes = [\"somewhat_vulnerable_to_flooding\"]\n"
-    "[components.bus]\n"
-    "type = \"muxer\"\n"
-    "stream = \"electricity\"\n"
-    "num_inflows = 2\n"
-    "num_outflows = 1\n"
-    "dispatch_strategy = \"in_order\"\n"
-    "[fragility_mode.somewhat_vulnerable_to_flooding]\n"
-    "fragility_curve = \"somewhat_vulnerable_to_flooding_curve\"\n"
-    "[fragility_mode.highly_vulnerable_to_wind]\n"
-    "fragility_curve = \"highly_vulnerable_to_wind_curve\"\n"
-    "[fragility_curve.somewhat_vulnerable_to_flooding_curve]\n"
-    "vulnerable_to = \"inundation_depth_ft\"\n"
-    "type = \"linear\"\n"
-    "lower_bound = 6.0\n"
-    "upper_bound = 14.0\n"
-    "[fragility_curve.highly_vulnerable_to_wind_curve]\n"
-    "vulnerable_to = \"wind_speed_mph\"\n"
-    "type = \"linear\"\n"
-    "lower_bound = 80.0\n"
-    "upper_bound = 160.0\n"
-    "[networks.normal_operations]\n"
-    "connections = [[\"electric_utility:OUT(0)\", \"cluster_01_electric:IN(0)\", \"electricity\"]]\n"
-    "[networks.emergency_operations]\n"
-    "connections = [\n"
-    "  [\"electric_utility:OUT(0)\", \"bus:IN(0)\", \"electricity\"],\n"
-    "  [\"emergency_generator:OUT(0)\", \"bus:IN(1)\", \"electricity\"],\n"
-    "  [\"bus:OUT(0)\", \"cluster_01_electric:IN(0)\", \"electricity\"]]\n"
-    "[dist.immediately]\n"
-    "type = \"fixed\"\n"
-    "value = 0\n"
-    "time_unit = \"seconds\"\n"
-    "[dist.every_10_seconds]\n"
-    "type = \"fixed\"\n"
-    "value = 10\n"
-    "time_unit = \"seconds\"\n"
-    "[scenarios.blue_sky]\n"
-    "time_unit = \"seconds\"\n"
-    "occurrence_distribution = \"immediately\"\n"
-    "duration = 4\n"
-    "max_occurrences = 1\n"
-    "network = \"normal_operations\"\n"
-    "[scenarios.class_4_hurricane]\n"
-    "time_unit = \"seconds\"\n"
-    "occurrence_distribution = \"every_10_seconds\"\n"
-    "duration = 4\n"
-    "max_occurrences = -1\n"
-    "network = \"emergency_operations\"\n"
-    "intensity.wind_speed_mph = 156\n"
-    "intensity.inundation_depth_ft = 8\n";
-  namespace E = ::ERIN;
-  auto m = E::make_main_from_string(input);
-  auto results = m.run_all();
-  std::vector<std::string> expected_scenario_ids{
-    "blue_sky", "class_4_hurricane"};
-  std::unordered_map<
-    std::string,
-    std::vector<E::ScenarioResults>::size_type> expected_num_results{
-      {"blue_sky", 1},
-      {"class_4_hurricane", 10}};
-  EXPECT_EQ(
-      expected_scenario_ids.size(),
-      results.number_of_scenarios());
-  EXPECT_EQ(expected_scenario_ids, results.get_scenario_ids());
-  EXPECT_EQ(expected_num_results, results.get_num_results());
-  std::unordered_map<
-    std::string,
-    std::unordered_map<std::string, std::vector<double>>> expected_teas;
-  expected_teas.emplace(
-      std::make_pair(
-        std::string{"blue_sky"},
-        std::unordered_map<
-          std::string,
-          std::vector<double>>{{std::string{"electricity"}, {1.0}}}));
-  const std::vector<E::FlowValueType> ten_zeros(10, 0.0);
-  expected_teas.emplace(
-      std::make_pair(
-        std::string{"class_4_hurricane"},
-        std::unordered_map<std::string, std::vector<double>>{
-          {std::string{"electricity"}, ten_zeros}}));
-  auto actual_teas = results.get_total_energy_availabilities();
-  ASSERT_EQ(expected_teas.size(), actual_teas.size());
-  for (const auto& pair : expected_teas) {
-    const auto& scenario_id = pair.first;
-    const auto& expected_stream_to_teas_map = pair.second;
-    auto it = actual_teas.find(scenario_id);
-    ASSERT_TRUE(it != actual_teas.end());
-    const auto& actual_stream_to_teas_map = it->second;
-    ASSERT_EQ(
-        expected_stream_to_teas_map.size(),
-        actual_stream_to_teas_map.size());
-    for (const auto& sub_pair : expected_stream_to_teas_map) {
-      const auto& stream_name = sub_pair.first;
-      const auto& expected_teas = sub_pair.second;
-      auto sub_it = actual_stream_to_teas_map.find(stream_name);
-      ASSERT_TRUE(sub_it != actual_stream_to_teas_map.end());
-      const auto& actual_teas = sub_it->second;
-      auto num_teas = expected_teas.size();
-      ASSERT_EQ(num_teas, actual_teas.size());
-      for (decltype(num_teas) i{0}; i < num_teas; ++i) {
-        EXPECT_NEAR(expected_teas[i], actual_teas[i], tolerance)
-          << scenario_id << ":" << stream_name << "[" << i << "]"
-          << " expected_teas=" << expected_teas[i]
-          << " actual_teas  =" << actual_teas[i] << "\n";
-      }
-    }
-  }
-}
-
-TEST(ErinBasicsTest, TestThatRandomProcessWorks)
-{
-  namespace E = ::ERIN;
-  E::SimulationInfo si{"kW", "kJ", E::TimeUnits::Hours, 4};
-  auto f = si.make_random_function();
-  double previous{0.0};
-  double current{0.0};
-  bool passed{false};
-  const int max_tries{100};
-  for (int i{0}; i < max_tries; ++i) {
-    current = f();
-    if ((i != 0) && (previous != current)) {
-      passed = true;
-      break;
-    }
-    previous = current;
-  }
-  ASSERT_TRUE(passed);
-}
-
-TEST(ErinBasicsTest, TestThatRandomProcessDoesNotCreateTheSameSeriesTwice)
-{
-  namespace E = ::ERIN;
-  E::SimulationInfo si1{"kW", "kJ", E::TimeUnits::Hours, 4, false, 0.0};
-  E::SimulationInfo si2{"kW", "kJ", E::TimeUnits::Hours, 4, false, 0.0};
-  ASSERT_NE(si1.get_random_seed(), si2.get_random_seed());
-  auto f1 = si1.make_random_function();
-  auto f2 = si2.make_random_function();
-  const int num_queries{100};
-  std::vector<double> series1(num_queries);
-  std::vector<double> series2(num_queries);
-  for (int i{0}; i < num_queries; ++i) {
-    series1[i] = f1();
-    series2[i] = f2();
-  }
-  EXPECT_NE(series1, series2);
-}
-
-TEST(ErinBasicsTest, TestThatRandomProcessCreatesTheSameSeriesTwiceIfSeeded)
-{
-  namespace E = ::ERIN;
-  unsigned int seed{1};
-  E::SimulationInfo si1{
-    "kW", "kJ", E::TimeUnits::Hours, 4, false, 0.0, true, seed};
-  E::SimulationInfo si2{
-    "kW", "kJ", E::TimeUnits::Hours, 4, false, 0.0, true, seed};
-  EXPECT_TRUE(si1.has_random_seed());
-  EXPECT_TRUE(si2.has_random_seed());
-  EXPECT_EQ(seed, si1.get_random_seed());
-  EXPECT_EQ(seed, si2.get_random_seed());
-  auto f1 = si1.make_random_function();
-  auto f2 = si2.make_random_function();
-  const int num_queries{100};
-  std::vector<double> series1(num_queries, 2.0);
-  std::vector<double> series2(num_queries, 2.0);
-  for (int i{0}; i < num_queries; ++i) {
-    series1[i] = f1();
-    series2[i] = f2();
-  }
-  EXPECT_EQ(series1, series2);
-}
-
-TEST(ErinBasicsTest, TestRepeatableRandom3)
-{
-  std::string input =
-    "[simulation_info]\n"
-    "rate_unit = \"kW\"\n"
-    "quantity_unit = \"kJ\"\n"
-    "time_unit = \"seconds\"\n"
-    "max_time = 100\n"
-    "random_seed = 1\n"
-    "[loads.default]\n"
-    "time_unit = \"hours\"\n"
-    "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,100.0],[4.0,0.0]]\n"
-    "[components.electric_utility]\n"
-    "type = \"source\"\n"
-    "output_stream = \"electricity\"\n"
-    "max_outflow = 100.0\n"
-    "fragility_modes = [\"highly_vulnerable_to_wind\"]\n"
-    "[components.cluster_01_electric]\n"
-    "type = \"load\"\n"
-    "input_stream = \"electricity\"\n"
-    "loads_by_scenario.blue_sky = \"default\"\n"
-    "loads_by_scenario.class_4_hurricane = \"default\"\n"
-    "[components.emergency_generator]\n"
-    "type = \"source\"\n"
-    "output_stream = \"electricity\"\n"
-    "max_outflow = 50.0\n"
-    "fragility_modes = [\"somewhat_vulnerable_to_flooding\"]\n"
-    "[components.bus]\n"
-    "type = \"muxer\"\n"
-    "stream = \"electricity\"\n"
-    "num_inflows = 2\n"
-    "num_outflows = 1\n"
-    "dispatch_strategy = \"in_order\"\n"
-    "[fragility_mode.somewhat_vulnerable_to_flooding]\n"
-    "fragility_curve = \"somewhat_vulnerable_to_flooding_curve\"\n"
-    "[fragility_mode.highly_vulnerable_to_wind]\n"
-    "fragility_curve = \"highly_vulnerable_to_wind_curve\"\n"
-    "[fragility_curve.somewhat_vulnerable_to_flooding_curve]\n"
-    "vulnerable_to = \"inundation_depth_ft\"\n"
-    "type = \"linear\"\n"
-    "lower_bound = 6.0\n"
-    "upper_bound = 14.0\n"
-    "[fragility_curve.highly_vulnerable_to_wind_curve]\n"
-    "vulnerable_to = \"wind_speed_mph\"\n"
-    "type = \"linear\"\n"
-    "lower_bound = 80.0\n"
-    "upper_bound = 160.0\n"
-    "[networks.normal_operations]\n"
-    "connections = [[\"electric_utility:OUT(0)\", \"cluster_01_electric:IN(0)\", \"electricity\"]]\n"
-    "[networks.emergency_operations]\n"
-    "connections = [\n"
-    "  [\"electric_utility:OUT(0)\", \"bus:IN(0)\", \"electricity\"],\n"
-    "  [\"emergency_generator:OUT(0)\", \"bus:IN(1)\", \"electricity\"],\n"
-    "  [\"bus:OUT(0)\", \"cluster_01_electric:IN(0)\", \"electricity\"]]\n"
-    "[dist.immediately]\n"
-    "type = \"fixed\"\n"
-    "value = 0\n"
-    "time_unit = \"hours\"\n"
-    "[dist.every_10_hours]\n"
-    "type = \"fixed\"\n"
-    "value = 10\n"
-    "time_unit = \"hours\"\n"
-    "[scenarios.blue_sky]\n"
-    "time_unit = \"seconds\"\n"
-    "occurrence_distribution = \"immediately\"\n"
-    "duration = 4\n"
-    "max_occurrences = 1\n"
-    "network = \"normal_operations\"\n"
-    "[scenarios.class_4_hurricane]\n"
-    "time_unit = \"hours\"\n"
-    "occurrence_distribution = \"every_10_hours\"\n"
-    "duration = 4\n"
-    "max_occurrences = -1\n"
-    "network = \"emergency_operations\"\n"
-    "intensity.wind_speed_mph = 156\n"
-    "intensity.inundation_depth_ft = 8\n";
-  namespace E = ::ERIN;
-  auto m1 = E::make_main_from_string(input);
-  auto results1 = m1.run_all();
-  auto m2 = E::make_main_from_string(input);
-  auto results2 = m2.run_all();
-  EXPECT_EQ(results1, results2);
-}
-
-TEST(ErinBasicsTest, ScenarioResultsEquality)
-{
-  namespace E = ::ERIN;
-  bool is_good{true};
-  E::RealTimeType start_time_s{0};
-  E::RealTimeType max_time_s{60};
-  E::ScenarioResults sr1{
-    is_good,
-    start_time_s,
-    max_time_s,
-    std::unordered_map<std::string,std::vector<E::Datum>>{
-      {"A", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}},
-      {"B", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}}},
-    std::unordered_map<std::string,std::string>{
-      {"A", std::string{"electricity"}},
-      {"B", std::string{"electricity"}}},
-    std::unordered_map<std::string,E::ComponentType>{
-      {"A", E::ComponentType::Load},
-      {"B", E::ComponentType::Source}},
-    std::unordered_map<std::string,E::PortRole>{
-      {"A", E::PortRole::LoadInflow},
-      {"B", E::PortRole::SourceOutflow}}};
-  E::ScenarioResults sr2{
-    is_good,
-    start_time_s,
-    max_time_s,
-    std::unordered_map<std::string,std::vector<E::Datum>>{
-      {"A", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}},
-      {"B", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}}},
-    std::unordered_map<std::string,std::string>{
-      {"A", std::string{"electricity"}},
-      {"B", std::string{"electricity"}}},
-    std::unordered_map<std::string,E::ComponentType>{
-      {"A", E::ComponentType::Load},
-      {"B", E::ComponentType::Source}},
-    std::unordered_map<std::string,E::PortRole>{
-      {"A", E::PortRole::LoadInflow},
-      {"B", E::PortRole::SourceOutflow}}};
-  ASSERT_EQ(sr1, sr2);
-  E::ScenarioResults sr3{
-    is_good,
-    start_time_s + 2,
-    max_time_s,
-    std::unordered_map<std::string,std::vector<E::Datum>>{
-      {"A", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}},
-      {"B", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}}},
-    std::unordered_map<std::string,std::string>{
-      {"A", std::string{"electricity"}},
-      {"B", std::string{"electricity"}}},
-    std::unordered_map<std::string,E::ComponentType>{
-      {"A", E::ComponentType::Load},
-      {"B", E::ComponentType::Source}},
-    std::unordered_map<std::string,E::PortRole>{
-      {"A", E::PortRole::LoadInflow},
-      {"B", E::PortRole::SourceOutflow}}};
-  ASSERT_NE(sr1, sr3);
-  ASSERT_NE(sr2, sr3);
-  E::ScenarioResults sr4{
-    !is_good,
-    start_time_s,
-    max_time_s,
-    std::unordered_map<std::string,std::vector<E::Datum>>{
-      {"A", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}},
-      {"B", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}}},
-    std::unordered_map<std::string,std::string>{
-      {"A", std::string{"electricity"}},
-      {"B", std::string{"electricity"}}},
-    std::unordered_map<std::string,E::ComponentType>{
-      {"A", E::ComponentType::Load},
-      {"B", E::ComponentType::Source}},
-    std::unordered_map<std::string,E::PortRole>{
-      {"A", E::PortRole::LoadInflow},
-      {"B", E::PortRole::SourceOutflow}}};
-  ASSERT_NE(sr1, sr4);
-  ASSERT_NE(sr2, sr4);
-  auto mt2{max_time_s - 1};
-  E::ScenarioResults sr5{
-    is_good,
-    start_time_s,
-    mt2,
-    std::unordered_map<std::string,std::vector<E::Datum>>{
-      {"A", {E::Datum{start_time_s,1.0,1.0}, E::Datum{mt2 - 1,0.0,0.0}}},
-      {"B", {E::Datum{start_time_s,1.0,1.0}, E::Datum{mt2 - 1,0.0,0.0}}}},
-    std::unordered_map<std::string,std::string>{
-      {"A", std::string{"electricity"}},
-      {"B", std::string{"electricity"}}},
-    std::unordered_map<std::string,E::ComponentType>{
-      {"A", E::ComponentType::Load},
-      {"B", E::ComponentType::Source}},
-    std::unordered_map<std::string,E::PortRole>{
-      {"A", E::PortRole::LoadInflow},
-      {"B", E::PortRole::SourceOutflow}}};
-  ASSERT_NE(sr1, sr5);
-  ASSERT_NE(sr2, sr5);
-  E::ScenarioResults sr6{
-    is_good,
-    start_time_s,
-    max_time_s,
-    std::unordered_map<std::string,std::vector<E::Datum>>{
-      {"A", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}},
-      {"C", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}}},
-    std::unordered_map<std::string,std::string>{
-      {"A", std::string{"electricity"}},
-      {"C", std::string{"electricity"}}},
-    std::unordered_map<std::string,E::ComponentType>{
-      {"A", E::ComponentType::Load},
-      {"C", E::ComponentType::Source}},
-    std::unordered_map<std::string,E::PortRole>{
-      {"A", E::PortRole::LoadInflow},
-      {"C", E::PortRole::SourceOutflow}}};
-  ASSERT_NE(sr1, sr6);
-  ASSERT_NE(sr2, sr6);
-  E::ScenarioResults sr7{
-    is_good,
-    start_time_s,
-    max_time_s,
-    std::unordered_map<std::string,std::vector<E::Datum>>{
-      {"A", {E::Datum{start_time_s,0.0,0.0}}},
-      {"B", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}}},
-    std::unordered_map<std::string,std::string>{
-      {"A", std::string{"electricity"}},
-      {"B", std::string{"electricity"}}},
-    std::unordered_map<std::string,E::ComponentType>{
-      {"A", E::ComponentType::Load},
-      {"B", E::ComponentType::Source}},
-    std::unordered_map<std::string,E::PortRole>{
-      {"A", E::PortRole::LoadInflow},
-      {"B", E::PortRole::SourceOutflow}}};
-  ASSERT_NE(sr1, sr7);
-  ASSERT_NE(sr2, sr7);
-  E::ScenarioResults sr8{
-    is_good,
-    start_time_s,
-    max_time_s,
-    std::unordered_map<std::string,std::vector<E::Datum>>{
-      {"A", {E::Datum{start_time_s,1.5,1.0}, E::Datum{max_time_s,0.0,0.0}}},
-      {"B", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}}},
-    std::unordered_map<std::string,std::string>{
-      {"A", std::string{"electricity"}},
-      {"B", std::string{"electricity"}}},
-    std::unordered_map<std::string,E::ComponentType>{
-      {"A", E::ComponentType::Load},
-      {"B", E::ComponentType::Source}},
-    std::unordered_map<std::string,E::PortRole>{
-      {"A", E::PortRole::LoadInflow},
-      {"B", E::PortRole::SourceOutflow}}};
-  ASSERT_NE(sr1, sr8);
-  ASSERT_NE(sr2, sr8);
-  E::ScenarioResults sr9{
-    is_good,
-    start_time_s,
-    max_time_s,
-    std::unordered_map<std::string,std::vector<E::Datum>>{
-      {"A", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}},
-      {"B", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}}},
-    std::unordered_map<std::string,std::string>{
-      {"A", std::string{"electricity"}},
-      {"C", std::string{"electricity"}}}, // TODO check this; shouldn't it be "B"?
-    std::unordered_map<std::string,E::ComponentType>{
-      {"A", E::ComponentType::Load},
-      {"B", E::ComponentType::Source}},
-    std::unordered_map<std::string,E::PortRole>{
-      {"A", E::PortRole::LoadInflow},
-      {"B", E::PortRole::SourceOutflow}}};
-  ASSERT_NE(sr1, sr9);
-  ASSERT_NE(sr2, sr9);
-  E::ScenarioResults sr10{
-    is_good,
-    start_time_s,
-    max_time_s,
-    std::unordered_map<std::string,std::vector<E::Datum>>{
-      {"A", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}},
-      {"B", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}}},
-    std::unordered_map<std::string,std::string>{
-      {"A", std::string{"gasoline"}},
-      {"B", std::string{"electricity"}}},
-    std::unordered_map<std::string,E::ComponentType>{
-      {"A", E::ComponentType::Load},
-      {"B", E::ComponentType::Source}},
-    std::unordered_map<std::string,E::PortRole>{
-      {"A", E::PortRole::LoadInflow},
-      {"B", E::PortRole::SourceOutflow}}};
-  ASSERT_NE(sr1, sr10);
-  ASSERT_NE(sr2, sr10);
-  E::ScenarioResults sr11{
-    is_good,
-    start_time_s,
-    max_time_s,
-    std::unordered_map<std::string,std::vector<E::Datum>>{
-      {"A", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}},
-      {"B", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}}},
-    std::unordered_map<std::string,std::string>{
-      {"A", std::string{"electricity"}},
-      {"B", std::string{"electricity"}}},
-    std::unordered_map<std::string,E::ComponentType>{
-      {"A", E::ComponentType::Load},
-      {"C", E::ComponentType::Source}},
-    std::unordered_map<std::string,E::PortRole>{
-      {"A", E::PortRole::LoadInflow},
-      {"B", E::PortRole::SourceOutflow}}};
-  ASSERT_NE(sr1, sr11);
-  ASSERT_NE(sr2, sr11);
-  E::ScenarioResults sr12{
-    is_good,
-    start_time_s,
-    max_time_s,
-    std::unordered_map<std::string,std::vector<E::Datum>>{
-      {"A", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}},
-      {"B", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}}},
-    std::unordered_map<std::string,std::string>{
-      {"A", std::string{"electricity"}},
-      {"B", std::string{"electricity"}}},
-    std::unordered_map<std::string,E::ComponentType>{
-      {"A", E::ComponentType::Load},
-      {"B", E::ComponentType::Load}},
-    std::unordered_map<std::string,E::PortRole>{
-      {"A", E::PortRole::LoadInflow},
-      {"B", E::PortRole::SourceOutflow}}};
-  ASSERT_NE(sr1, sr12);
-  ASSERT_NE(sr2, sr12);
-}
-
-TEST(ErinBasicsTest, AllResultsEquality)
-{
-  namespace E = ::ERIN;
-  bool is_good{true};
-  E::RealTimeType start_time_s{0};
-  E::RealTimeType max_time_s{60};
-  E::ScenarioResults sr1{
-    is_good,
-    start_time_s,
-    max_time_s,
-    std::unordered_map<std::string,std::vector<E::Datum>>{
-      {"A", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}},
-      {"B", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}}},
-    std::unordered_map<std::string,std::string>{
-      {"A", std::string{"electricity"}},
-      {"B", std::string{"electricity"}}},
-    std::unordered_map<std::string,E::ComponentType>{
-      {"A", E::ComponentType::Load},
-      {"B", E::ComponentType::Source}},
-    std::unordered_map<std::string,E::PortRole>{
-      {"A", E::PortRole::LoadInflow},
-      {"B", E::PortRole::SourceOutflow}}};
-  E::ScenarioResults sr2{
-    is_good,
-    start_time_s,
-    max_time_s,
-    std::unordered_map<std::string,std::vector<E::Datum>>{
-      {"A", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}},
-      {"B", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}}},
-    std::unordered_map<std::string,std::string>{
-      {"A", std::string{"electricity"}},
-      {"B", std::string{"electricity"}}},
-    std::unordered_map<std::string,E::ComponentType>{
-      {"A", E::ComponentType::Load},
-      {"B", E::ComponentType::Source}},
-    std::unordered_map<std::string,E::PortRole>{
-      {"A", E::PortRole::LoadInflow},
-      {"B", E::PortRole::SourceOutflow}}};
-  E::ScenarioResults sr3{
-    is_good,
-    start_time_s,
-    max_time_s,
-    std::unordered_map<std::string,std::vector<E::Datum>>{
-      {"A", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}},
-      {"C", {E::Datum{start_time_s,1.0,1.0}, E::Datum{max_time_s,0.0,0.0}}}},
-    std::unordered_map<std::string,std::string>{
-      {"A", std::string{"electricity"}},
-      {"C", std::string{"electricity"}}},
-    std::unordered_map<std::string,E::ComponentType>{
-      {"A", E::ComponentType::Load},
-      {"C", E::ComponentType::Source}},
-    std::unordered_map<std::string,E::PortRole>{
-      {"A", E::PortRole::LoadInflow},
-      {"C", E::PortRole::SourceOutflow}}};
-  std::unordered_map<std::string, std::vector<E::ScenarioResults>> sr_map1{
-    {"A", {sr1}},
-    {"B", {sr1, sr2}}};
-  std::unordered_map<std::string, std::vector<E::ScenarioResults>> sr_map2{
-    {"A", {sr1}},
-    {"B", {sr1, sr2}}};
-  std::unordered_map<std::string, std::vector<E::ScenarioResults>> sr_map3{
-    {"A", {sr1}}};
-  std::unordered_map<std::string, std::vector<E::ScenarioResults>> sr_map4{
-    {"A", {sr1, sr2}},
-    {"C", {sr1}}};
-  std::unordered_map<std::string, std::vector<E::ScenarioResults>> sr_map5{
-    {"A", {sr1, sr2}},
-    {"B", {sr1, sr2}}};
-  std::unordered_map<std::string, std::vector<E::ScenarioResults>> sr_map6{
-    {"A", {sr1}},
-    {"B", {sr1, sr3}}};
-  const E::AllResults ar1{is_good, sr_map1};
-  const E::AllResults ar2{is_good, sr_map2};
-  ASSERT_EQ(ar1, ar2);
-  const E::AllResults ar3{!is_good, sr_map1};
-  ASSERT_NE(ar1, ar3);
-  const E::AllResults ar4{is_good, sr_map3};
-  ASSERT_NE(ar1, ar4);
-  const E::AllResults ar5{is_good, sr_map4};
-  ASSERT_NE(ar1, ar5);
-  const E::AllResults ar6{is_good, sr_map5};
-  ASSERT_NE(ar1, ar6);
-  const E::AllResults ar7{is_good, sr_map6};
-  ASSERT_NE(ar1, ar7);
-}
-
-TEST(ErinBasicsTest, TestWeCanReadDistributionWithOptionalTimeUnits)
-{
-  namespace E = ERIN;
-  std::stringstream ss{};
-  ss << "[scenarios.a]\n"
-        "time_unit = \"hours\"\n"
-        "occurrence_distribution = \"every_10_years\"\n"
-        "duration = 10\n"
-        "max_occurrences = 1\n"
-        "network = \"nw_A\"\n"
-        "[scenarios.b]\n"
-        "time_unit = \"hours\"\n"
-        "occurrence_distribution = \"every_10_hours\"\n"
-        "duration = 10\n"
-        "max_occurrences = 1\n"
-        "network = \"nw_B\"\n";
-  E::TomlInputReader t{ss};
-  std::unordered_map<std::string, E::size_type>
-    dists{{"every_10_years", 0}, {"every_10_hours", 1}};
-  auto scenario_map = t.read_scenarios(dists);
-  auto a_it = scenario_map.find("a");
-  ASSERT_TRUE(a_it != scenario_map.end());
-  auto b_it = scenario_map.find("b");
-  ASSERT_TRUE(b_it != scenario_map.end());
-}
-
-ERIN::Main
-load_example_results(
-    const std::vector<double>& fixed_rolls,
-    double intensity = 15.0)
-{
-  namespace E = ::ERIN;
-  std::string random_line{};
-  auto num_rolls{fixed_rolls.size()};
-  if (num_rolls == 1) {
-    std::ostringstream oss;
-    oss << "fixed_random = " << fixed_rolls[0] << "\n";
-    random_line = oss.str();
-  }
-  else if (num_rolls > 1) {
-    std::ostringstream oss;
-    oss << "fixed_random_series = ";
-    std::string delim{"["};
-    for (const auto& x: fixed_rolls) {
-      oss << delim << x;
-      delim = ",";
-    }
-    oss << "]\n";
-    random_line = oss.str();
-  }
-  std::string input =
-    "[simulation_info]\n"
-    "rate_unit = \"kW\"\n"
-    "quantity_unit = \"kJ\"\n"
-    "time_unit = \"years\"\n"
-    "max_time = 40\n" + random_line + "\n"
-    "[loads.load01]\n"
-    "time_unit = \"hours\"\n"
-    "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,1.0],[10.0,0.0]]\n"
-    "[components.A]\n"
-    "type = \"source\"\n"
-    "output_stream = \"electricity\"\n"
-    "fragility_modes = [\"frag01\"]\n"
-    "[components.B]\n"
-    "type = \"load\"\n"
-    "input_stream = \"electricity\"\n"
-    "loads_by_scenario.scenario01 = \"load01\"\n"
-    "[fragility_mode.frag01]\n"
-    "fragility_curve = \"frag01_curve\"\n"
-    "[fragility_curve.frag01_curve]\n"
-    "vulnerable_to = \"intensity01\"\n"
-    "type = \"linear\"\n"
-    "lower_bound = 10.0\n"
-    "upper_bound = 20.0\n"
-    "[networks.nw01]\n"
-    "connections = [[\"A:OUT(0)\", \"B:IN(0)\", \"electricity\"]]\n"
-    "[dist.every_10_years]\n"
-    "type = \"fixed\"\n"
-    "value = 10\n"
-    "time_unit = \"years\"\n"
-    "[scenarios.scenario01]\n"
-    "time_unit = \"hours\"\n"
-    "occurrence_distribution = \"every_10_years\"\n"
-    "duration = 10\n"
-    "max_occurrences = -1\n"
-    "network = \"nw01\"\n"
-    "intensity.intensity01 = " + std::to_string(intensity) + "\n";
-  return E::make_main_from_string(input);
-}
-
-TEST(ErinBasicsTest, TestThatMaxDowntimeIsMaxContiguousDowntime)
-{
-  namespace E = ::ERIN;
-  const std::string scenario_id{"scenario01"};
-  const E::RealTimeType scenario_duration_hrs{10};
-  const E::RealTimeType scenario_duration_s{
-    scenario_duration_hrs * E::rtt_seconds_per_hour};
-  auto m = load_example_results({0.5}, 30.0);
-  const auto& si = m.get_sim_info();
-  EXPECT_EQ(si.get_random_type(), E::RandomType::FixedProcess);
-  auto results = m.run_all();
-  ASSERT_TRUE(results.get_is_good());
-  auto actual_number_of_scenarios = results.number_of_scenarios();
-  decltype(actual_number_of_scenarios) expected_number_of_scenarios{1};
-  EXPECT_EQ(expected_number_of_scenarios, actual_number_of_scenarios);
-  auto stats = results.get_stats();
-  ASSERT_EQ(expected_number_of_scenarios, stats.size());
-  auto all_ss_it = stats.find(scenario_id);
-  ASSERT_TRUE(all_ss_it != stats.end());
-  const auto& all_ss = all_ss_it->second;
-  const std::vector<E::ScenarioResults>::size_type expected_num_occurrences{4};
-  EXPECT_EQ(all_ss.num_occurrences, expected_num_occurrences);
-  const std::unordered_map<std::string, E::RealTimeType>::size_type expected_num_comps{2};
-  EXPECT_EQ(expected_num_comps, results.get_comp_ids().size());
-  EXPECT_EQ(expected_num_comps, all_ss.max_downtime_by_comp_id_s.size());
-  EXPECT_EQ(all_ss.max_downtime_by_comp_id_s.at("A"), scenario_duration_s);
-  EXPECT_EQ(all_ss.max_downtime_by_comp_id_s.at("B"), scenario_duration_s);
-  EXPECT_EQ(all_ss.energy_availability_by_comp_id.at("A"), 0.0);
-  EXPECT_EQ(all_ss.energy_availability_by_comp_id.at("B"), 0.0);
-  auto bad_results = results.with_is_good_as(false);
-  auto bad_stats = bad_results.get_stats();
-  EXPECT_EQ(bad_stats.size(), 0);
-}
-
-TEST(ErinBasicsTest, TestThatEnergyAvailabilityIsCorrect)
-{
-  namespace E = ::ERIN;
-  const std::string scenario_id{"scenario01"};
-  const E::RealTimeType scenario_duration_hrs{10};
-  const E::RealTimeType scenario_duration_s{
-    scenario_duration_hrs * E::rtt_seconds_per_hour};
-  // should translate to a [not-failed, not-failed, failed, failed] result for component A.
-  auto m = load_example_results({0.75, 0.75, 0.25, 0.25});
-  const auto& si = m.get_sim_info();
-  ASSERT_EQ(si.get_random_type(), E::RandomType::FixedSeries);
-  auto results = m.run_all();
-  ASSERT_TRUE(results.get_is_good());
-  auto actual_number_of_scenarios = results.number_of_scenarios();
-  decltype(actual_number_of_scenarios) expected_number_of_scenarios{1};
-  EXPECT_EQ(expected_number_of_scenarios, actual_number_of_scenarios);
-  auto stats = results.get_stats();
-  ASSERT_EQ(expected_number_of_scenarios, stats.size());
-  auto all_ss_it = stats.find(scenario_id);
-  ASSERT_TRUE(all_ss_it != stats.end());
-  const auto& all_ss = all_ss_it->second;
-  const std::vector<E::ScenarioResults>::size_type expected_num_occurrences{4};
-  EXPECT_EQ(all_ss.num_occurrences, expected_num_occurrences);
-  const std::unordered_map<std::string, E::RealTimeType>::size_type expected_num_comps{2};
-  EXPECT_EQ(expected_num_comps, results.get_comp_ids().size());
-  EXPECT_EQ(expected_num_comps, all_ss.max_downtime_by_comp_id_s.size());
-  EXPECT_EQ(all_ss.max_downtime_by_comp_id_s.at("A"), scenario_duration_s);
-  EXPECT_EQ(all_ss.max_downtime_by_comp_id_s.at("B"), scenario_duration_s);
-  EXPECT_EQ(all_ss.energy_availability_by_comp_id.at("A"), 0.5);
-  EXPECT_EQ(all_ss.energy_availability_by_comp_id.at("B"), 0.5);
-}
-
-TEST(ErinBasicsTest, TestRandomProcesses)
-{
-  double expected{0.5};
-  auto fp = ERIN::FixedProcess{expected};
-  EXPECT_EQ(fp.call(), expected);
-  std::vector<double> series{0.1, 0.2, 0.3};
-  auto fs = ERIN::FixedSeries{series};
-  auto fs_alt = ERIN::FixedSeries{series};
-  EXPECT_EQ(fs, fs_alt);
-  fs_alt.call();
-  EXPECT_NE(fs, fs_alt);
-  EXPECT_EQ(fs.call(), series[0]);
-  EXPECT_EQ(fs.call(), series[1]);
-  EXPECT_EQ(fs.call(), series[2]);
-  EXPECT_EQ(fs.call(), series[0]);
-  std::unique_ptr<ERIN::RandomInfo> a = std::make_unique<ERIN::FixedSeries>(series);
-  std::unique_ptr<ERIN::RandomInfo> b = std::make_unique<ERIN::FixedSeries>(series);
-  EXPECT_EQ(a, b);
-  b->call();
-  EXPECT_NE(a, b);
-}
-
-TEST(ErinBasicsTest, Test_that_we_can_specify_different_random_processes)
-{
-  std::string stub = 
-    "[simulation_info]\n"
-    "rate_unit = \"kW\"\n"
-    "quantity_unit = \"kJ\"\n"
-    "time_unit = \"years\"\n"
-    "max_time = 40\n";
-  unsigned int seed{17};
-  std::vector<std::string> inputs{
-    "fixed_random = 0.5", 
-    "fixed_random_series = [0.25,0.5,0.75]",
-    "random_seed = " + std::to_string(seed),
-    ""};
-  std::vector<ERIN::RandomType> expected_types{
-    ERIN::RandomType::FixedProcess,
-    ERIN::RandomType::FixedSeries,
-    ERIN::RandomType::RandomProcess,
-    ERIN::RandomType::RandomProcess};
-  std::vector<bool> expect_known_seed{false, false, true, false};
-  std::vector<unsigned int> expected_seeds{0, 0, seed, 0};
-  using size_type = std::vector<std::string>::size_type;
-  for (size_type i{0}; i < inputs.size(); ++i) {
-    std::stringstream ss{};
-    ss << stub << inputs.at(i) << "\n";
-    ERIN::TomlInputReader tir{ss};
-    auto si = tir.read_simulation_info();
-    const auto& expected_type = expected_types.at(i);
-    EXPECT_EQ(si.get_random_type(), expected_type)
-      << "i = " << i << "\n"
-      << "inputs[i] = " << inputs.at(i);
-    if (expect_known_seed.at(i)) {
-      EXPECT_TRUE(si.has_random_seed());
-      EXPECT_EQ(si.get_random_seed(), expected_seeds.at(i));
-    }
-  }
-}
-
-ERIN::Main
-load_converter_example()
-{
-  std::string input =
-    "[simulation_info]\n"
-    "rate_unit = \"kW\"\n"
-    "quantity_unit = \"kJ\"\n"
-    "time_unit = \"seconds\"\n"
-    "max_time = 10\n"
-    "[loads.load01]\n"
-    "time_unit = \"seconds\"\n"
-    "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,1.0],[10.0,0.0]]\n"
-    "[components.S]\n"
-    "type = \"source\"\n"
-    "output_stream = \"diesel\"\n"
-    "[components.L]\n"
-    "type = \"load\"\n"
-    "input_stream = \"electricity\"\n"
-    "loads_by_scenario.scenario01 = \"load01\"\n"
-    "[components.C]\n"
-    "type = \"converter\"\n"
-    "input_stream = \"diesel\"\n"
-    "output_stream = \"electricity\"\n"
-    "constant_efficiency = 0.5\n"
-    "[networks.nw01]\n"
-    "connections = [[\"S:OUT(0)\", \"C:IN(0)\", \"diesel\"], [\"C:OUT(0)\", \"L:IN(0)\", \"electricity\"]]\n"
-    "[dist.immediately]\n"
-    "type = \"fixed\"\n"
-    "value = 0\n"
-    "time_unit = \"hours\"\n"
-    "[scenarios.scenario01]\n"
-    "time_unit = \"seconds\"\n"
-    "occurrence_distribution = \"immediately\"\n"
-    "duration = 10\n"
-    "max_occurrences = 1\n"
-    "network = \"nw01\"\n";
-  return ERIN::make_main_from_string(input);
-}
-
-TEST(ErinBasicsTest, Test_that_we_can_simulate_with_a_converter)
-{
-  auto m = load_converter_example();
-  const auto& comps = m.get_components();
-  using size_type = std::unordered_map<
-    std::string, std::unique_ptr<ERIN::Component>>::size_type;
-  const size_type expected_num_components{3};
-  EXPECT_EQ(expected_num_components, comps.size());
-  auto results = m.run("scenario01");
-  EXPECT_TRUE(results.get_is_good());
-  auto stats_by_comp_id = results.get_statistics();
-  // num_components + 3 because for converter we have an input (the one we
-  // count) plus output, lossport, and wasteport
-  EXPECT_EQ(stats_by_comp_id.size(), expected_num_components + 3);
-  const auto& load_stats = stats_by_comp_id.at("L");
-  ERIN::RealTimeType scenario_duration_s{10};
-  ERIN::FlowValueType load_kW{1.0};
-  ERIN::FlowValueType expected_load_energy_kJ{load_kW * scenario_duration_s};
-  EXPECT_EQ(load_stats.total_energy, expected_load_energy_kJ);
-  ERIN::FlowValueType const_eff{0.5};
-  ERIN::FlowValueType expected_source_energy_kJ{
-    expected_load_energy_kJ / const_eff};
-  auto source_stats = stats_by_comp_id.at("S");
-  EXPECT_EQ(source_stats.total_energy, expected_source_energy_kJ);
-  const auto& conv = comps.at("C");
-  std::unique_ptr<ERIN::Component> expected_conv =
-    std::make_unique<ERIN::ConverterComponent>(
-        std::string{"C"},
-        std::string{"diesel"},
-        std::string{"electricity"},
-        std::string{"waste_heat"},
-        const_eff);
-  EXPECT_EQ(expected_conv, conv);
-  std::ostringstream oss{};
-  oss << conv;
-}
-
-ERIN::Main
-load_combined_heat_and_power_example()
-{
-  std::string input =
-    "[simulation_info]\n"
-    "rate_unit = \"kW\"\n"
-    "quantity_unit = \"kJ\"\n"
-    "time_unit = \"seconds\"\n"
-    "max_time = 10\n"
-    "[loads.electric_load]\n"
-    "time_unit = \"seconds\"\n"
-    "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,10.0],[10.0,0.0]]\n"
-    "[loads.heating_load]\n"
-    "time_unit = \"seconds\"\n"
-    "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,1.0],[10.0,0.0]]\n"
-    "[loads.waste_heat_load]\n"
-    "time_unit = \"seconds\"\n"
-    "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,1000.0],[10.0,0.0]]\n"
-    "[components.S]\n"
-    "type = \"source\"\n"
-    "outflow = \"natural_gas\"\n"
-    "[components.LE]\n"
-    "type = \"load\"\n"
-    "inflow = \"electricity\"\n"
-    "loads_by_scenario.scenario01 = \"electric_load\"\n"
-    "[components.LT]\n"
-    "type = \"load\"\n"
-    "inflow = \"district_hot_water\"\n"
-    "loads_by_scenario.scenario01 = \"heating_load\"\n"
-    "[components.C0]\n"
-    "type = \"converter\"\n"
-    "inflow = \"natural_gas\"\n"
-    "outflow = \"electricity\"\n"
-    "lossflow = \"waste_heat\"\n"
-    "constant_efficiency = 0.5\n"
-    "[components.C1]\n"
-    "type = \"converter\"\n"
-    "inflow = \"waste_heat\"\n"
-    "outflow = \"district_hot_water\"\n"
-    "lossflow = \"waste_heat\"\n"
-    "constant_efficiency = 0.5\n"
-    "dispatch_strategy = \"dump_load\"\n"
-    "[networks.nw01]\n"
-    "connections = [[\"S:OUT(0)\", \"C0:IN(0)\", \"natural_gas\"], "
-    "               [\"C0:OUT(0)\", \"LE:IN(0)\", \"electricity\"], "
-    "               [\"C0:OUT(1)\", \"C1:IN(0)\", \"waste_heat\"], "
-    "               [\"C1:OUT(0)\", \"LT:IN(0)\", \"district_hot_water\"]]\n"
-    "[dist.immediately]\n"
-    "type = \"fixed\"\n"
-    "value = 0\n"
-    "time_unit = \"hours\"\n"
-    "[scenarios.scenario01]\n"
-    "time_unit = \"seconds\"\n"
-    "occurrence_distribution = \"immediately\"\n"
-    "duration = 10\n"
-    "max_occurrences = 1\n"
-    "network = \"nw01\"\n";
-  return ERIN::make_main_from_string(input);
-}
-
-TEST(ErinBasicsTest, Test_that_we_can_simulate_with_a_CHP_converter)
-{
-  using size_type =
-    std::unordered_map<std::string, std::unique_ptr<ERIN::Component>>::size_type;
-  auto m = load_combined_heat_and_power_example();
-  const auto& comps = m.get_components();
-  const size_type expected_num_components{5};
-  EXPECT_EQ(expected_num_components, comps.size());
-  auto results = m.run("scenario01");
-  EXPECT_TRUE(results.get_is_good());
-  auto stats_by_comp_id = results.get_statistics();
-  EXPECT_EQ(stats_by_comp_id.size(), expected_num_components + 6);
-  const auto& electrical_load_stats = stats_by_comp_id.at("LE");
-  ERIN::RealTimeType scenario_duration_s{10};
-  ERIN::FlowValueType electrical_load_kW{10.0};
-  ERIN::FlowValueType expected_electrical_load_energy_kJ{
-    electrical_load_kW * scenario_duration_s};
-  EXPECT_EQ(
-      electrical_load_stats.total_energy,
-      expected_electrical_load_energy_kJ);
-  ERIN::FlowValueType const_eff{0.5};
-  ERIN::FlowValueType expected_source_energy_kJ{
-    expected_electrical_load_energy_kJ / const_eff};
-  auto source_stats = stats_by_comp_id.at("S");
-  EXPECT_EQ(source_stats.total_energy, expected_source_energy_kJ);
-  const auto& thermal_load_stats = stats_by_comp_id.at("LT");
-  ERIN::FlowValueType thermal_load_kW{1.0};
-  ERIN::FlowValueType expected_thermal_load_energy_kJ{
-    thermal_load_kW * scenario_duration_s};
-  EXPECT_EQ(
-      thermal_load_stats.total_energy,
-      expected_thermal_load_energy_kJ);
-}
-
-TEST(ErinDevs, Test_smart_port_object)
-{
-  namespace D = erin::devs;
-  namespace E = ERIN;
-  D::Port p{};
-  E::RealTimeType t_init{-1};
-  E::RealTimeType t0{0};
-  E::RealTimeType t1{10};
-  E::RealTimeType t2{20};
-  E::FlowValueType v0{0.0};
-  E::FlowValueType v1{100.0};
-  E::FlowValueType v2{10.0};
-  EXPECT_EQ(p.get_time_of_last_change(), t_init);
-  EXPECT_EQ(p.get_requested(), v0);
-  EXPECT_EQ(p.get_achieved(), v0);
-  EXPECT_FALSE(p.should_propagate_request_at(t0));
-  EXPECT_FALSE(p.should_propagate_achieved_at(t0));
-  EXPECT_FALSE(p.should_propagate_request_at(t1));
-  EXPECT_FALSE(p.should_propagate_achieved_at(t1));
-  EXPECT_FALSE(p.should_propagate_request_at(t2));
-  EXPECT_FALSE(p.should_propagate_achieved_at(t2));
-  auto p1 = p.with_requested(v1, t1);
-  EXPECT_EQ(p1.get_time_of_last_change(), t1);
-  ASSERT_THROW(auto _ = p1.with_requested(v2, t0), std::invalid_argument);
-  EXPECT_EQ(p1.get_requested(), v1);
-  EXPECT_EQ(p1.get_achieved(), v1);
-  EXPECT_FALSE(p1.should_propagate_request_at(t0));
-  EXPECT_FALSE(p1.should_propagate_achieved_at(t0));
-  EXPECT_TRUE(p1.should_propagate_request_at(t1));
-  EXPECT_FALSE(p1.should_propagate_achieved_at(t1));
-  EXPECT_FALSE(p1.should_propagate_request_at(t2));
-  EXPECT_FALSE(p1.should_propagate_achieved_at(t2));
-  auto p1a = p1.with_achieved(v2, t1);
-  EXPECT_EQ(p1a.get_time_of_last_change(), t1);
-  EXPECT_EQ(p1a.get_requested(), p1.get_requested());
-  EXPECT_EQ(p1a.get_achieved(), v2);
-  auto p2 = p1.with_requested(v1, t2);
-  EXPECT_EQ(p2.get_time_of_last_change(), t1);
-  EXPECT_EQ(p2.get_requested(), v1);
-  EXPECT_EQ(p2.get_achieved(), v1);
-  EXPECT_FALSE(p2.should_propagate_request_at(t0));
-  EXPECT_FALSE(p2.should_propagate_achieved_at(t0));
-  if (false) {
-    std::cout << "p=" << p << "\n";
-    std::cout << "p1=" << p1 << "\n";
-    std::cout << "p2=" << p2 << "\n";
-  }
-  EXPECT_TRUE(p2.should_propagate_request_at(t1));
-  EXPECT_FALSE(p2.should_propagate_achieved_at(t1));
-  EXPECT_FALSE(p2.should_propagate_request_at(t2));
-  EXPECT_FALSE(p2.should_propagate_achieved_at(t2));
-  //auto p2 = p1.with_achieved(10.0);
-  //EXPECT_EQ(p2.get_requested(), 20.0);
-  //EXPECT_EQ(p2.get_achieved(), 10.0);
-}
-
-TEST(ErinComponents, Test_passthrough_component)
-{
-  std::string input =
-    "[simulation_info]\n"
-    "rate_unit = \"kW\"\n"
-    "quantity_unit = \"kJ\"\n"
-    "time_unit = \"seconds\"\n"
-    "max_time = 10\n"
-    "[loads.load0]\n"
-    "time_unit = \"seconds\"\n"
-    "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,10.0],[10.0,0.0]]\n"
-    "[components.S]\n"
-    "type = \"source\"\n"
-    "output_stream = \"electricity\"\n"
-    "[components.P]\n"
-    "type = \"pass_through\"\n"
-    "stream = \"electricity\"\n"
-    "[components.L]\n"
-    "type = \"load\"\n"
-    "input_stream = \"electricity\"\n"
-    "loads_by_scenario.scenario0 = \"load0\"\n"
-    "[networks.nw0]\n"
-    "connections = [[\"S:OUT(0)\", \"P:IN(0)\", \"electricity\"], [\"P:OUT(0)\", \"L:IN(0)\", \"electricity\"]]\n"
-    "[dist.immediately]\n"
-    "type = \"fixed\"\n"
-    "value = 0\n"
-    "time_unit = \"hours\"\n"
-    "[scenarios.scenario0]\n"
-    "time_unit = \"seconds\"\n"
-    "duration = 10\n"
-    "occurrence_distribution = \"immediately\"\n"
-    "max_occurrences = 1\n"
-    "network = \"nw0\"\n";
-  namespace E = ::ERIN;
-  auto pt = E::ComponentType::PassThrough;
-  EXPECT_EQ("pass_through", E::component_type_to_tag(pt));
-  EXPECT_EQ(E::tag_to_component_type("pass_through"), pt);
-  auto ptc = E::PassThroughComponent{"my_comp", std::string{"electrical"}};
-  auto ptc2 = E::PassThroughComponent{"my_comp", std::string{"electrical"}};
-  std::ostringstream oss;
-  oss << ptc;
-  EXPECT_EQ(ptc, ptc2);
-  auto m = E::make_main_from_string(input);
-  auto results = m.run("scenario0");
-  EXPECT_TRUE(results.get_is_good());
-  auto results_map = results.get_results();
-  EXPECT_EQ(3, results_map.size());
-  auto comp_ids = results.get_component_ids();
-  std::vector<std::string> expected_comp_ids{"L","P","S"};
-  ASSERT_EQ(expected_comp_ids.size(), comp_ids.size());
-  EXPECT_EQ(expected_comp_ids, comp_ids);
-  std::string elec{"electricity"};
-  std::unordered_map<std::string,std::string> expected_streams{
-    {"L", elec},
-    {"P", elec},
-    {"S", elec}};
-  auto streams = results.get_stream_ids();
-  EXPECT_EQ(expected_streams, streams);
-  auto comps = results.get_component_types();
-  std::unordered_map<std::string, E::ComponentType> expected_comps{
-    {"L", E::ComponentType::Load},
-    {"P", E::ComponentType::PassThrough},
-    {"S", E::ComponentType::Source}};
-  EXPECT_EQ(3, comps.size());
-  EXPECT_EQ(expected_comps, comps);
-  auto stats = results.get_statistics();
-  std::unordered_map<std::string, E::ScenarioStats> expected_stats{
-    {"L", E::ScenarioStats{10,0,0,0.0,100.0}},
-    {"P", E::ScenarioStats{10,0,0,0.0,100.0}},
-    {"S", E::ScenarioStats{10,0,0,0.0,100.0}}};
-  EXPECT_EQ(stats.size(), expected_stats.size());
-  for (const auto& s_item: expected_stats) {
-    const auto& id = s_item.first;
-    const auto& expected_stat = s_item.second;
-    auto it = stats.find(id);
-    ASSERT_TRUE(it != stats.end());
-    EXPECT_EQ(expected_stat, it->second) << "id = " << id;
-  }
-}
-
-TEST(ErinComponents, Test_passthrough_component_with_fragility)
-{
-  std::string input =
-    "[simulation_info]\n"
-    "rate_unit = \"kW\"\n"
-    "quantity_unit = \"kJ\"\n"
-    "time_unit = \"seconds\"\n"
-    "max_time = 10\n"
-    "[loads.load0]\n"
-    "time_unit = \"seconds\"\n"
-    "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,10.0],[10.0,0.0]]\n"
-    "[components.S]\n"
-    "type = \"source\"\n"
-    "output_stream = \"electricity\"\n"
-    "[components.P]\n"
-    "type = \"pass_through\"\n"
-    "stream = \"electricity\"\n"
-    "fragility_modes = [\"frag01\"]\n"
-    "[components.L]\n"
-    "type = \"load\"\n"
-    "input_stream = \"electricity\"\n"
-    "loads_by_scenario.scenario0 = \"load0\"\n"
-    "[fragility_mode.frag01]\n"
-    "fragility_curve = \"frag01_curve\"\n"
-    "[fragility_curve.frag01_curve]\n"
-    "vulnerable_to = \"intensity01\"\n"
-    "type = \"linear\"\n"
-    "lower_bound = 10.0\n"
-    "upper_bound = 20.0\n"
-    "[networks.nw0]\n"
-    "connections = [[\"S:OUT(0)\", \"P:IN(0)\", \"electricity\"], [\"P:OUT(0)\", \"L:IN(0)\", \"electricity\"]]\n"
-    "[dist.immediately]\n"
-    "type = \"fixed\"\n"
-    "value = 0\n"
-    "time_unit = \"hours\"\n"
-    "[scenarios.scenario0]\n"
-    "time_unit = \"seconds\"\n"
-    "duration = 10\n"
-    "occurrence_distribution = \"immediately\"\n"
-    "max_occurrences = 1\n"
-    "intensity.intensity01 = 30.0\n"
-    "network = \"nw0\"\n";
-  namespace E = ::ERIN;
-  auto m = E::make_main_from_string(input);
-  auto results = m.run("scenario0");
-  auto stats = results.get_statistics();
-  std::unordered_map<std::string, E::ScenarioStats> expected_stats{
-    {"L", E::ScenarioStats{0,10,10,100.0,0.0}},
-    {"P", E::ScenarioStats{0,10,10,100.0,0.0}},
-    {"S", E::ScenarioStats{10,0,0,0.0,0.0}}};
-  EXPECT_EQ(stats.size(), expected_stats.size());
-  for (const auto& s_item: expected_stats) {
-    const auto& id = s_item.first;
-    const auto& expected_stat = s_item.second;
-    auto it = stats.find(id);
-    ASSERT_TRUE(it != stats.end());
-    EXPECT_EQ(expected_stat, it->second) << "id = " << id;
-  }
-}
-
-TEST(ErinComponents, Test_passthrough_component_with_limits)
-{
-  std::string input =
-    "[simulation_info]\n"
-    "rate_unit = \"kW\"\n"
-    "quantity_unit = \"kJ\"\n"
-    "time_unit = \"seconds\"\n"
-    "max_time = 10\n"
-    "[loads.load0]\n"
-    "time_unit = \"seconds\"\n"
-    "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,10.0],[10.0,0.0]]\n"
-    "[components.S]\n"
-    "type = \"source\"\n"
-    "output_stream = \"electricity\"\n"
-    "[components.P]\n"
-    "type = \"pass_through\"\n"
-    "stream = \"electricity\"\n"
-    "max_outflow = 5.0\n"
-    "min_outflow = 0.0\n"
-    "[components.L]\n"
-    "type = \"load\"\n"
-    "input_stream = \"electricity\"\n"
-    "loads_by_scenario.scenario0 = \"load0\"\n"
-    "[networks.nw0]\n"
-    "connections = [[\"S:OUT(0)\", \"P:IN(0)\", \"electricity\"], [\"P:OUT(0)\", \"L:IN(0)\", \"electricity\"]]\n"
-    "[dist.immediately]\n"
-    "type = \"fixed\"\n"
-    "value = 0\n"
-    "time_unit = \"hours\"\n"
-    "[scenarios.scenario0]\n"
-    "time_unit = \"seconds\"\n"
-    "duration = 10\n"
-    "occurrence_distribution = \"immediately\"\n"
-    "max_occurrences = 1\n"
-    "network = \"nw0\"\n";
-  namespace E = ::ERIN;
-  auto m = E::make_main_from_string(input);
-  auto results = m.run("scenario0");
-  ASSERT_TRUE(results.get_is_good());
-  auto stats = results.get_statistics();
-  std::unordered_map<std::string, E::ScenarioStats> expected_stats{
-    // load is aware of unmet requests
-    {"L", E::ScenarioStats{0,10,10,50.0,50.0}},
-    // pass-through is aware of unmet requests
-    {"P", E::ScenarioStats{0,10,10,50.0,50.0}},
-    // from source's point of view, it meets all requests
-    {"S", E::ScenarioStats{10,0,0,0.0,50.0}}};
-  EXPECT_EQ(stats.size(), expected_stats.size());
-  for (const auto& s_item: expected_stats) {
-    const auto& id = s_item.first;
-    const auto& expected_stat = s_item.second;
-    auto it = stats.find(id);
-    ASSERT_TRUE(it != stats.end());
-    EXPECT_EQ(expected_stat, it->second) << "id = " << id;
-  }
-}
-
-TEST(ErinComponents, Test_that_clone_works_for_passthrough_component)
-{
-  auto c = ERIN::PassThroughComponent(
-      "P", std::string{"electricity"}, ERIN::Limits{0.0,100.0}, {});
-  auto p = c.clone();
-  EXPECT_EQ(c, dynamic_cast<ERIN::PassThroughComponent&>(*p));
-}
-
-TEST(ErinComponents, Test_converter_component_with_fragilities)
-{
-  std::string input =
-    "[simulation_info]\n"
-    "rate_unit = \"kW\"\n"
-    "quantity_unit = \"kJ\"\n"
-    "time_unit = \"seconds\"\n"
-    "max_time = 10\n"
-    "[loads.load0]\n"
-    "time_unit = \"seconds\"\n"
-    "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,10.0],[10.0,0.0]]\n"
-    "[components.S]\n"
-    "type = \"source\"\n"
-    "outflow = \"natural_gas\"\n"
-    "[components.C]\n"
-    "type = \"converter\"\n"
-    "inflow = \"natural_gas\"\n"
-    "outflow = \"electricity\"\n"
-    "lossflow = \"waste_heat\"\n"
-    "constant_efficiency = 0.5\n"
-    "fragility_modes = [\"frag01\"]\n"
-    "[components.L]\n"
-    "type = \"load\"\n"
-    "input_stream = \"electricity\"\n"
-    "loads_by_scenario.scenario0 = \"load0\"\n"
-    "[fragility_mode.frag01]\n"
-    "fragility_curve = \"frag01_curve\"\n"
-    "[fragility_curve.frag01_curve]\n"
-    "vulnerable_to = \"intensity01\"\n"
-    "type = \"linear\"\n"
-    "lower_bound = 10.0\n"
-    "upper_bound = 20.0\n"
-    "[networks.nw0]\n"
-    "connections = [[\"S:OUT(0)\", \"C:IN(0)\", \"natural_gas\"], [\"C:OUT(0)\", \"L:IN(0)\", \"electricity\"]]\n"
-    "[dist.immediately]\n"
-    "type = \"fixed\"\n"
-    "value = 0\n"
-    "time_unit = \"hours\"\n"
-    "[scenarios.scenario0]\n"
-    "time_unit = \"seconds\"\n"
-    "duration = 10\n"
-    "occurrence_distribution = \"immediately\"\n"
-    "max_occurrences = 1\n"
-    "intensity.intensity01 = 30.0\n"
-    "network = \"nw0\"\n";
-  namespace E = ::ERIN;
-  auto m = E::make_main_from_string(input);
-  const auto& comps = m.get_components();
-  const auto& c = comps.at("C");
-  ASSERT_TRUE(c->is_fragile());
-  const auto& c1 = c->clone();
-  ASSERT_TRUE(c1->is_fragile());
-  ASSERT_EQ(
-      dynamic_cast<E::ConverterComponent&>(*c),
-      dynamic_cast<E::ConverterComponent&>(*c1));
-  auto results = m.run("scenario0");
-  ASSERT_TRUE(results.get_is_good());
-  auto stats = results.get_statistics();
-  std::unordered_map<std::string, E::ScenarioStats> expected_stats{
-    {"L", E::ScenarioStats{0,10,10,100.0,0.0}},
-    {"C-inflow", E::ScenarioStats{10,0,0,0.0,0.0}},
-    {"C-outflow", E::ScenarioStats{0,10,10,100.0,0.0}},
-    {"C-lossflow", E::ScenarioStats{10,0,0,0.0,0.0}},
-    {"C-wasteflow", E::ScenarioStats{10,0,0,0.0,0.0}},
-    {"S", E::ScenarioStats{10,0,0,0.0,0.0}}};
-  EXPECT_EQ(stats.size(), expected_stats.size());
-  for (const auto& s_item: expected_stats) {
-    const auto& id = s_item.first;
-    const auto& expected_stat = s_item.second;
-    auto it = stats.find(id);
-    ASSERT_TRUE(it != stats.end()) << "expected id = " << id;
-    EXPECT_EQ(expected_stat, it->second) << "id = " << id;
-  }
-}
-
-TEST(ErinElements, Test_that_converter_yields_lossflow)
-{
-  namespace E = ERIN;
-  namespace EU = erin::utils;
-  std::unique_ptr<ERIN::FlowElement> c = std::make_unique<ERIN::Converter>(
-      "conv",
-      E::ComponentType::Converter,
-      std::string{"coal"},
-      std::string{"electricity"},
-      [](E::FlowValueType input) -> E::FlowValueType { return input * 0.5; },
-      [](E::FlowValueType output) -> E::FlowValueType { return output * 2.0; });
-  // * external: lossflow request of 100,000 comes in at (0,0)
-  // * ta() should be 0
-  // * external: outflow request of 10 comes in at (0,1)
-  // * ta() should be 0
-  // * ys = output(); ys = [{:port :outport_inflow_request :value 20}]
-  // * external: inflow achieved of 20 comes in at (0,3)
-  // * call output_func() and check values of ys; do we report the right lossflow?
-  // * call delta_int()
-  E::Time t0{0,0};
-  E::Time dt{0,1};
-  int inport_lossflow_request{
-    E::FlowElement::inport_outflow_request + 1};
-  int outport_lossflow_achieved{
-    E::FlowElement::outport_outflow_achieved + 1};
-  auto lossflow_request = E::PortValue{
-    inport_lossflow_request,
-    100'000.0,
-  }; 
-  auto outflow_request = E::PortValue{
-    E::FlowElement::inport_outflow_request,
-    10.0,
-  };
-  auto inflow_achieved = E::PortValue{
-    E::FlowElement::inport_inflow_achieved,
-    20.0,
-  };
-  std::vector<E::PortValue> v1 = {lossflow_request};
-  std::vector<E::PortValue> v2 = {outflow_request};
-  std::vector<E::PortValue> v3 = {inflow_achieved};
-  auto dt_next = c->ta();
-  EXPECT_EQ(dt_next, E::inf);
-  c->delta_ext(t0+dt, v1);
-  dt_next = c->ta();
-  EXPECT_EQ(dt_next, E::inf);
-  c->delta_ext(dt, v2);
-  dt_next = c->ta();
-  EXPECT_EQ(dt_next, dt);
-  std::vector<E::PortValue> outputs1{};
-  c->output_func(outputs1);
-  c->delta_int();
-  dt_next = c->ta();
-  // lossflow_achieved
-  ASSERT_EQ(1, outputs1.size());
-  EXPECT_EQ(E::FlowElement::outport_inflow_request, outputs1[0].port);
-  EXPECT_EQ(20.0, outputs1[0].value);
-  EXPECT_EQ(dt_next, E::inf);
-  c->delta_ext(dt, v3);
-  dt_next = c->ta();
-  EXPECT_EQ(dt_next, dt);
-  std::vector<E::PortValue> outputs2{};
-  std::vector<E::PortValue> expected_outputs2{
-    E::PortValue{E::FlowElement::outport_outflow_achieved, 10.0},
-    E::PortValue{outport_lossflow_achieved, 10.0}};
-  c->output_func(outputs2);
-  ASSERT_EQ(2, outputs2.size());
-  ASSERT_TRUE(
-      EU::compare_vectors_unordered_with_fn<E::PortValue>(
-        outputs2, expected_outputs2, compare_ports));
-}
-
-TEST(ErinGraphviz, Test_that_we_can_generate_graphviz)
-{
-  namespace en = erin::network;
-  namespace ep = erin::port;
-  std::vector<en::Connection> nw = {
-  en::Connection{
-    en::ComponentAndPort{"electric_utility", ep::Type::Outflow, 0},
-    en::ComponentAndPort{"cluster_01_electric", ep::Type::Inflow, 0},
-    "electricity"}};
-  namespace eg = erin::graphviz;
-  std::string expected =
-    "digraph ex01_normal_operations {\n"
-    "  node [shape=record];\n"
-    "  cluster_01_electric [shape=record,label=\"<I0> I(0)|<name> cluster_01_electric\"];\n"
-    "  electric_utility [shape=record,label=\"<name> electric_utility|<O0> O(0)\"];\n"
-    "  electric_utility:O0:s -> cluster_01_electric:I0:n;\n"
-    "}";
-  auto actual = eg::network_to_dot(nw, "ex01_normal_operations", false);
-  EXPECT_EQ(expected, actual);
-}
-
-TEST(ErinBasicsTest, Test_that_we_can_access_version_info_programmatically)
-{
-  namespace ev = erin::version;
-  EXPECT_TRUE(ev::major_version >= 0);
-  EXPECT_TRUE(ev::minor_version >= 0);
-  EXPECT_TRUE(ev::release_number >= 0);
-  std::ostringstream oss;
-  oss << ev::major_version << "." << ev::minor_version << "." << ev::release_number;
-  EXPECT_EQ(ev::version_string, oss.str());
-}
-
-TEST(ErinBasicsTest, Test_that_path_to_filename_works)
-{
-  namespace eu = erin::utils;
-  std::string path0{"erin"};
-  std::string expected_filename0{"erin"};
-  EXPECT_EQ(expected_filename0, eu::path_to_filename(path0));
-  std::string path1{"./bin/erin"};
-  std::string expected_filename1{"erin"};
-  EXPECT_EQ(expected_filename1, eu::path_to_filename(path1));
-  std::string path2{".\\bin\\Debug\\erin.exe"};
-  std::string expected_filename2{"erin.exe"};
-}
-
-TEST(ErinElements, Test_flow_writer_implementation)
-{
-  auto fw = ERIN::DefaultFlowWriter();
-  auto id = fw.register_id(
-      "element", "electricity", ERIN::ComponentType::Load, ERIN::PortRole::LoadInflow, true);
-  ERIN::RealTimeType t_max{10};
-  fw.write_data(id, 0, 0.0, 0.0);
-  fw.write_data(id, 0, 10.0, 10.0);
-  fw.write_data(id, 0, 10.0, 8.0);
-  fw.write_data(id, 5, 5.0, 5.0);
-  fw.finalize_at_time(t_max);
-  ASSERT_THROW(fw.write_data(id, t_max+1, 10.0, 10.0), std::runtime_error);
-  auto actual = fw.get_results();
-  std::unordered_map<std::string, std::vector<ERIN::Datum>> expected{
+    std::unordered_set<std::string> expected {"a", "b", "c", "d"};
+    std::unordered_set<std::string> actual =
+        erin::TOMLTable_parse_component_tags_in_use(example_input);
+    EXPECT_EQ(expected.size(), actual.size());
+    for (auto const& item : expected)
     {
-      "element",
-      std::vector<ERIN::Datum>{
-        ERIN::Datum{0,10.0,8.0},
-        ERIN::Datum{5,5.0,5.0},
-        ERIN::Datum{10,0.0,0.0}}}};
-  EXPECT_EQ(actual, expected);
-  fw.clear();
-  auto id1 = fw.register_id(
-      "electric_load_1:inflow", "electricity",
-      ERIN::ComponentType::Load, ERIN::PortRole::LoadInflow, true);
-  auto id2 = fw.register_id(
-      "diesel_genset_1:outflow", "electricity",
-      ERIN::ComponentType::Converter, ERIN::PortRole::Outflow, true);
-  auto id3 = fw.register_id(
-      "electric_load_2:inflow", "electricity",
-      ERIN::ComponentType::Load, ERIN::PortRole::LoadInflow, true);
-  auto id4 = fw.register_id(
-      "diesel_genset_2:outflow", "electricity",
-      ERIN::ComponentType::Converter, ERIN::PortRole::Outflow, true);
-  auto id5 = fw.register_id(
-      "diesel_fuel_tank:outflow", "diesel_fuel",
-      ERIN::ComponentType::Source, ERIN::PortRole::SourceOutflow, true);
-  // start
-  fw.write_data(id1, 0, 10.0, 10.0);
-  fw.write_data(id2, 0, 10.0, 10.0);
-  fw.write_data(id3, 0, 5.0, 5.0);
-  fw.write_data(id4, 0, 5.0, 5.0);
-  fw.write_data(id5, 0, 30.0, 30.0);
-  // 5 seconds
-  fw.write_data(id3, 5, 10.0, 10.0);
-  fw.write_data(id4, 5, 10.0, 10.0);
-  fw.write_data(id5, 5, 40.0, 35.0);
-  fw.write_data(id4, 5, 10.0, 7.5);
-  fw.write_data(id3, 5, 10.0, 7.5);
-  // 10 seconds
-  fw.write_data(id3, 10, 5.0, 5.0);
-  fw.write_data(id4, 10, 5.0, 5.0);
-  fw.write_data(id5, 10, 30.0, 30.0);
-  fw.finalize_at_time(10);
-  auto actual1 = fw.get_results();
-  std::unordered_map<std::string, std::vector<ERIN::Datum>> expected1{
-    {
-      "electric_load_1:inflow", // id1
-      std::vector<ERIN::Datum>{
-        ERIN::Datum{0,10.0,10.0},
-        ERIN::Datum{5,10.0,10.0},
-        ERIN::Datum{10,0.0,0.0}}},
-    {
-      "diesel_genset_1:outflow", // id2
-      std::vector<ERIN::Datum>{
-        ERIN::Datum{0,10.0,10.0},
-        ERIN::Datum{5,10.0,10.0},
-        ERIN::Datum{10,0.0,0.0}}},
-    {
-      "electric_load_2:inflow", // id3
-      std::vector<ERIN::Datum>{
-        ERIN::Datum{0,5.0,5.0},
-        ERIN::Datum{5,10.0,7.5},
-        ERIN::Datum{10,0.0,0.0}}},
-    {
-      "diesel_genset_2:outflow", // id4
-      std::vector<ERIN::Datum>{
-        ERIN::Datum{0,5.0,5.0},
-        ERIN::Datum{5,10.0,7.5},
-        ERIN::Datum{10,0.0,0.0}}},
-    {
-      "diesel_fuel_tank:outflow", // id5
-      std::vector<ERIN::Datum>{
-        ERIN::Datum{0,30.0,30.0},
-        ERIN::Datum{5,40.0,35.0},
-        ERIN::Datum{10,0.0,0.0}}}};
-  ASSERT_EQ(5, actual1.size());
-  for (const auto& item: actual1) {
-    const auto& tag = item.first;
-    const auto& actual_val = item.second;
-    auto it = expected1.find(tag);
-    ASSERT_TRUE(it != expected1.end()) << tag << " not found in expected1!";
-    const auto& expected_val = it->second;
-    EXPECT_EQ(actual_val, expected_val) << "values not equal for " << tag;
-  }
-}
-
-TEST(ErinElements, Test_flow_writer)
-{
-  std::unique_ptr<ERIN::FlowWriter> fw1 = std::make_unique<ERIN::DefaultFlowWriter>();
-  auto id = fw1->register_id(
-      "element", "stream", ERIN::ComponentType::Load, ERIN::PortRole::LoadInflow, true);
-  fw1->write_data(id, 0, 10.0, 10.0);
-  fw1->write_data(id, 4, 20.0, 10.0);
-  fw1->finalize_at_time(10);
-  auto results1 = fw1->get_results();
-  fw1->clear();
-  std::vector<ERIN::RealTimeType> expected_times1 = {0,4,10};
-  auto actual_times1 = ERIN::get_times_from_results_for_component(results1, "element");
-  EXPECT_EQ(expected_times1, actual_times1);
-  std::vector<ERIN::FlowValueType> expected_achieved_flows1 = {10.0,10.0,0.0};
-  auto actual_achieved_flows1 = ERIN::get_actual_flows_from_results_for_component(results1, "element");
-  EXPECT_EQ(expected_achieved_flows1, actual_achieved_flows1);
-  std::vector<ERIN::FlowValueType> expected_requested_flows1 = {10.0,20.0,0.0};
-  auto actual_requested_flows1 = ERIN::get_requested_flows_from_results_for_component(results1, "element");
-  EXPECT_EQ(expected_requested_flows1, actual_requested_flows1);
-}
-
-TEST(ErinBasicsTest, Test_that_compare_vectors_unordered_works)
-{
-  namespace eu = erin::utils;
-  std::vector<int> xs{1,2,3,4};
-  std::vector<int> ys{4,3,2,1};
-  EXPECT_TRUE(eu::compare_vectors_unordered<int>(xs, ys));
-  xs = std::vector<int>{1,2,3};
-  ys = std::vector<int>{4,3,2};
-  EXPECT_FALSE(eu::compare_vectors_unordered<int>(xs, ys));
-  xs = std::vector<int>{1,2,3,4};
-  ys = std::vector<int>{4,3,2};
-  EXPECT_FALSE(eu::compare_vectors_unordered<int>(xs, ys));
-}
-
-TEST(ErinDevs, Test_converter_functions)
-{
-  namespace ED = erin::devs;
-  namespace EU = erin::utils;
-  ED::FlowValueType constant_efficiency{0.25};
-  auto s0 = ED::make_converter_state(constant_efficiency);
-  std::unique_ptr<ED::ConversionFun> cf =
-    std::make_unique<ED::ConstantEfficiencyFun>(constant_efficiency);
-  ED::ConverterState expected_s0{
-    // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
-    0, ED::Port3{}, ED::Port3{}, ED::Port3{}, ED::Port3{},
-    // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
-    cf->clone(), false, false, false};
-  EXPECT_EQ(s0, expected_s0);
-  auto dt0 = ED::converter_time_advance(s0);
-  EXPECT_EQ(dt0, ED::infinity);
-  std::vector<ED::PortValue> xs0{ED::PortValue{ED::inport_outflow_request, 10.0}};
-  auto s1 = ED::converter_external_transition(s0, 2, xs0);
-  ED::ConverterState expected_s1{
-    // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
-    2, ED::Port3{40.0}, ED::Port3{10.0}, ED::Port3{0.0}, ED::Port3{30.0},
-    // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
-    cf->clone(), true, false, false};
-  ASSERT_EQ(expected_s1, s1);
-  auto dt1 = ED::converter_time_advance(s1);
-  ASSERT_EQ(dt1, 0);
-  auto ys1 = ED::converter_output_function(s1);
-  std::vector<ED::PortValue> expected_ys1{
-    ED::PortValue{ED::outport_inflow_request, 40.0}};
-  ASSERT_TRUE(
-      EU::compare_vectors_unordered_with_fn<ED::PortValue>(
-        ys1, expected_ys1, compare_ports));
-  auto s2 = ED::converter_internal_transition(s1);
-  ED::ConverterState expected_s2{
-    // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
-    2, ED::Port3{40.0}, ED::Port3{10.0}, ED::Port3{0.0}, ED::Port3{30.0},
-    // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
-    cf->clone(), false, false, false};
-  ASSERT_EQ(expected_s2, s2);
-  auto dt2 = ED::converter_time_advance(s2);
-  ASSERT_EQ(dt2, ED::infinity);
-  std::vector<ED::PortValue> xs2{
-    ED::PortValue{ED::inport_inflow_achieved, 20.0}};
-  auto s3 = ED::converter_external_transition(s2, 1, xs2);
-  ED::ConverterState expected_s3{
-    // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
-    3, ED::Port3{40.0, 20.0}, ED::Port3{10.0, 5.0}, ED::Port3{0.0}, ED::Port3{30.0, 15.0},
-    // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
-    cf->clone(), false, true, false};
-  ASSERT_EQ(expected_s3, s3);
-  auto dt3 = ED::converter_time_advance(s3);
-  ASSERT_EQ(dt3, 0);
-  auto ys3 = ED::converter_output_function(s3);
-  std::vector<ED::PortValue> expected_ys3{
-    ED::PortValue{ED::outport_outflow_achieved, 5.0}};
-  ASSERT_TRUE(
-      EU::compare_vectors_unordered_with_fn<ED::PortValue>(
-        ys3, expected_ys3, compare_ports));
-  auto s4 = ED::converter_internal_transition(s3);
-  ED::ConverterState expected_s4{
-    // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
-    3, ED::Port3{40.0, 20.0}, ED::Port3{10.0, 5.0}, ED::Port3{0.0}, ED::Port3{30.0, 15.0},
-    // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
-    cf->clone(), false, false, false};
-  ASSERT_EQ(s4, expected_s4);
-  auto dt4 = ED::converter_time_advance(s4);
-  ASSERT_EQ(dt4, ED::infinity);
-  // Test Confluent Transitions
-  const int inport_lossflow_request{ED::inport_outflow_request + 1};
-  std::vector<ED::PortValue> xs1a{
-    ED::PortValue{inport_lossflow_request, 2.0}};
-  auto s2a = ED::converter_confluent_transition(s1, xs1a);
-  ED::ConverterState expected_s2a{
-    // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
-    2, ED::Port3{40.0}, ED::Port3{10.0}, ED::Port3{2.0}, ED::Port3{28.0},
-    // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
-    cf->clone(), false, false, false};
-  ASSERT_EQ(s2a, expected_s2a);
-
-  // Test Multiple Events for a Single External Transition
-  // Starting from a "Zero" State
-  std::vector<ED::PortValue> xs_a{
-    ED::PortValue{ED::inport_outflow_request, 10.0}};
-  auto s_a = ED::converter_external_transition(s0, 10, xs_a);
-  ED::ConverterState expected_s_a{
-    // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
-    10, ED::Port3{40.0}, ED::Port3{10.0}, ED::Port3{0.0}, ED::Port3{30.0},
-    // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
-    cf->clone(), true, false, false};
-  ASSERT_EQ(s_a, expected_s_a);
-
-  std::vector<ED::PortValue> xs_b{
-    ED::PortValue{inport_lossflow_request, 30.0}};
-  auto s_b = ED::converter_external_transition(s0, 10, xs_b);
-  ED::ConverterState expected_s_b{
-    // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
-    10, ED::Port3{0.0}, ED::Port3{0.0}, ED::Port3{30.0, 0.0}, ED::Port3{0.0, 0.0},
-    // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
-    cf->clone(), false, false, false};
-  ASSERT_EQ(s_b, expected_s_b);
-
-  // setting up an achieved more than requested situation
-  std::cout << "1\n";
-  std::vector<ED::PortValue> xs_c{
-    ED::PortValue{ED::inport_inflow_achieved, 40.0}};
-  auto some_s = ED::converter_external_transition(s_a, 10, xs_c);
-  ASSERT_FALSE(some_s.report_inflow_request);
-
-  std::vector<ED::PortValue> xs_d{
-    ED::PortValue{ED::inport_outflow_request, 10.0},
-    ED::PortValue{inport_lossflow_request, 30.0}};
-  auto s_d = ED::converter_external_transition(s_a, 10, xs_d);
-  ED::ConverterState expected_s_d{
-    // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
-    20, ED::Port3{40.0}, ED::Port3{10.0}, ED::Port3{30.0}, ED::Port3{0.0},
-    // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
-    cf->clone(), false, false, false};
-  EXPECT_EQ(s_d, expected_s_d);
-
-  // ... we get an outflow request and somehow we get an overrequest at the
-  // same moment; it all works out
-  std::vector<ED::PortValue> xs_e{
-    ED::PortValue{ED::inport_outflow_request, 10.0},
-    ED::PortValue{ED::inport_inflow_achieved, 40.0}};
-  some_s = ED::converter_external_transition(s_a, 10, xs_e);
-  EXPECT_FALSE(some_s.report_inflow_request);
-
-  // a lossflow port cannot drive an inflow request. Therefore, inflow is going
-  // to get rerequested at 0 and lossflow request denied
-  std::vector<ED::PortValue> xs_f{
-    ED::PortValue{inport_lossflow_request, 30.0},
-    ED::PortValue{ED::inport_inflow_achieved, 40.0}};
-  some_s = ED::converter_external_transition(s_a, 10, xs_f);
-  EXPECT_FALSE(some_s.report_inflow_request);
-  EXPECT_TRUE(some_s.report_outflow_achieved);
-  EXPECT_TRUE(some_s.report_lossflow_achieved);
-  EXPECT_EQ(some_s.inflow_port.get_requested(), 40.0);
-  EXPECT_EQ(some_s.lossflow_port.get_achieved(), 30.0);
-
-  // inflow, outflow, and lossflow just happen to be in sync. OK.
-  std::vector<ED::PortValue> xs_g{
-    ED::PortValue{ED::inport_outflow_request, 10.0},
-    ED::PortValue{inport_lossflow_request, 30.0},
-    ED::PortValue{ED::inport_inflow_achieved, 40.0}};
-  some_s = ED::converter_external_transition(s_a, 10, xs_g);
-  EXPECT_FALSE(some_s.report_inflow_request);
-  EXPECT_TRUE(some_s.report_outflow_achieved);
-  EXPECT_TRUE(some_s.report_lossflow_achieved);
-  EXPECT_EQ(some_s.inflow_port.get_requested(), 40.0);
-  EXPECT_EQ(some_s.lossflow_port.get_achieved(), 30.0);
-  EXPECT_EQ(some_s.outflow_port.get_achieved(), 10.0);
-  
-  // Test Multiple Events for a Single External Transition
-  ED::ConverterState s_m{
-    // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
-    2, ED::Port3{80.0}, ED::Port3{20.0}, ED::Port3{0.0}, ED::Port3{60.0},
-    // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
-    cf->clone(), false, false, false};
-  //std::vector<ED::PortValue> xs_a{
-  //  ED::PortValue{ED::inport_outflow_request, 10.0}};
-  auto s_a1 = ED::converter_external_transition(s_m, 10, xs_a);
-  ED::ConverterState expected_s_a1{
-    // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
-    12, ED::Port3{40.0}, ED::Port3{10.0}, ED::Port3{0.0}, ED::Port3{30.0},
-    // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
-    cf->clone(), true, false, false};
-  EXPECT_EQ(s_a1, expected_s_a1);
-
-  //std::vector<ED::PortValue> xs_b{
-  //  ED::PortValue{ED::inport_lossflow_request, 30.0}};
-  auto s_b1 = ED::converter_external_transition(s_m, 10, xs_b);
-  ED::ConverterState expected_s_b1{
-    // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
-    12, ED::Port3{80.0}, ED::Port3{20.0}, ED::Port3{30.0}, ED::Port3{30.0},
-    // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
-    cf->clone(), false, false, false};
-  EXPECT_EQ(s_b1, expected_s_b1);
-
-  //std::vector<ED::PortValue> xs_c{
-  //  ED::PortValue{ED::inport_inflow_achieved, 40.0}};
-  auto s_c1 = ED::converter_external_transition(s_m, 10, xs_c);
-  ED::ConverterState expected_s_c1{
-    // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
-    12, ED::Port3{80.0, 40.0}, ED::Port3{20.0, 10.0}, ED::Port3{0.0, 0.0}, ED::Port3{60.0, 30.0},
-    // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
-    cf->clone(), false, true, false};
-  EXPECT_EQ(s_c1, expected_s_c1);
-
-  //std::vector<ED::PortValue> xs_d{
-  //  ED::PortValue{ED::inport_outflow_request, 10.0},
-  //  ED::PortValue{ED::inport_lossflow_request, 30.0}};
-  auto s_d1 = ED::converter_external_transition(s_m, 10, xs_d);
-  ED::ConverterState expected_s_d1{
-    // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
-    12, ED::Port3{40.0}, ED::Port3{10.0}, ED::Port3{30.0}, ED::Port3{0.0},
-    // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
-    cf->clone(), true, false, false};
-  EXPECT_EQ(s_d1, expected_s_d1);
-
-  //std::vector<ED::PortValue> xs_e{
-  //  ED::PortValue{ED::inport_outflow_request, 10.0},
-  //  ED::PortValue{ED::inport_inflow_achieved, 40.0}};
-  auto s_e1 = ED::converter_external_transition(s_m, 10, xs_e);
-  ED::ConverterState expected_s_e1{
-    // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
-    12, ED::Port3{40.0, 40.0}, ED::Port3{10.0, 10.0}, ED::Port3{0.0}, ED::Port3{30.0, 30.0},
-    // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
-    cf->clone(), true, true, false};
-  EXPECT_EQ(s_e1, expected_s_e1);
-
-  //std::vector<ED::PortValue> xs_f{
-  //  ED::PortValue{ED::inport_lossflow_request, 30.0},
-  //  ED::PortValue{ED::inport_inflow_achieved, 40.0}};
-  auto s_f1 = ED::converter_external_transition(s_m, 10, xs_f);
-  ED::ConverterState expected_s_f1{
-    // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
-    12, ED::Port3{80.0, 40.0}, ED::Port3{20.0, 10.0}, ED::Port3{30.0, 30.0}, ED::Port3{30.0, 0.0},
-    // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
-    cf->clone(), false, true, true};
-  EXPECT_EQ(s_f1, expected_s_f1);
-
-  //std::vector<ED::PortValue> xs_g{
-  //  ED::PortValue{ED::inport_outflow_request, 10.0},
-  //  ED::PortValue{ED::inport_lossflow_request, 30.0},
-  //  ED::PortValue{ED::inport_inflow_achieved, 40.0}};
-  auto s_g1 = ED::converter_external_transition(s_m, 10, xs_g);
-  ED::ConverterState expected_s_g1{
-    // time, inflow_port, outflow_port, lossflow_port, wasteflow_port
-    12, ED::Port3{40.0, 40.0}, ED::Port3{10.0, 10.0}, ED::Port3{30.0, 30.0}, ED::Port3{0.0},
-    // std::unique_ptr<ConversionFun>, report_inflow_request, report_outflow_achieved, report_lossflow_achieved
-    cf->clone(), true, true, true};
-  EXPECT_EQ(s_g1, expected_s_g1);
-}
-
-TEST(ErinDevs, Test_function_based_efficiency)
-{
-  namespace ED = erin::devs;
-  namespace E = ERIN;
-  auto f_in_to_out = [](E::FlowValueType inflow) -> E::FlowValueType {
-    return inflow * 0.25;
-  };
-  auto f_out_to_in = [](E::FlowValueType outflow) -> E::FlowValueType {
-    return outflow / 0.25;
-  };
-  std::unique_ptr<ED::ConversionFun> f =
-    std::make_unique<ED::FunctionBasedEfficiencyFun>(f_in_to_out, f_out_to_in);
-  EXPECT_EQ(40.0, f->inflow_given_outflow(10.0));
-  EXPECT_EQ(10.0, f->outflow_given_inflow(40.0));
-}
-
-TEST(ErinDevs, Test_function_based_load)
-{
-  namespace E = ERIN;
-  namespace ED = erin::devs;
-  namespace EU = erin::utils;
-  auto d = ED::make_load_data(
-      std::vector<ED::LoadItem>{
-        ED::LoadItem{0, 100.0},
-        ED::LoadItem{10, 10.0},
-        ED::LoadItem{100, 10.0}, // should NOT cause a new event -- same load request.
-        ED::LoadItem{200, 0.0}});
-  auto s0 = ED::make_load_state();
-  EXPECT_EQ(s0.current_index, -1);
-  EXPECT_EQ(ED::load_current_time(s0), 0);
-  EXPECT_EQ(ED::load_next_time(d, s0), 0);
-  EXPECT_EQ(ED::load_current_request(s0), 0.0);
-  EXPECT_EQ(ED::load_current_achieved(s0), 0.0);
-  auto dt0 = ED::load_time_advance(d, s0);
-  EXPECT_EQ(dt0, 0);
-  auto ys0 = ED::load_output_function(d, s0);
-  std::vector<ED::PortValue> expected_ys0{
-    ED::PortValue{ED::outport_inflow_request, 100.0}};
-  EXPECT_EQ(ys0.size(), expected_ys0.size());
-  EXPECT_TRUE(
-      EU::compare_vectors_unordered_with_fn<ED::PortValue>(
-        ys0, expected_ys0, compare_ports));
-  auto s1 = ED::load_internal_transition(d, s0);
-  EXPECT_EQ(s1.current_index, 0);
-  EXPECT_EQ(ED::load_current_time(s1), 0);
-  EXPECT_EQ(ED::load_next_time(d, s1), 10);
-  EXPECT_EQ(ED::load_current_request(s1), 100.0);
-  EXPECT_EQ(ED::load_current_achieved(s1), 0.0);
-  auto dt1 = ED::load_time_advance(d, s1);
-  EXPECT_EQ(dt1, 10);
-  auto ys1 = ED::load_output_function(d, s1);
-  std::vector<ED::PortValue> expected_ys1{
-    ED::PortValue{ED::outport_inflow_request, 10.0}};
-  EXPECT_EQ(ys1.size(), expected_ys1.size());
-  EXPECT_TRUE(
-      EU::compare_vectors_unordered_with_fn<ED::PortValue>(
-        ys1, expected_ys1, compare_ports));
-  auto s2 = ED::load_internal_transition(d, s1);
-  EXPECT_EQ(s2.current_index, 1);
-  EXPECT_EQ(ED::load_current_time(s2), 10);
-  EXPECT_EQ(ED::load_next_time(d, s2), 100);
-  EXPECT_EQ(ED::load_current_request(s2), 10.0);
-  EXPECT_EQ(ED::load_current_achieved(s2), 0.0);
-  auto dt2 = ED::load_time_advance(d, s2);
-  EXPECT_EQ(dt2, 90);
-  std::vector<ED::PortValue> xs2{
-    ED::PortValue{ED::inport_inflow_achieved, 5.0}};
-  auto s3 = ED::load_external_transition(s2, 50, xs2);
-  EXPECT_EQ(s3.current_index, 1);
-  EXPECT_EQ(ED::load_current_time(s3), 60);
-  EXPECT_EQ(ED::load_next_time(d, s3), 100);
-  EXPECT_EQ(ED::load_current_request(s3), 10.0);
-  EXPECT_EQ(ED::load_current_achieved(s3), 5.0);
-  auto dt3 = ED::load_time_advance(d, s3);
-  EXPECT_EQ(dt3, 40);
-  std::vector<ED::PortValue> xs3{
-    ED::PortValue{ED::inport_inflow_achieved, 10.0}};
-  auto s4 = ED::load_external_transition(s3, 10, xs3);
-  EXPECT_EQ(s4.current_index, 1);
-  EXPECT_EQ(ED::load_current_time(s4), 70);
-  EXPECT_EQ(ED::load_next_time(d, s4), 100);
-  EXPECT_EQ(ED::load_current_request(s4), 10.0);
-  EXPECT_EQ(ED::load_current_achieved(s4), 10.0);
-  auto dt4 = ED::load_time_advance(d, s4);
-  EXPECT_EQ(dt4, 30);
-  auto ys4 = ED::load_output_function(d, s4);
-  // we get no output because the requested load is the same as current -- no
-  // change to propagate!
-  std::vector<ED::PortValue> expected_ys4{};
-  EXPECT_TRUE(
-      EU::compare_vectors_unordered_with_fn<ED::PortValue>(
-        ys4, expected_ys4, compare_ports));
-  auto s5 = ED::load_internal_transition(d, s4);
-  EXPECT_EQ(s5.current_index, 2);
-  EXPECT_EQ(ED::load_current_time(s5), 100);
-  EXPECT_EQ(ED::load_next_time(d, s5), 200);
-  EXPECT_EQ(ED::load_current_request(s5), 10.0);
-  EXPECT_EQ(ED::load_current_achieved(s5), 10.0);
-  auto dt5 = ED::load_time_advance(d, s5);
-  EXPECT_EQ(dt5, 100);
-  auto ys5 = ED::load_output_function(d, s5);
-  std::vector<ED::PortValue> expected_ys5{
-    ED::PortValue{ED::outport_inflow_request, 0.0}};
-  EXPECT_EQ(ys5.size(), expected_ys5.size());
-  EXPECT_TRUE(
-      EU::compare_vectors_unordered_with_fn<ED::PortValue>(
-        ys5, expected_ys5, compare_ports));
-  auto s6 = ED::load_internal_transition(d, s5);
-  EXPECT_EQ(s6.current_index, 3);
-  EXPECT_EQ(ED::load_current_time(s6), 200);
-  EXPECT_EQ(ED::load_next_time(d, s6), ED::infinity);
-  EXPECT_EQ(ED::load_current_request(s6), 0.0);
-  EXPECT_EQ(ED::load_current_achieved(s6), 0.0);
-  EXPECT_EQ(s6.inflow_port.get_actual_achieved(), 10.0);
-  auto dt6 = ED::load_time_advance(d, s6);
-  EXPECT_EQ(dt6, ED::infinity);
-
-  // test confluent update from state 
-  std::vector<ED::PortValue> xs5{
-    ED::PortValue{ED::inport_inflow_achieved, 8.0}};
-  auto s6a = ED::load_confluent_transition(d, s5, xs5);
-  EXPECT_EQ(s6a.current_index, 3);
-  EXPECT_EQ(ED::load_current_time(s6a), 200);
-  EXPECT_EQ(ED::load_next_time(d, s6a), ED::infinity);
-  EXPECT_EQ(ED::load_current_request(s6a), 0.0);
-  EXPECT_EQ(ED::load_current_achieved(s6a), 0.0);
-  EXPECT_EQ(s6a.inflow_port.get_actual_achieved(), 8.0);
-
-  ASSERT_THROW(
-      ED::check_loads(std::vector<ED::LoadItem>{}),
-      std::invalid_argument);
-}
-
-TEST(ErinBasicsTest, Test_standalone_sink_with_port_logging)
-{
-  namespace E = ERIN;
-  std::string st{"electrical"};
-  E::RealTimeType t_max{3};
-  std::string id{"load"};
-  auto sink = new E::Sink(
-      id,
-      E::ComponentType::Load,
-      st,
-      {E::LoadItem{0,100},
-       E::LoadItem{1,10},
-       E::LoadItem{2,0},
-       E::LoadItem{t_max,0}});
-  std::shared_ptr<E::FlowWriter> fw =
-    std::make_shared<E::DefaultFlowWriter>();
-  sink->set_recording_on();
-  sink->set_flow_writer(fw);
-  adevs::Simulator<E::PortValue, E::Time> sim{};
-  sim.add(sink);
-  while (sim.next_event_time() < E::inf) {
-    sim.exec_next_event();
-  }
-  fw->finalize_at_time(t_max);
-  auto results = fw->get_results();
-  fw->clear();
-  std::vector<E::RealTimeType> expected_times = {0, 1, 2, 3};
-  std::vector<E::FlowValueType> expected_loads_achieved = {0, 0, 0, 0};
-  std::vector<E::FlowValueType> expected_loads_requested = {100, 10, 0, 0};
-  bool use_requested{true};
-  ASSERT_TRUE(
-      check_times_and_loads(
-        results, expected_times, expected_loads_requested, id, use_requested))
-    << "key: " << id << "\n";
-  use_requested = false;
-  ASSERT_TRUE(
-      check_times_and_loads(
-        results, expected_times, expected_loads_achieved, id, use_requested))
-    << "key: " << id << "\n";
-}
-
-TEST(ErinBasicsTest, Test_sink_and_converter_with_port_logging)
-{
-  namespace E = ERIN;
-  std::string st_out{"electrical"};
-  std::string st_in{"natural_gas"};
-  E::RealTimeType t_max{3};
-  std::string sink_id{"sink"};
-  auto sink = new E::Sink(
-      sink_id,
-      E::ComponentType::Load,
-      st_out,
-      {E::LoadItem{0,100},
-       E::LoadItem{1,10},
-       E::LoadItem{2,0},
-       E::LoadItem{t_max,0}});
-  std::string converter_id{"converter"};
-  E::FlowValueType constant_efficiency{0.5};
-  std::function<E::FlowValueType(E::FlowValueType)> outflow_given_inflow =
-    [constant_efficiency](E::FlowValueType inflow) -> E::FlowValueType {
-      return inflow * constant_efficiency;
-    };
-  std::function<E::FlowValueType(E::FlowValueType)> inflow_given_outflow =
-    [constant_efficiency](E::FlowValueType outflow) -> E::FlowValueType {
-      return outflow / constant_efficiency;
-    };
-  auto converter = new E::Converter(
-      converter_id,
-      E::ComponentType::Converter,
-      st_in,
-      st_out,
-      outflow_given_inflow,
-      inflow_given_outflow);
-  std::string src_id{"natural_gas_tank"};
-  auto src = new E::Source(
-      src_id,
-      E::ComponentType::Source,
-      st_in);
-  std::shared_ptr<E::FlowWriter> fw = std::make_shared<E::DefaultFlowWriter>();
-  sink->set_flow_writer(fw);
-  sink->set_recording_on();
-  converter->set_flow_writer(fw);
-  converter->set_recording_on();
-  adevs::Digraph<E::FlowValueType, E::Time> network;
-  network.couple(
-      sink, E::Sink::outport_inflow_request,
-      converter, E::Converter::inport_outflow_request);
-  network.couple(
-      converter, E::Source::outport_inflow_request,
-      src, E::Source::inport_outflow_request);
-  network.couple(
-      src, E::Source::outport_outflow_achieved,
-      converter, E::Converter::inport_inflow_achieved);
-  network.couple(
-      converter, E::Converter::outport_outflow_achieved,
-      sink, E::Sink::inport_inflow_achieved);
-  adevs::Simulator<E::PortValue, E::Time> sim{};
-  network.add(&sim);
-  while (sim.next_event_time() < E::inf) {
-    sim.exec_next_event();
-  }
-  fw->finalize_at_time(t_max);
-  auto results = fw->get_results();
-  fw->clear();
-  // Sink recorded data
-  std::vector<E::RealTimeType> expected_times = {0, 1, 2, 3};
-  std::vector<E::FlowValueType> expected_loads = {100.0, 10.0, 0.0, 0.0};
-  ASSERT_TRUE(
-      check_times_and_loads(results, expected_times, expected_loads, sink_id)
-      ) << "key: " << sink_id;
-  // Converter recorded data -- outflow
-  ASSERT_TRUE(
-      check_times_and_loads(
-        results, expected_times, expected_loads,
-        converter_id + "-outflow")
-      ) << "key: " << converter_id;
-  // ... -- inflow
-  std::vector<E::FlowValueType> expected_loads_inflow = {200.0, 20.0, 0.0, 0.0};
-  ASSERT_TRUE(
-      check_times_and_loads(
-        results, expected_times, expected_loads_inflow,
-        converter_id + "-inflow")
-      ) << "key: " << converter_id << "-inflow";
-  // ... -- wasteflow
-  std::vector<E::FlowValueType> expected_loads_wasteflow = {100.0, 10.0, 0.0, 0.0};
-  ASSERT_TRUE(
-      check_times_and_loads(
-        results, expected_times, expected_loads_wasteflow,
-        converter_id + "-wasteflow")
-      ) << "key: " << converter_id << "-wasteflow";
-  // ... -- lossflow
-  std::vector<E::FlowValueType> expected_loads_lossflow = {0.0, 0.0, 0.0, 0.0};
-  ASSERT_TRUE(
-      check_times_and_loads(
-        results, expected_times, expected_loads_lossflow,
-        converter_id + "-lossflow")
-      ) << "key: " << converter_id << "-lossflow";
-}
-
-TEST(ErinBasicsTest, Test_example_8)
-{
-  namespace E = ERIN;
-  std::string input =
-    "[simulation_info]\n"
-    "rate_unit = \"kW\"\n"
-    "quantity_unit = \"kJ\"\n"
-    "time_unit = \"hours\"\n"
-    "max_time = 10\n"
-    "[loads.building_electrical]\n"
-    "time_unit = \"hours\"\n"
-    "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,10.0],[10.0,0.0]]\n"
-    "[components.electric_source]\n"
-    "type = \"source\"\n"
-    "max_outflow = 5.0\n"
-    "outflow = \"electricity\"\n"
-    "[components.electric_battery]\n"
-    "type = \"store\"\n"
-    "outflow = \"electricity\"\n"
-    "inflow = \"electricity\"\n"
-    "max_inflow = 5.0\n"
-    "capacity_unit = \"kWh\"\n"
-    "capacity = 20.0\n"
-    "[components.electric_load]\n"
-    "type = \"load\"\n"
-    "inflow = \"electricity\"\n"
-    "loads_by_scenario.blue_sky = \"building_electrical\"\n"
-    "[networks.normal_operations]\n"
-    "connections = [\n"
-    "  [\"electric_source:OUT(0)\", \"electric_battery:IN(0)\", \"electricity\"],\n"
-    "  [\"electric_battery:OUT(0)\", \"electric_load:IN(0)\", \"electricity\"],\n"
-    "]\n"
-    "[dist.immediately]\n"
-    "type = \"fixed\"\n"
-    "value = 0\n"
-    "time_unit = \"hours\"\n"
-    "[scenarios.blue_sky]\n"
-    "time_unit = \"hours\"\n"
-    "occurrence_distribution = \"immediately\"\n"
-    "duration = 10\n"
-    "max_occurrences = 1\n"
-    "network = \"normal_operations\"\n";
-  auto m = E::make_main_from_string(input);
-  const auto& si = m.get_sim_info();
-  EXPECT_EQ(si.get_time_units(), E::TimeUnits::Hours);
-  EXPECT_EQ(si.get_max_time(), 10);
-  EXPECT_EQ(si.get_max_time_in_seconds(), 36000);
-  EXPECT_EQ(m.max_time_for_scenario("blue_sky"), 36000);
-  const auto& comps = m.get_components();
-  EXPECT_EQ(comps.size(), 3);
-  const auto& nws = m.get_networks();
-  EXPECT_EQ(nws.size(), 1);
-  auto results = m.run_all();
-  EXPECT_TRUE(results.get_is_good());
-  auto srs = results.get_results();
-  EXPECT_EQ(srs.size(), 1);
-  EXPECT_EQ(results.number_of_scenarios(), 1);
-  const auto& scenario_ids = results.get_scenario_ids();
-  EXPECT_EQ(scenario_ids.size(), 1);
-  EXPECT_EQ(scenario_ids[0], "blue_sky");
-  const auto& blue_sky_sr = srs["blue_sky"];
-  EXPECT_EQ(blue_sky_sr.size(), 1);
-  const auto& bsr = blue_sky_sr[0];
-  EXPECT_TRUE(bsr.get_is_good());
-  const auto& blue_sky_data = bsr.get_results();
-  if constexpr (false) {
-    for (const auto& pair : blue_sky_data) {
-      std::cout << "item: " << pair.first << "\n";
-      for (const auto& x : pair.second) {
-        std::cout << "- " << x << "\n";
-      }
+        EXPECT_TRUE(actual.contains(item)) << "expected item '" << item << "' not present";
     }
-  }
-  const auto& d0_load = blue_sky_data.at("electric_load")[0];
-  const E::Datum d0_load_expected{0, 10.0, 10.0};
-  EXPECT_EQ(d0_load, d0_load_expected);
-  const auto& d1_load = blue_sky_data.at("electric_load")[1];
-  const E::Datum d1_load_expected{14400, 10.0, 5.0};
-  EXPECT_EQ(d1_load, d1_load_expected);
-  const auto& d2_load = blue_sky_data.at("electric_load")[2];
-  const E::Datum d2_load_expected{36000, 0.0, 0.0};
-  EXPECT_EQ(d2_load, d2_load_expected);
-
-  const auto& d0_battery = blue_sky_data.at("electric_battery-inflow")[0];
-  const E::Datum d0_battery_expected{0, 5.0, 5.0};
-  EXPECT_EQ(d0_battery, d0_battery_expected);
-  const auto& d1_battery = blue_sky_data.at("electric_battery-inflow")[1];
-  const E::Datum d1_battery_expected{14400, 5.0, 5.0};
-  EXPECT_EQ(d1_battery, d1_battery_expected);
-  const auto& d2_battery = blue_sky_data.at("electric_battery-inflow")[2];
-  const E::Datum d2_battery_expected{36000, 0.0, 0.0};
-  EXPECT_EQ(d2_battery, d2_battery_expected);
-
-  const auto& d0_battery_out = blue_sky_data.at("electric_battery-outflow")[0];
-  const E::Datum d0_battery_out_expected{0, 10.0, 10.0};
-  EXPECT_EQ(d0_battery_out, d0_battery_out_expected);
-  const auto& d1_battery_out = blue_sky_data.at("electric_battery-outflow")[1];
-  const E::Datum d1_battery_out_expected{14400, 10.0, 5.0};
-  EXPECT_EQ(d1_battery_out, d1_battery_out_expected);
-  const auto& d2_battery_out = blue_sky_data.at("electric_battery-outflow")[2];
-  const E::Datum d2_battery_out_expected{36000, 0.0, 0.0};
-  EXPECT_EQ(d2_battery_out, d2_battery_out_expected);
-
-  const auto& d0_source = blue_sky_data.at("electric_source")[0];
-  const E::Datum d0_source_expected{0, 5.0, 5.0};
-  EXPECT_EQ(d0_source, d0_source_expected);
-  const auto& d1_source = blue_sky_data.at("electric_source")[1];
-  const E::Datum d1_source_expected{14400, 5.0, 5.0};
-  EXPECT_EQ(d1_source, d1_source_expected);
-  const auto& d2_source = blue_sky_data.at("electric_source")[2];
-  const E::Datum d2_source_expected{36000, 0.0, 0.0};
-  EXPECT_EQ(d2_source, d2_source_expected);
 }
 
-TEST(ErinBasicsTest, Test_that_we_can_create_an_energy_balance)
+TEST(Erin, TestApplyUniformTimeStep)
 {
-  namespace E = ERIN;
-  std::string input =
-    "[simulation_info]\n"
-    "rate_unit = \"kW\"\n"
-    "quantity_unit = \"kJ\"\n"
-    "time_unit = \"hours\"\n"
-    "max_time = 10\n"
-    "[loads.LP1]\n"
-    "time_unit = \"hours\"\n"
-    "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,10.0],[10.0,0.0]]\n"
-    "[components.S]\n"
-    "type = \"source\"\n"
-    "outflow = \"natural_gas\"\n"
-    "[components.C]\n"
-    "type = \"converter\"\n"
-    "inflow = \"natural_gas\"\n"
-    "outflow = \"electricity\"\n"
-    "lossflow = \"waste_heat\"\n"
-    "constant_efficiency = 0.5\n"
-    "[components.L]\n"
-    "type = \"load\"\n"
-    "inflow = \"electricity\"\n"
-    "loads_by_scenario.blue_sky = \"LP1\"\n"
-    "[networks.normal_operations]\n"
-    "connections = [\n"
-    "  [\"S:OUT(0)\", \"C:IN(0)\", \"natural_gas\"],\n"
-    "  [\"C:OUT(0)\", \"L:IN(0)\", \"electricity\"],\n"
-    "]\n"
-    "[dist.immediately]\n"
-    "type = \"fixed\"\n"
-    "value = 0\n"
-    "time_unit = \"hours\"\n"
-    "[scenarios.blue_sky]\n"
-    "time_unit = \"hours\"\n"
-    "occurrence_distribution = \"immediately\"\n"
-    "duration = 10\n"
-    "max_occurrences = 1\n"
-    "network = \"normal_operations\"\n";
-  auto m = E::make_main_from_string(input);
-  auto results = m.run_all();
-  auto stats = results.to_stats_csv();
-  // Updated Stats CSV Output Header:
-  // scenario id,number of occurrences,total time in scenario (hours),
-  // +source component id,+source port,+receiving component id,+receiving port,-component id,type,+role,stream,energy availability,max downtime (hours),load not served (kJ)
-  // [,<stream> energy used (kJ)]+
-  // role is one of source, load, circulatory, and waste
-  std::string expected{
-    "scenario id,number of occurrences,total time in scenario (hours),component id,type,stream,energy availability,max downtime (hours),load not served (kJ),"
-    "electricity energy used (kJ),natural_gas energy used (kJ),waste_heat energy used (kJ)\n"
-    "blue_sky,1,10,C-inflow,converter,natural_gas,1,0,0,0.0,720000,0.0\n"
-    "blue_sky,1,10,C-lossflow,converter,waste_heat,1,0,0,0.0,0.0,0\n"
-    "blue_sky,1,10,C-outflow,converter,electricity,1,0,0,360000,0.0,0.0\n"
-    "blue_sky,1,10,C-wasteflow,converter,waste_heat,1,0,0,0.0,0.0,360000\n"
-    "blue_sky,1,10,L,load,electricity,1,0,0,360000,0.0,0.0\n"
-    "blue_sky,1,10,S,source,natural_gas,1,0,0,0.0,720000,0.0\n"
-    "blue_sky,1,10,TOTAL (source),,,,,,0.0,720000,0.0\n"
-    "blue_sky,1,10,TOTAL (load),,,,,,360000,0.0,0.0\n"
-    "blue_sky,1,10,TOTAL (storage),,,,,,0.0,0.0,0.0\n"
-    "blue_sky,1,10,TOTAL (waste),,,,,,0.0,0.0,360000\n"
-    "blue_sky,1,10,ENERGY BALANCE (source-(load+storage+waste)),0,,,,,,,\n"
-  };
-  EXPECT_EQ(stats, expected);
-}
+    // SIMULATION INFO and INITIALIZATION
+    Model m = {};
+    m.random_function = []() { return 0.4; };
+    m.final_time_s = hours_as_seconds(24.0);
 
-TEST(ErinBasicsTest, Test_port_role_to_and_from_string_roundtrip)
-{
-  namespace E = ERIN;
-  std::vector<E::PortRole> roles{
-    E::PortRole::Inflow,
-    E::PortRole::LoadInflow,
-    E::PortRole::WasteInflow,
-    E::PortRole::Outflow,
-    E::PortRole::SourceOutflow,
-  };
-  for (const auto& role : roles) {
-    auto role_tag = E::port_role_to_tag(role);
-    auto role_2 = E::tag_to_port_role(role_tag);
-    EXPECT_EQ(role_2, role);
-  }
-}
+    // COMPONENTS
+    std::vector<TimeAndAmount> ePV_avail {};
+    ePV_avail.reserve(5);
+    ePV_avail.push_back(TimeAndAmount {hours_as_seconds(0.0), kW_as_W(0.0)});
+    ePV_avail.push_back(TimeAndAmount {hours_as_seconds(6.0), kW_as_W(1.0)});
+    ePV_avail.push_back(TimeAndAmount {hours_as_seconds(9.0), kW_as_W(1.5)});
+    ePV_avail.push_back(TimeAndAmount {hours_as_seconds(18.0), kW_as_W(1.0)});
+    ePV_avail.push_back(TimeAndAmount {hours_as_seconds(21.0), kW_as_W(0.0)});
 
-TEST(ErinBasicsTest, Test_that_we_can_calculate_reliability_schedule)
-{
-  auto f = []()->double { return 0.5; };
-  ERIN::ReliabilityCoordinator rc{};
-  auto cds = erin::distribution::DistributionSystem{};
-  std::int64_t final_time{10};
-  auto reliability_schedule_1 = rc.calc_reliability_schedule(f, cds, final_time);
-  EXPECT_EQ(reliability_schedule_1.size(), 0);
-  auto failure_id = cds.add_fixed("f", 5);
-  auto repair_id = cds.add_fixed("r", 1);
-  auto fm_id = rc.add_failure_mode(
-      "standard failure",
-      failure_id,
-      repair_id);
-  auto comp_id = rc.register_component("c");
-  rc.link_component_with_failure_mode(comp_id, fm_id);
-  auto reliability_schedule = rc.calc_reliability_schedule(f, cds, final_time);
-  EXPECT_EQ(reliability_schedule.size(), 1);
-  std::vector<ERIN::TimeState> expected{
-    ERIN::TimeState{0, true},
-    ERIN::TimeState{5, false},
-    ERIN::TimeState{6, true},
-    ERIN::TimeState{11, false},
-  };
-  EXPECT_EQ(reliability_schedule.at(0), expected);
-}
+    // COMPONENTS
+    auto e_pv = Model_AddScheduleBasedSource(m, ePV_avail);
+    auto e_batt_id = Model_AddStore(m,
+                                    static_cast<uint64_t>(kWh_as_J(2.0)),
+                                    static_cast<uint64_t>(kW_as_W(0.5)),
+                                    static_cast<uint64_t>(kW_as_W(1.0)),
+                                    static_cast<uint64_t>(kWh_as_J(0.0)),
+                                    static_cast<uint64_t>(kWh_as_J(1.0)));
 
-TEST(ErinBasicsTest, Test_that_reliability_works_on_source_component)
-{
-  namespace E = ERIN;
-  std::string input =
-    "[simulation_info]\n"
-    "rate_unit = \"kW\"\n"
-    "quantity_unit = \"kJ\"\n"
-    "time_unit = \"seconds\"\n"
-    "max_time = 10\n"
-    "[loads.default]\n"
-    "time_unit = \"seconds\"\n"
-    "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,100.0],[10.0,0.0]]\n"
-    "[dist.break]\n"
-    "type = \"fixed\"\n"
-    "value = 5\n"
-    "time_unit = \"seconds\"\n"
-    "[dist.repair]\n"
-    "type = \"fixed\"\n"
-    "value = 2\n"
-    "time_unit = \"seconds\"\n"
-    "[failure_mode.standard]\n"
-    "failure_dist = \"break\"\n"
-    "repair_dist = \"repair\"\n"
-    "[components.S]\n"
-    "type = \"source\"\n"
-    "output_stream = \"electricity\"\n"
-    "max_outflow = 100.0\n"
-    "failure_modes = [\"standard\"]\n"
-    "[components.L]\n"
-    "type = \"load\"\n"
-    "input_stream = \"electricity\"\n"
-    "loads_by_scenario.blue_sky = \"default\"\n"
-    "[networks.normal_operations]\n"
-    "connections = [[\"S:OUT(0)\", \"L:IN(0)\", \"electricity\"]]\n"
-    "[dist.immediately]\n"
-    "type = \"fixed\"\n"
-    "value = 0\n"
-    "time_unit = \"hours\"\n"
-    "[scenarios.blue_sky]\n"
-    "time_unit = \"seconds\"\n"
-    "occurrence_distribution = \"immediately\"\n"
-    "duration = 10\n"
-    "max_occurrences = 1\n"
-    "network = \"normal_operations\"\n"
-    "calculate_reliability = true\n";
-  auto f = []()->double { return 0.5; };
-  erin::distribution::DistributionSystem cds{};
-  E::ReliabilityCoordinator rc{};
-  auto id_break = cds.add_fixed("break", 5);
-  auto id_repair = cds.add_fixed("repair", 2);
-  auto id_fm = rc.add_failure_mode(
-          "standard",
-          id_break,
-          id_repair);
-  auto id_S = rc.register_component("S");
-  rc.link_component_with_failure_mode(id_S, id_fm);
-  std::int64_t final_time{10};
-  auto expected_sch =
-    rc.calc_reliability_schedule_by_component_tag(f, cds, final_time);
-  auto m = E::make_main_from_string(input);
-  auto sch = m.get_reliability_schedule();
-  EXPECT_EQ(sch.size(), expected_sch.size());
-  EXPECT_EQ(sch, expected_sch);
-  auto out = m.run_all();
-  EXPECT_TRUE(out.get_is_good());
-  auto results = out.get_results();
-  ASSERT_EQ(results.size(), 1);
-  auto blue_sky_it = results.find("blue_sky");
-  ASSERT_TRUE(blue_sky_it != results.end());
-  const auto& raw_bs_data = results["blue_sky"];
-  ASSERT_EQ(raw_bs_data.size(), 1);
-  const auto& bs_scenario_results = raw_bs_data.at(0);
-  ASSERT_TRUE(bs_scenario_results.get_is_good());
-  const auto& bs_data = bs_scenario_results.get_results();
-  std::unordered_map<std::string, std::vector<ERIN::Datum>>
-    expected_results{
-      { std::string{"S"},
-        std::vector<ERIN::Datum>{
-          ERIN::Datum{0, 100.0, 100.0},
-          ERIN::Datum{5, 100.0, 0.0},
-          ERIN::Datum{7, 100.0, 100.0},
-          ERIN::Datum{10, 0.0, 0.0}}},
-      { std::string{"L"},
-        std::vector<ERIN::Datum>{
-          ERIN::Datum{0, 100.0, 100.0},
-          ERIN::Datum{5, 100.0, 0.0},
-          ERIN::Datum{7, 100.0, 100.0},
-          ERIN::Datum{10, 0.0, 0.0}}}};
-  ASSERT_EQ(expected_results.size(), bs_data.size());
-  EXPECT_EQ(expected_results, bs_data);
-}
+    // LOADS
+    std::vector<TimeAndAmount> e_load {};
+    e_load.reserve(5);
+    e_load.push_back(TimeAndAmount {hours_as_seconds(0.0), kW_as_W(0.1)});
+    e_load.push_back(TimeAndAmount {hours_as_seconds(6.0), kW_as_W(1.5)});
+    e_load.push_back(TimeAndAmount {hours_as_seconds(12.0), kW_as_W(0.5)});
+    e_load.push_back(TimeAndAmount {hours_as_seconds(18.0), kW_as_W(1.0)});
+    e_load.push_back(TimeAndAmount {hours_as_seconds(21.0), kW_as_W(0.1)});
+    auto eLoadId = Model_AddScheduleBasedLoad(m, e_load);
 
-TEST(ErinBasicsTest, Test_that_reliability_works_on_load_component)
-{
-  namespace E = ERIN;
-  std::string input =
-    "[simulation_info]\n"
-    "rate_unit = \"kW\"\n"
-    "quantity_unit = \"kJ\"\n"
-    "time_unit = \"seconds\"\n"
-    "max_time = 10\n"
-    "[loads.default]\n"
-    "time_unit = \"seconds\"\n"
-    "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,100.0],[10.0,0.0]]\n"
-    "[dist.break]\n"
-    "type = \"fixed\"\n"
-    "value = 5\n"
-    "time_unit = \"seconds\"\n"
-    "[dist.repair]\n"
-    "type = \"fixed\"\n"
-    "value = 2\n"
-    "time_unit = \"seconds\"\n"
-    "[failure_mode.standard]\n"
-    "failure_dist = \"break\"\n"
-    "repair_dist = \"repair\"\n"
-    "[components.S]\n"
-    "type = \"source\"\n"
-    "output_stream = \"electricity\"\n"
-    "max_outflow = 100.0\n"
-    "[components.L]\n"
-    "type = \"load\"\n"
-    "input_stream = \"electricity\"\n"
-    "loads_by_scenario.blue_sky = \"default\"\n"
-    "failure_modes = [\"standard\"]\n"
-    "[networks.normal_operations]\n"
-    "connections = [[\"S:OUT(0)\", \"L:IN(0)\", \"electricity\"]]\n"
-    "[dist.immediately]\n"
-    "type = \"fixed\"\n"
-    "value = 0\n"
-    "time_unit = \"hours\"\n"
-    "[scenarios.blue_sky]\n"
-    "time_unit = \"seconds\"\n"
-    "occurrence_distribution = \"immediately\"\n"
-    "duration = 10\n"
-    "max_occurrences = 1\n"
-    "network = \"normal_operations\"\n"
-    "calculate_reliability = true\n";
-  auto rand_fn = []()->double { return 0.5; };
-  erin::distribution::DistributionSystem cds{};
-  E::ReliabilityCoordinator rc{};
-  auto id_break = cds.add_fixed("break", 5);
-  auto id_repair = cds.add_fixed("repair", 2);
-  auto id_fm = rc.add_failure_mode(
-          "standard",
-          id_break,
-          id_repair);
-  auto id_L = rc.register_component("L");
-  rc.link_component_with_failure_mode(id_L, id_fm);
-  std::int64_t final_time{10};
-  auto expected_sch =
-    rc.calc_reliability_schedule_by_component_tag(rand_fn, cds, final_time);
-  auto m = E::make_main_from_string(input);
-  auto sch = m.get_reliability_schedule();
-  EXPECT_EQ(sch.size(), expected_sch.size());
-  EXPECT_EQ(sch, expected_sch);
-  auto out = m.run_all();
-  EXPECT_TRUE(out.get_is_good());
-  auto results = out.get_results();
-  ASSERT_EQ(results.size(), 1);
-  auto blue_sky_it = results.find("blue_sky");
-  ASSERT_TRUE(blue_sky_it != results.end());
-  const auto& raw_bs_data = results["blue_sky"];
-  ASSERT_EQ(raw_bs_data.size(), 1);
-  const auto& bs_scenario_results = raw_bs_data.at(0);
-  ASSERT_TRUE(bs_scenario_results.get_is_good());
-  const auto& bs_data = bs_scenario_results.get_results();
-  std::unordered_map<std::string, std::vector<ERIN::Datum>>
-    expected_results{
-      { std::string{"S"},
-        std::vector<ERIN::Datum>{
-          ERIN::Datum{0, 100.0, 100.0},
-          ERIN::Datum{5, 0.0, 0.0},
-          ERIN::Datum{7, 100.0, 100.0},
-          ERIN::Datum{10, 0.0, 0.0}}},
-      { std::string{"L"},
-        std::vector<ERIN::Datum>{
-          ERIN::Datum{0, 100.0, 100.0},
-          ERIN::Datum{5, 100.0, 0.0},
-          ERIN::Datum{7, 100.0, 100.0},
-          ERIN::Datum{10, 0.0, 0.0}}}};
-  ASSERT_EQ(expected_results.size(), bs_data.size());
-  EXPECT_EQ(expected_results, bs_data);
-}
+    // NETWORK / CONNECTIONS
+    Model_AddConnection(m, e_pv.id, 0, e_batt_id, 0);
+    Model_AddConnection(m, e_batt_id, 0, eLoadId, 0);
 
-TEST(ErinBasicsTest, Test_that_reliability_works_on_mux_component)
-{
-  namespace E = ERIN;
-  std::string input =
-    "[simulation_info]\n"
-    "rate_unit = \"kW\"\n"
-    "quantity_unit = \"kJ\"\n"
-    "time_unit = \"seconds\"\n"
-    "max_time = 10\n"
-    "[loads.default]\n"
-    "time_unit = \"seconds\"\n"
-    "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,100.0],[10.0,0.0]]\n"
-    "[dist.break]\n"
-    "type = \"fixed\"\n"
-    "value = 5\n"
-    "time_unit = \"seconds\"\n"
-    "[dist.repair]\n"
-    "type = \"fixed\"\n"
-    "value = 2\n"
-    "time_unit = \"seconds\"\n"
-    "[failure_mode.standard]\n"
-    "failure_dist = \"break\"\n"
-    "repair_dist = \"repair\"\n"
-    "[components.S1]\n"
-    "type = \"source\"\n"
-    "output_stream = \"electricity\"\n"
-    "max_outflow = 50.0\n"
-    "[components.S2]\n"
-    "type = \"source\"\n"
-    "output_stream = \"electricity\"\n"
-    "[components.L1]\n"
-    "type = \"load\"\n"
-    "input_stream = \"electricity\"\n"
-    "loads_by_scenario.blue_sky = \"default\"\n"
-    "[components.L2]\n"
-    "type = \"load\"\n"
-    "input_stream = \"electricity\"\n"
-    "loads_by_scenario.blue_sky = \"default\"\n"
-    "[components.M]\n"
-    "type = \"muxer\"\n"
-    "num_inflows = 2\n"
-    "num_outflows = 2\n"
-    "stream = \"electricity\"\n"
-    "dispatch_strategy = \"in_order\"\n"
-    "failure_modes = [\"standard\"]\n"
-    "[networks.normal_operations]\n"
-    "connections = [\n"
-    "    [\"S1:OUT(0)\",  \"M:IN(0)\", \"electricity\"],\n"
-    "    [\"S2:OUT(0)\",  \"M:IN(1)\", \"electricity\"],\n"
-    "    [ \"M:OUT(0)\", \"L1:IN(0)\", \"electricity\"],\n"
-    "    [ \"M:OUT(1)\", \"L2:IN(0)\", \"electricity\"]]\n"
-    "[dist.immediately]\n"
-    "type = \"fixed\"\n"
-    "value = 0\n"
-    "time_unit = \"hours\"\n"
-    "[scenarios.blue_sky]\n"
-    "time_unit = \"seconds\"\n"
-    "occurrence_distribution = \"immediately\"\n"
-    "duration = 10\n"
-    "max_occurrences = 1\n"
-    "network = \"normal_operations\"\n"
-    "calculate_reliability = true\n";
-  auto m = E::make_main_from_string(input);
-  auto out = m.run_all();
-  EXPECT_TRUE(out.get_is_good());
-  auto results = out.get_results();
-  ASSERT_EQ(results.size(), 1);
-  auto blue_sky_it = results.find("blue_sky");
-  ASSERT_TRUE(blue_sky_it != results.end());
-  const auto& raw_bs_data = results["blue_sky"];
-  ASSERT_EQ(raw_bs_data.size(), 1);
-  const auto& bs_scenario_results = raw_bs_data.at(0);
-  ASSERT_TRUE(bs_scenario_results.get_is_good());
-  const auto& bs_data = bs_scenario_results.get_results();
-  std::unordered_map<std::string, std::vector<ERIN::Datum>>
-    expected_results{
-      { std::string{"S1"},
-        std::vector<ERIN::Datum>{
-          ERIN::Datum{0, 200.0, 50.0},
-          ERIN::Datum{5, 0.0, 0.0},
-          ERIN::Datum{7, 200.0, 50.0},
-          ERIN::Datum{10, 0.0, 0.0}}},
-      { std::string{"S2"},
-        std::vector<ERIN::Datum>{
-          ERIN::Datum{0, 150.0, 150.0},
-          ERIN::Datum{5, 0.0, 0.0},
-          ERIN::Datum{7, 150.0, 150.0},
-          ERIN::Datum{10, 0.0, 0.0}}},
-      { std::string{"M-inflow(0)"},
-        std::vector<ERIN::Datum>{
-          ERIN::Datum{0, 200.0, 50.0},
-          ERIN::Datum{5, 0.0, 0.0},
-          ERIN::Datum{7, 200.0, 50.0},
-          ERIN::Datum{10, 0.0, 0.0}}},
-      { std::string{"M-inflow(1)"},
-        std::vector<ERIN::Datum>{
-          ERIN::Datum{0, 150.0, 150.0},
-          ERIN::Datum{5, 0.0, 0.0},
-          ERIN::Datum{7, 150.0, 150.0},
-          ERIN::Datum{10, 0.0, 0.0}}},
-      { std::string{"M-outflow(0)"},
-        std::vector<ERIN::Datum>{
-          ERIN::Datum{0, 100.0, 100.0},
-          ERIN::Datum{5, 100.0, 0.0},
-          ERIN::Datum{7, 100.0, 100.0},
-          ERIN::Datum{10, 0.0, 0.0}}},
-      { std::string{"M-outflow(1)"},
-        std::vector<ERIN::Datum>{
-          ERIN::Datum{0, 100.0, 100.0},
-          ERIN::Datum{5, 100.0, 0.0},
-          ERIN::Datum{7, 100.0, 100.0},
-          ERIN::Datum{10, 0.0, 0.0}}},
-      { std::string{"L1"},
-        std::vector<ERIN::Datum>{
-          ERIN::Datum{0, 100.0, 100.0},
-          ERIN::Datum{5, 100.0, 0.0},
-          ERIN::Datum{7, 100.0, 100.0},
-          ERIN::Datum{10, 0.0, 0.0}}},
-      { std::string{"L2"},
-        std::vector<ERIN::Datum>{
-          ERIN::Datum{0, 100.0, 100.0},
-          ERIN::Datum{5, 100.0, 0.0},
-          ERIN::Datum{7, 100.0, 100.0},
-          ERIN::Datum{10, 0.0, 0.0}}}};
-  ASSERT_EQ(expected_results.size(), bs_data.size());
-  if (false) {
-    for (const auto& item : bs_data) {
-      std::cout << item.first << "\n";
-      for (const auto& d : item.second) {
-        std::cout << "  " << d << "\n";
-      }
-    }
-  }
-  EXPECT_EQ(expected_results, bs_data);
-}
+    // SIMULATE
+    auto results = Simulate(m, false);
 
-TEST(ErinBasicsTest, Test_that_reliability_works_on_converter_component)
-{
-  namespace E = ERIN;
-  std::string input =
-    "[simulation_info]\n"
-    "rate_unit = \"kW\"\n"
-    "quantity_unit = \"kJ\"\n"
-    "time_unit = \"seconds\"\n"
-    "max_time = 10\n"
-    "[loads.default]\n"
-    "time_unit = \"seconds\"\n"
-    "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,100.0],[10.0,0.0]]\n"
-    "[dist.break]\n"
-    "type = \"fixed\"\n"
-    "value = 5\n"
-    "time_unit = \"seconds\"\n"
-    "[dist.repair]\n"
-    "type = \"fixed\"\n"
-    "value = 2\n"
-    "time_unit = \"seconds\"\n"
-    "[failure_mode.standard]\n"
-    "failure_dist = \"break\"\n"
-    "repair_dist = \"repair\"\n"
-    "[components.S]\n"
-    "type = \"source\"\n"
-    "output_stream = \"natural_gas\"\n"
-    "[components.L]\n"
-    "type = \"load\"\n"
-    "input_stream = \"electricity\"\n"
-    "loads_by_scenario.blue_sky = \"default\"\n"
-    "[components.C]\n"
-    "type = \"converter\"\n"
-    "input_stream = \"natural_gas\"\n"
-    "output_stream = \"electricity\"\n"
-    "lossflow = \"waste_heat\"\n"
-    "constant_efficiency = 0.5\n"
-    "failure_modes = [\"standard\"]\n"
-    "[networks.normal_operations]\n"
-    "connections = [\n"
-    "    [\"S:OUT(0)\",  \"C:IN(0)\", \"natural_gas\"],\n"
-    "    [\"C:OUT(0)\",  \"L:IN(0)\", \"electricity\"]]\n"
-    "[dist.immediately]\n"
-    "type = \"fixed\"\n"
-    "value = 0\n"
-    "time_unit = \"hours\"\n"
-    "[scenarios.blue_sky]\n"
-    "time_unit = \"seconds\"\n"
-    "occurrence_distribution = \"immediately\"\n"
-    "duration = 10\n"
-    "max_occurrences = 1\n"
-    "network = \"normal_operations\"\n"
-    "calculate_reliability = true\n";
-  auto m = E::make_main_from_string(input);
-  auto out = m.run_all();
-  EXPECT_TRUE(out.get_is_good());
-  auto results = out.get_results();
-  ASSERT_EQ(results.size(), 1);
-  auto blue_sky_it = results.find("blue_sky");
-  ASSERT_TRUE(blue_sky_it != results.end());
-  const auto& raw_bs_data = results["blue_sky"];
-  ASSERT_EQ(raw_bs_data.size(), 1);
-  const auto& bs_scenario_results = raw_bs_data.at(0);
-  ASSERT_TRUE(bs_scenario_results.get_is_good());
-  const auto& bs_data = bs_scenario_results.get_results();
-  std::unordered_map<std::string, std::vector<ERIN::Datum>>
-    expected_results{
-      { std::string{"S"},
-        std::vector<ERIN::Datum>{
-          ERIN::Datum{0, 200.0, 200.0},
-          ERIN::Datum{5, 0.0, 0.0},
-          ERIN::Datum{7, 200.0, 200.0},
-          ERIN::Datum{10, 0.0, 0.0}}},
-      { std::string{"C-inflow"},
-        std::vector<ERIN::Datum>{
-          ERIN::Datum{0, 200.0, 200.0},
-          ERIN::Datum{5, 0.0, 0.0},
-          ERIN::Datum{7, 200.0, 200.0},
-          ERIN::Datum{10, 0.0, 0.0}}},
-      { std::string{"C-outflow"},
-        std::vector<ERIN::Datum>{
-          ERIN::Datum{0, 100.0, 100.0},
-          ERIN::Datum{5, 100.0, 0.0},
-          ERIN::Datum{7, 100.0, 100.0},
-          ERIN::Datum{10, 0.0, 0.0}}},
-      { std::string{"C-lossflow"},
-        std::vector<ERIN::Datum>{
-          ERIN::Datum{0, 0.0, 0.0},
-          ERIN::Datum{5, 0.0, 0.0},
-          ERIN::Datum{7, 0.0, 0.0},
-          ERIN::Datum{10, 0.0, 0.0}}},
-      { std::string{"C-wasteflow"},
-        std::vector<ERIN::Datum>{
-          ERIN::Datum{0, 100.0, 100.0},
-          ERIN::Datum{5, 0.0, 0.0},
-          ERIN::Datum{7, 100.0, 100.0},
-          ERIN::Datum{10, 0.0, 0.0}}},
-      { std::string{"L"},
-        std::vector<ERIN::Datum>{
-          ERIN::Datum{0, 100.0, 100.0},
-          ERIN::Datum{5, 100.0, 0.0},
-          ERIN::Datum{7, 100.0, 100.0},
-          ERIN::Datum{10, 0.0, 0.0}}}};
-  ASSERT_EQ(expected_results.size(), bs_data.size());
-  if (false) {
-    std::vector<std::string> keys{};
-    std::cout << "actual keys:\n";
-    for (const auto& item : bs_data) {
-      std::cout << "- " << item.first << "\n";
-    }
-    std::cout << "expected keys:\n";
-    for (const auto& item : expected_results) {
-      const auto& k = item.first;
-      std::cout << "- " << k << "\n";
-      keys.emplace_back(k);
-      auto it = bs_data.find(k);
-      ASSERT_TRUE(it != bs_data.end()) << "expected key '" << k << "' not found in bs_data\n";
-    }
-    std::sort(keys.begin(), keys.end());
-    for (const auto& k : keys) {
-      std::cout << k << ":\n";
-      std::cout << "- EXPECTED:\n";
-      for (const auto& d : expected_results[k]) {
-        std::cout << "  " << d << "\n";
-      }
-      std::cout << "- ACTUAL:\n";
-      auto it = bs_data.find(k);
-      ASSERT_TRUE(it != bs_data.end());
-      for (const auto& d : it->second) {
-        std::cout << "  " << d << "\n";
-      }
-    }
-  }
-  EXPECT_EQ(expected_results, bs_data);
-}
+    // NOTE: 1-h steps
+    auto modified_results = apply_uniform_time_step(results, 1.0);
 
-TEST(ErinBasicsTest, Test_that_reliability_works_on_pass_through_component)
-{
-  namespace E = ERIN;
-  std::string input =
-    "[simulation_info]\n"
-    "rate_unit = \"kW\"\n"
-    "quantity_unit = \"kJ\"\n"
-    "time_unit = \"seconds\"\n"
-    "max_time = 10\n"
-    "[loads.default]\n"
-    "time_unit = \"seconds\"\n"
-    "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,100.0],[10.0,0.0]]\n"
-    "[dist.break]\n"
-    "type = \"fixed\"\n"
-    "value = 5\n"
-    "time_unit = \"seconds\"\n"
-    "[dist.repair]\n"
-    "type = \"fixed\"\n"
-    "value = 2\n"
-    "time_unit = \"seconds\"\n"
-    "[failure_mode.standard]\n"
-    "failure_dist = \"break\"\n"
-    "repair_dist = \"repair\"\n"
-    "[components.S]\n"
-    "type = \"source\"\n"
-    "output_stream = \"electricity\"\n"
-    "[components.P]\n"
-    "type = \"pass_through\"\n"
-    "stream = \"electricity\"\n"
-    "failure_modes = [\"standard\"]\n"
-    "[components.L]\n"
-    "type = \"load\"\n"
-    "input_stream = \"electricity\"\n"
-    "loads_by_scenario.blue_sky = \"default\"\n"
-    "[networks.normal_operations]\n"
-    "connections = [\n"
-    "    [\"S:OUT(0)\",  \"P:IN(0)\", \"electricity\"],\n"
-    "    [\"P:OUT(0)\",  \"L:IN(0)\", \"electricity\"]]\n"
-    "[dist.immediately]\n"
-    "type = \"fixed\"\n"
-    "value = 0\n"
-    "time_unit = \"hours\"\n"
-    "[scenarios.blue_sky]\n"
-    "time_unit = \"seconds\"\n"
-    "occurrence_distribution = \"immediately\"\n"
-    "duration = 10\n"
-    "max_occurrences = 1\n"
-    "network = \"normal_operations\"\n"
-    "calculate_reliability = true\n";
-  auto m = E::make_main_from_string(input);
-  auto out = m.run_all();
-  EXPECT_TRUE(out.get_is_good());
-  auto results = out.get_results();
-  ASSERT_EQ(results.size(), 1);
-  auto blue_sky_it = results.find("blue_sky");
-  ASSERT_TRUE(blue_sky_it != results.end());
-  const auto& raw_bs_data = results["blue_sky"];
-  ASSERT_EQ(raw_bs_data.size(), 1);
-  const auto& bs_scenario_results = raw_bs_data.at(0);
-  ASSERT_TRUE(bs_scenario_results.get_is_good());
-  const auto& bs_data = bs_scenario_results.get_results();
-  std::unordered_map<std::string, std::vector<ERIN::Datum>>
-    expected_results{
-      { std::string{"S"},
-        std::vector<ERIN::Datum>{
-          ERIN::Datum{0, 100.0, 100.0},
-          ERIN::Datum{5, 0.0, 0.0},
-          ERIN::Datum{7, 100.0, 100.0},
-          ERIN::Datum{10, 0.0, 0.0}}},
-      { std::string{"P"},
-        std::vector<ERIN::Datum>{
-          ERIN::Datum{0, 100.0, 100.0},
-          ERIN::Datum{5, 100.0, 0.0},
-          ERIN::Datum{7, 100.0, 100.0},
-          ERIN::Datum{10, 0.0, 0.0}}},
-      { std::string{"L"},
-        std::vector<ERIN::Datum>{
-          ERIN::Datum{0, 100.0, 100.0},
-          ERIN::Datum{5, 100.0, 0.0},
-          ERIN::Datum{7, 100.0, 100.0},
-          ERIN::Datum{10, 0.0, 0.0}}}};
-  ASSERT_EQ(expected_results.size(), bs_data.size());
-  if (false) {
-    std::vector<std::string> keys{};
-    std::cout << "actual keys:\n";
-    for (const auto& item : bs_data) {
-      std::cout << "- " << item.first << "\n";
-    }
-    std::cout << "expected keys:\n";
-    for (const auto& item : expected_results) {
-      const auto& k = item.first;
-      std::cout << "- " << k << "\n";
-      keys.emplace_back(k);
-      auto it = bs_data.find(k);
-      ASSERT_TRUE(it != bs_data.end()) << "expected key '" << k << "' not found in bs_data\n";
-    }
-    std::sort(keys.begin(), keys.end());
-    for (const auto& k : keys) {
-      std::cout << k << ":\n";
-      std::cout << "- EXPECTED:\n";
-      for (const auto& d : expected_results[k]) {
-        std::cout << "  " << d << "\n";
-      }
-      std::cout << "- ACTUAL:\n";
-      auto it = bs_data.find(k);
-      ASSERT_TRUE(it != bs_data.end());
-      for (const auto& d : it->second) {
-        std::cout << "  " << d << "\n";
-      }
-    }
-  }
-  EXPECT_EQ(expected_results, bs_data);
-}
+    EXPECT_EQ(modified_results.size(), 25) << "incorrect number of events";
+    EXPECT_EQ(modified_results[8].time_s, hours_as_seconds(8.0)) << "incorrect time of event";
+    EXPECT_EQ(modified_results[8].flows.size(), 3) << "incorrect number of flows";
 
-TEST(ErinBasicsTest, Test_that_reliability_works_on_storage_component)
-{
-  namespace E = ERIN;
-  std::string input =
-    "[simulation_info]\n"
-    "rate_unit = \"kW\"\n"
-    "quantity_unit = \"kJ\"\n"
-    "time_unit = \"seconds\"\n"
-    "max_time = 10\n"
-    "[loads.default]\n"
-    "time_unit = \"seconds\"\n"
-    "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,100.0],[10.0,0.0]]\n"
-    "[dist.break]\n"
-    "type = \"fixed\"\n"
-    "value = 5\n"
-    "time_unit = \"seconds\"\n"
-    "[dist.repair]\n"
-    "type = \"fixed\"\n"
-    "value = 2\n"
-    "time_unit = \"seconds\"\n"
-    "[failure_mode.standard]\n"
-    "failure_dist = \"break\"\n"
-    "repair_dist = \"repair\"\n"
-    "[components.S]\n"
-    "type = \"source\"\n"
-    "output_stream = \"electricity\"\n"
-    "[components.BATTERY]\n"
-    "type = \"store\"\n"
-    "outflow = \"electricity\"\n"
-    "inflow = \"electricity\"\n"
-    "max_inflow = 50.0\n"
-    "capacity_unit = \"kJ\"\n"
-    "capacity = 300.0\n"
-    "failure_modes = [\"standard\"]\n"
-    "[components.L]\n"
-    "type = \"load\"\n"
-    "input_stream = \"electricity\"\n"
-    "loads_by_scenario.blue_sky = \"default\"\n"
-    "[networks.normal_operations]\n"
-    "connections = [\n"
-    "    [\"S:OUT(0)\",  \"BATTERY:IN(0)\", \"electricity\"],\n"
-    "    [\"BATTERY:OUT(0)\", \"L:IN(0)\", \"electricity\"]]\n"
-    "[dist.immediately]\n"
-    "type = \"fixed\"\n"
-    "value = 0\n"
-    "time_unit = \"hours\"\n"
-    "[scenarios.blue_sky]\n"
-    "time_unit = \"seconds\"\n"
-    "occurrence_distribution = \"immediately\"\n"
-    "duration = 10\n"
-    "max_occurrences = 1\n"
-    "network = \"normal_operations\"\n"
-    "calculate_reliability = true\n";
-  auto m = E::make_main_from_string(input);
-  auto out = m.run_all();
-  EXPECT_TRUE(out.get_is_good());
-  auto results = out.get_results();
-  ASSERT_EQ(results.size(), 1);
-  auto blue_sky_it = results.find("blue_sky");
-  ASSERT_TRUE(blue_sky_it != results.end());
-  const auto& raw_bs_data = results["blue_sky"];
-  ASSERT_EQ(raw_bs_data.size(), 1);
-  const auto& bs_scenario_results = raw_bs_data.at(0);
-  ASSERT_TRUE(bs_scenario_results.get_is_good());
-  const auto& bs_data = bs_scenario_results.get_results();
-  std::unordered_map<std::string, std::vector<ERIN::Datum>>
-    expected_results{
-      { std::string{"S"},
-        std::vector<ERIN::Datum>{
-          ERIN::Datum{0, 50.0, 50.0},
-          ERIN::Datum{5, 0.0, 0.0},
-          ERIN::Datum{7, 50.0, 50.0},
-          ERIN::Datum{8, 50.0, 50.0},
-          ERIN::Datum{10, 0.0, 0.0}}},
-      { std::string{"BATTERY-inflow"},
-        std::vector<ERIN::Datum>{
-          ERIN::Datum{0, 50.0, 50.0},
-          ERIN::Datum{5, 50.0, 0.0},
-          ERIN::Datum{7, 50.0, 50.0},
-          ERIN::Datum{8, 50.0, 50.0},
-          ERIN::Datum{10, 0.0, 0.0}}},
-      { std::string{"BATTERY-outflow"},
-        std::vector<ERIN::Datum>{
-          ERIN::Datum{0, 100.0, 100.0},
-          ERIN::Datum{5, 100.0, 0.0},
-          ERIN::Datum{7, 100.0, 100.0},
-          ERIN::Datum{8, 100.0, 50.0},
-          ERIN::Datum{10, 0.0, 0.0}}},
-      { std::string{"BATTERY-storeflow"},
-        std::vector<ERIN::Datum>{
-          ERIN::Datum{0, 0.0, 0.0},
-          ERIN::Datum{5, 50.0, 0.0},
-          ERIN::Datum{7, 0.0, 0.0},
-          ERIN::Datum{8, 0.0, 0.0},
-          ERIN::Datum{10, 0.0, 0.0}}},
-      { std::string{"BATTERY-discharge"},
-        std::vector<ERIN::Datum>{
-          ERIN::Datum{0, 50.0, 50.0},
-          ERIN::Datum{5, 0.0, 0.0},
-          ERIN::Datum{7, 50.0, 50.0},
-          ERIN::Datum{8, 50.0, 0.0},
-          ERIN::Datum{10, 0.0, 0.0}}},
-      { std::string{"BATTERY-stored"},
-        std::vector<ERIN::Datum>{
-          ERIN::Datum{0, 300.0, 300.0},
-          ERIN::Datum{5, 50.0, 50.0},
-          ERIN::Datum{7, 50.0, 50.0},
-          ERIN::Datum{8, 0.0, 0.0},
-          ERIN::Datum{10, 0.0, 0.0}}},
-      { std::string{"L"},
-        std::vector<ERIN::Datum>{
-          ERIN::Datum{0, 100.0, 100.0},
-          ERIN::Datum{5, 100.0, 0.0},
-          ERIN::Datum{7, 100.0, 100.0},
-          ERIN::Datum{8, 100.0, 50.0},
-          ERIN::Datum{10, 0.0, 0.0}}}};
-  ASSERT_EQ(expected_results.size(), bs_data.size());
-  if (false) {
-    std::vector<std::string> keys{};
-    std::cout << "actual keys:\n";
-    for (const auto& item : bs_data) {
-      std::cout << "- " << item.first << "\n";
-    }
-    std::cout << "expected keys:\n";
-    for (const auto& item : expected_results) {
-      const auto& k = item.first;
-      std::cout << "- " << k << "\n";
-      keys.emplace_back(k);
-      auto it = bs_data.find(k);
-      ASSERT_TRUE(it != bs_data.end()) << "expected key '" << k << "' not found in bs_data\n";
-    }
-    std::sort(keys.begin(), keys.end());
-    for (const auto& k : keys) {
-      std::cout << k << ":\n";
-      std::cout << "- EXPECTED:\n";
-      for (const auto& d : expected_results[k]) {
-        std::cout << "  " << d << "\n";
-      }
-      std::cout << "- ACTUAL:\n";
-      auto it = bs_data.find(k);
-      ASSERT_TRUE(it != bs_data.end());
-      for (const auto& d : it->second) {
-        std::cout << "  " << d << "\n";
-      }
-    }
-  }
-  EXPECT_EQ(expected_results, bs_data);
-}
+    EXPECT_EQ(modified_results[8].flows[2].requested_W, kW_as_W(1.5))
+        << "incorrect requested-flow value";
+    EXPECT_EQ(modified_results[8].flows[2].actual_W, kW_as_W(1.0)) << "incorrect actual-flow value";
+    EXPECT_EQ(modified_results[8].storage_amounts_J[0], kWh_as_J(0.0))
+        << "incorrect storage amount";
 
-TEST(ErinBasicsTest, Test_source_store_load)
-{
-  const std::string input{
-      "[simulation_info]\n"
-      "rate_unit = \"kW\"\n"
-      "quantity_unit = \"kJ\"\n"
-      "time_unit = \"hours\"\n"
-      "max_time = 8760\n"
-      "[loads.coal_load]\n"
-      "time_unit = \"hours\"\n"
-      "rate_unit = \"kW\"\n"
-      "time_rate_pairs = [[0.0,143562.0],[1.0,92624.7],[8760.0,0.0]]\n"
-      "[components.coal_utility]\n"
-      "type=\"source\"\n"
-      "outflow=\"coal\"\n"
-      "max_outflow=879213000.0\n"
-      "[components.coal_pile]\n"
-      "type=\"store\"\n"
-      "inflow=\"coal\"\n"
-      "outflow=\"coal\"\n"
-      "capacity=1200000000.0\n"
-      "max_inflow=87921300.0\n"
-      "[components.boiler]\n"
-      "type=\"load\"\n"
-      "inflow=\"coal\"\n"
-      "loads_by_scenario.blue_sky = \"coal_load\"\n"
-      "[networks.nw]\n"
-      "connections = [\n"
-      "  [\"coal_utility:OUT(0)\", \"coal_pile:IN(0)\",\"coal\"],\n"
-      "  [\"coal_pile:OUT(0)\",\"boiler:IN(0)\",\"coal\"],\n"
-      "]\n"
-      "[dist.immediately]\n"
-      "type = \"fixed\"\n"
-      "value = 0\n"
-      "time_unit = \"hours\"\n"
-      "[scenarios.blue_sky]\n"
-      "time_unit = \"hours\"\n"
-      "occurrence_distribution = \"immediately\"\n"
-      "duration = 8760\n"
-      "max_occurrences = 1\n"
-      "network = \"nw\"\n"
-  };
-  namespace E = ERIN;
-  auto m = E::make_main_from_string(input);
-  const auto results = m.run_all();
-  ASSERT_TRUE(results.get_is_good());
-  const auto& r = results.get_results();
-  if (false) {
-    std::cout << "iterating r\n";
-    for (const auto& item : r) {
-      std::cout << item.first << "\n";
-    }
-  }
-  const auto blue_sky_results = results.get_results().at("blue_sky")[0];
-  ASSERT_TRUE(blue_sky_results.get_is_good());
-  const auto bs0 = blue_sky_results.get_results();
-  if (false) {
-    std::cout << "iterating bs0\n";
-    for (const auto& item : bs0) {
-      std::cout << item.first << "\n";
-    }
-  }
-  constexpr double tol{ 1e-6 };
-  ASSERT_EQ(bs0.at("boiler")[0].time, 0LL);
-  ASSERT_EQ(bs0.at("coal_utility")[0].time, 0LL);
-  ASSERT_EQ(bs0.at("coal_pile-inflow")[0].time, 0LL);
-  ASSERT_EQ(bs0.at("coal_pile-outflow")[0].time, 0LL);
-  ASSERT_EQ(bs0.at("coal_pile-storeflow")[0].time, 0LL);
-  ASSERT_EQ(bs0.at("coal_pile-discharge")[0].time, 0LL);
-  ASSERT_NEAR(bs0.at("boiler")[0].requested_value, 143562.00, tol);
-  ASSERT_NEAR(bs0.at("coal_utility")[0].requested_value, 143562.00, tol);
-  ASSERT_NEAR(bs0.at("coal_pile-inflow")[0].requested_value, 143562.00, tol);
-  ASSERT_NEAR(bs0.at("coal_pile-outflow")[0].requested_value, 143562.00, tol);
-  ASSERT_NEAR(bs0.at("coal_pile-storeflow")[0].requested_value, 0.0, tol);
-  ASSERT_NEAR(bs0.at("coal_pile-discharge")[0].requested_value, 0.0, tol);
-  ASSERT_NEAR(bs0.at("boiler")[0].achieved_value, 143562.00, tol);
-  ASSERT_NEAR(bs0.at("coal_utility")[0].achieved_value, 143562.00, tol);
-  ASSERT_NEAR(bs0.at("coal_pile-inflow")[0].achieved_value, 143562.00, tol);
-  ASSERT_NEAR(bs0.at("coal_pile-outflow")[0].achieved_value, 143562.00, tol);
-  ASSERT_NEAR(bs0.at("coal_pile-storeflow")[0].achieved_value, 0.0, tol);
-  ASSERT_NEAR(bs0.at("coal_pile-discharge")[0].achieved_value, 0.0, tol);
-
-  ASSERT_EQ(bs0.at("boiler")[1].time, 3600LL);
-  ASSERT_EQ(bs0.at("coal_utility")[1].time, 3600LL);
-  ASSERT_EQ(bs0.at("coal_pile-inflow")[1].time, 3600LL);
-  ASSERT_EQ(bs0.at("coal_pile-outflow")[1].time, 3600LL);
-  ASSERT_EQ(bs0.at("coal_pile-storeflow")[1].time, 3600LL);
-  ASSERT_EQ(bs0.at("coal_pile-discharge")[1].time, 3600LL);
-  ASSERT_NEAR(bs0.at("boiler")[1].requested_value, 92624.70, tol);
-  ASSERT_NEAR(bs0.at("coal_utility")[1].requested_value, 92624.70, tol);
-  ASSERT_NEAR(bs0.at("coal_pile-inflow")[1].requested_value, 92624.70, tol);
-  ASSERT_NEAR(bs0.at("coal_pile-outflow")[1].requested_value, 92624.70, tol);
-  ASSERT_NEAR(bs0.at("coal_pile-storeflow")[1].requested_value, 0.0, tol);
-  ASSERT_NEAR(bs0.at("coal_pile-discharge")[1].requested_value, 0.0, tol);
-  ASSERT_NEAR(bs0.at("boiler")[1].achieved_value, 92624.70, tol);
-  ASSERT_NEAR(bs0.at("coal_utility")[1].achieved_value, 92624.70, tol);
-  ASSERT_NEAR(bs0.at("coal_pile-inflow")[1].achieved_value, 92624.70, tol);
-  ASSERT_NEAR(bs0.at("coal_pile-outflow")[1].achieved_value, 92624.70, tol);
-  ASSERT_NEAR(bs0.at("coal_pile-storeflow")[1].achieved_value, 0.0, tol);
-  ASSERT_NEAR(bs0.at("coal_pile-discharge")[1].achieved_value, 0.0, tol);
-
-  ASSERT_EQ(bs0.at("coal_utility")[2].time, 3600LL * 8760LL);
-  ASSERT_EQ(bs0.at("coal_pile-inflow")[2].time, 3600LL * 8760LL);
-  ASSERT_EQ(bs0.at("coal_pile-outflow")[2].time, 3600LL * 8760LL);
-  ASSERT_EQ(bs0.at("coal_pile-storeflow")[2].time, 3600LL * 8760LL);
-  ASSERT_EQ(bs0.at("coal_pile-discharge")[2].time, 3600LL * 8760LL);
-  ASSERT_NEAR(bs0.at("boiler")[2].requested_value, 0.0, tol);
-  ASSERT_NEAR(bs0.at("coal_utility")[2].requested_value, 0.0, tol);
-  ASSERT_NEAR(bs0.at("coal_pile-inflow")[2].requested_value, 0.0, tol);
-  ASSERT_NEAR(bs0.at("coal_pile-outflow")[2].requested_value, 0.0, tol);
-  ASSERT_NEAR(bs0.at("coal_pile-storeflow")[2].requested_value, 0.0, tol);
-  ASSERT_NEAR(bs0.at("coal_pile-discharge")[2].requested_value, 0.0, tol);
-  ASSERT_NEAR(bs0.at("boiler")[2].achieved_value, 0.0, tol);
-  ASSERT_NEAR(bs0.at("coal_utility")[2].achieved_value, 0.0, tol);
-  ASSERT_NEAR(bs0.at("coal_pile-inflow")[2].achieved_value, 0.0, tol);
-  ASSERT_NEAR(bs0.at("coal_pile-outflow")[2].achieved_value, 0.0, tol);
-  ASSERT_NEAR(bs0.at("coal_pile-storeflow")[2].achieved_value, 0.0, tol);
-  ASSERT_NEAR(bs0.at("coal_pile-discharge")[2].achieved_value, 0.0, tol);
-}
-
-TEST(ErinBasicsTest, Test_mux_inflows_intelligently_v2)
-{
-  namespace ED = erin::devs;
-  //
-  std::vector<ED::Port3> ips{
-    ED::Port3{},
-    ED::Port3{},
-    ED::Port3{}
-  };
-  auto ups = ED::request_inflows_intelligently_v2(ips, 5.0);
-  std::vector<ED::PortUpdate3> expected_ups{
-    ED::PortUpdate3{ED::Port3{5.0,0.0}, true, false},
-    ED::PortUpdate3{ED::Port3{}, false, false},
-    ED::PortUpdate3{ED::Port3{}, false, false},
-  };
-  ASSERT_EQ(ups.size(), expected_ups.size());
-  for (std::size_t idx{0}; idx < ups.size(); ++idx) {
-    ASSERT_EQ(ups[idx], expected_ups[idx])
-      << "idx: " << idx << "\n"
-      << "ups[idx]: " << ups[idx] << "\n"
-      << "expected_ups[idx]: " << expected_ups[idx] << "\n";
-  }
-  //
-  ips = std::vector<ED::Port3>{
-    ED::Port3{5.0, 3.0},
-    ED::Port3{},
-    ED::Port3{},
-  };
-  ups = ED::request_inflows_intelligently_v2(ips, 5.0);
-  expected_ups = std::vector<ED::PortUpdate3>{
-    ED::PortUpdate3{ED::Port3{5.0,3.0}, false, false},
-    ED::PortUpdate3{ED::Port3{2.0,0.0}, true, false},
-    ED::PortUpdate3{ED::Port3{}, false, false},
-  };
-  ASSERT_EQ(ups.size(), expected_ups.size());
-  for (std::size_t idx{0}; idx < ups.size(); ++idx) {
-    ASSERT_EQ(ups[idx], expected_ups[idx])
-      << "idx: " << idx << "\n"
-      << "ups[idx]: " << ups[idx] << "\n"
-      << "expected_ups[idx]: " << expected_ups[idx] << "\n";
-  }
-  //
-  ips = std::vector<ED::Port3>{
-    ED::Port3{5.0, 3.0},
-    ED::Port3{2.0, 1.0},
-    ED::Port3{},
-  };
-  ups = ED::request_inflows_intelligently_v2(ips, 5.0);
-  expected_ups = std::vector<ED::PortUpdate3>{
-    ED::PortUpdate3{ED::Port3{5.0,3.0}, false, false},
-    ED::PortUpdate3{ED::Port3{2.0,1.0}, false, false},
-    ED::PortUpdate3{ED::Port3{1.0,0.0}, true, false},
-  };
-  ASSERT_EQ(ups.size(), expected_ups.size());
-  for (std::size_t idx{0}; idx < ups.size(); ++idx) {
-    ASSERT_EQ(ups[idx], expected_ups[idx])
-      << "idx: " << idx << "\n"
-      << "ups[idx]: " << ups[idx] << "\n"
-      << "expected_ups[idx]: " << expected_ups[idx] << "\n";
-  }
-  //
-  ips = std::vector<ED::Port3>{
-    ED::Port3{5.0, 3.0},
-    ED::Port3{2.0, 1.0},
-    ED::Port3{1.0, 0.0},
-  };
-  ups = ED::request_inflows_intelligently_v2(ips, 5.0);
-  expected_ups = std::vector<ED::PortUpdate3>{
-    ED::PortUpdate3{ED::Port3{5.0,3.0}, false, false},
-    ED::PortUpdate3{ED::Port3{2.0,1.0}, false, false},
-    ED::PortUpdate3{ED::Port3{1.0,0.0}, false, false},
-  };
-  ASSERT_EQ(ups.size(), expected_ups.size());
-  for (std::size_t idx{0}; idx < ups.size(); ++idx) {
-    ASSERT_EQ(ups[idx], expected_ups[idx])
-      << "idx: " << idx << "\n"
-      << "ups[idx]: " << ups[idx] << "\n"
-      << "expected_ups[idx]: " << expected_ups[idx] << "\n";
-  }
-  //
-  ips = std::vector<ED::Port3>{
-    ED::Port3{5.0, 3.0},
-    ED::Port3{2.0, 1.0},
-    ED::Port3{1.0, 0.0},
-  };
-  ups = ED::request_inflows_intelligently_v2(ips, 10.0);
-  expected_ups = std::vector<ED::PortUpdate3>{
-    ED::PortUpdate3{ED::Port3{10.0,3.0}, true, false},
-    ED::PortUpdate3{ED::Port3{0.0,1.0}, true, false},
-    ED::PortUpdate3{ED::Port3{0.0,0.0}, true, false},
-  };
-  ASSERT_EQ(ups.size(), expected_ups.size());
-  for (std::size_t idx{0}; idx < ups.size(); ++idx) {
-    ASSERT_EQ(ups[idx], expected_ups[idx])
-      << "idx: " << idx << "\n"
-      << "ups[idx]: " << ups[idx] << "\n"
-      << "expected_ups[idx]: " << expected_ups[idx] << "\n";
-  }
-  //
-  ips = std::vector<ED::Port3>{
-    ED::Port3{10.0, 5.0},
-    ED::Port3{5.0, 2.0},
-    ED::Port3{0.0, 0.0},
-  };
-  ups = ED::request_inflows_intelligently_v2(ips, 4.0);
-  expected_ups = std::vector<ED::PortUpdate3>{
-    ED::PortUpdate3{ED::Port3{4.0,5.0}, true, false},
-    ED::PortUpdate3{ED::Port3{0.0,2.0}, true, false},
-    ED::PortUpdate3{ED::Port3{0.0,0.0}, false, false},
-  };
-  ASSERT_EQ(ups.size(), expected_ups.size());
-  for (std::size_t idx{0}; idx < ups.size(); ++idx) {
-    ASSERT_EQ(ups[idx], expected_ups[idx])
-      << "idx: " << idx << "\n"
-      << "ups[idx]: " << ups[idx] << "\n"
-      << "expected_ups[idx]: " << expected_ups[idx] << "\n";
-  }
-}
-
-TEST(ErinBasicsTest, Test_add_initial_soc_option_for_storage)
-{
-  namespace E = ERIN;
-  std::string input =
-    "[simulation_info]\n"
-    "rate_unit = \"kW\"\n"
-    "quantity_unit = \"kJ\"\n"
-    "time_unit = \"seconds\"\n"
-    "max_time = 10\n"
-    "[loads.default]\n"
-    "time_unit = \"seconds\"\n"
-    "rate_unit = \"kW\"\n"
-    "time_rate_pairs = [[0.0,25.0],[10.0,0.0]]\n"
-    "[components.supply]\n"
-    "type = \"source\"\n"
-    "outflow = \"electricity\"\n"
-    "max_outflow = 0.0\n"
-    "[components.store_0]\n"
-    "type = \"store\"\n"
-    "inflow = \"electricity\"\n"
-    "outflow = \"electricity\"\n"
-    "max_inflow = 50.0\n"
-    "capacity_unit = \"kWh\"\n"
-    "capacity = 200.0\n"
-    "efficiency = 0.5\n"
-    "init_soc = 0.5\n"
-    "[components.store_1]\n"
-    "type = \"store\"\n"
-    "inflow = \"electricity\"\n"
-    "outflow = \"electricity\"\n"
-    "max_inflow = 100.0\n"
-    "capacity_unit = \"kWh\"\n"
-    "capacity = 200.0\n"
-    "charge_efficiency = 0.5\n"
-    "init_soc = 0.5\n"
-    "[components.store_2]\n"
-    "type = \"store\"\n"
-    "inflow = \"electricity\"\n"
-    "outflow = \"electricity\"\n"
-    "max_inflow = 100.0\n"
-    "capacity_unit = \"kWh\"\n"
-    "capacity = 800.0\n"
-    "discharge_efficiency = 0.5\n"
-    "init_soc = 0.5\n"
-    "[components.load]\n"
-    "type = \"load\"\n"
-    "inflow = \"electricity\"\n"
-    "loads_by_scenario.blue_sky = \"default\"\n"
-    "[networks.nw]\n"
-    "connections = [\n"
-    "    [\"supply:OUT(0)\",  \"store_2:IN(0)\", \"electricity\"],\n"
-    "    [\"store_2:OUT(0)\",  \"store_1:IN(0)\", \"electricity\"],\n"
-    "    [\"store_1:OUT(0)\",  \"store_0:IN(0)\", \"electricity\"],\n"
-    "    [\"store_0:OUT(0)\",  \"load:IN(0)\", \"electricity\"],\n"
-    "    ]\n"
-    "[dist.immediately]\n"
-    "type = \"fixed\"\n"
-    "value = 0\n"
-    "time_unit = \"hours\"\n"
-    "[scenarios.blue_sky]\n"
-    "time_unit = \"seconds\"\n"
-    "occurrence_distribution = \"immediately\"\n"
-    "duration = 10\n"
-    "max_occurrences = 1\n"
-    "network = \"nw\"\n";
-  auto m = E::make_main_from_string(input);
-  auto out = m.run_all();
-  EXPECT_TRUE(out.get_is_good());
-  auto results_map = out.get_results();
-  ASSERT_EQ(1, results_map.size());
-  const auto& bs_res = results_map["blue_sky"];
-  ASSERT_EQ(1, bs_res.size());
-  const auto& bs_res0 = bs_res[0];
-  const auto& rez = bs_res0.get_results();
-  std::set<std::string> expected_comp_ids{
-    "store_0-inflow", "store_0-outflow", "store_0-storeflow", "store_0-discharge",
-    "store_1-inflow", "store_1-outflow", "store_1-storeflow", "store_1-discharge",
-    "store_2-inflow", "store_2-outflow", "store_2-storeflow", "store_2-discharge",
-    "supply", "load", "store_0-stored", "store_1-stored", "store_2-stored"};
-  ASSERT_EQ(expected_comp_ids.size(), rez.size());
-  if (true) {
-    for (const auto& item : rez) {
-      std::cout << item.first << ":\n";
-      for (const auto& d : item.second) {
-        std::cout << "  " << d << "\n";
-      }
-    }
-  }
-  const auto& comp_ids = bs_res0.get_component_ids();
-  std::set<std::string> actual_comp_ids{};
-  for (const auto& id : comp_ids) {
-    actual_comp_ids.emplace(id);
-  }
-  ASSERT_EQ(actual_comp_ids.size(), expected_comp_ids.size());
-  EXPECT_EQ(actual_comp_ids, expected_comp_ids);
-}
-
-int
-main(int argc, char **argv)
-{
-  ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
+    EXPECT_EQ(modified_results[14].storage_amounts_J[0], kWh_as_J(1.0))
+        << "incorrect storage amount";
 }

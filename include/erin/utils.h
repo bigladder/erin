@@ -1,137 +1,127 @@
-/* Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
- * See the LICENSE.txt file for additional terms and conditions. */
-
+// Copyright (c) 2020 - 2024 Big Ladder Software, LLC.
+// See the LICENSE.txt file for additional terms and conditions.
 #ifndef ERIN_UTILS_H
 #define ERIN_UTILS_H
-#include "erin/type.h"
+
+#include <cstdlib>
+#include <iomanip>
 #include <iostream>
+#include <sstream>
+#include <stdint.h>
+#include <string>
 #include <vector>
-#include <functional>
 
-namespace erin::utils
+#include "erin/const.h"
+
+namespace erin
 {
-  using RealTimeType = ERIN::RealTimeType;
-  using FlowValueType = ERIN::FlowValueType;
-  using Datum = ERIN::Datum;
-  /**
-   * Months_days_elapsed is a duration of time in months and days.
-   * Months_days_elapsed should only take on values from {0,0} (no time forward
-   * in months or days) to {11,30} 11 months and 30 days HAVE ELAPSED.  The
-   * assumption is that the "clock" always starts from January 1 at 00:00:00 so
-   * therefore a value of {11,30} would be some time on or after midnight on
-   * December 31.
-   */
-  class Months_days_elapsed
-  {
-    public:
-      Months_days_elapsed(
-          RealTimeType month,
-          RealTimeType days);
 
-      [[nodiscard]] RealTimeType get_elapsed_months() const {
-        return months;
-      }
-      [[nodiscard]] RealTimeType get_elapsed_days_of_month() const {
-        return days;
-      }
+// Clojure program to calculate the below:
+// > (def days-per-month [31 28 31 30 31 30 31 31 30 31 30 31])
+// > (count days-per-month) ;=> 12
+// > (reduce + days-per-month) ;=> 365
+// > (reductions + days-per-month) ;=>
+// ;;  [31 59 90 120 151 181 212 243 273 304 334 365]
+std::vector<flow_t> const days_per_month {// January
+                                          31,
+                                          // February (non-leap year)
+                                          28,
+                                          // March
+                                          31,
+                                          // April
+                                          30,
+                                          // May
+                                          31,
+                                          // June
+                                          30,
+                                          // July
+                                          31,
+                                          // August
+                                          31,
+                                          // September
+                                          30,
+                                          // October
+                                          31,
+                                          // November
+                                          30,
+                                          // December
+                                          31};
 
-      friend bool operator==(
-          const Months_days_elapsed& a, const Months_days_elapsed& b);
-      friend std::ostream& operator<<(std::ostream& os, const Months_days_elapsed& mdd); 
+std::vector<flow_t> const day_of_year_to_month {// January is doy <= 31 days
+                                                31,
+                                                // February (non-leap year) is doy <= 59
+                                                59,
+                                                // March is doy <= 90, etc.
+                                                90,
+                                                // April
+                                                120,
+                                                // May
+                                                151,
+                                                // June
+                                                181,
+                                                // July
+                                                212,
+                                                // August
+                                                243,
+                                                // September
+                                                273,
+                                                // October
+                                                304,
+                                                // November
+                                                334,
+                                                // December
+                                                365};
 
-    private:
-      RealTimeType months; // months of time that have ELAPSED January 1 at 00:00:00
-      RealTimeType days; // days of the next month
-  };
+flow_t const num_months {12};
+int const max_month_idx = 11;
+int const min_month_idx = 0;
 
-  bool operator==(const Months_days_elapsed& a, const Months_days_elapsed& b);
+// Time Conversion Factors
+int constexpr seconds_per_minute {60};
+int constexpr minutes_per_hour {60};
+int constexpr seconds_per_hour {seconds_per_minute * minutes_per_hour};
+int constexpr hours_per_day {24};
+int constexpr seconds_per_day {seconds_per_hour * hours_per_day};
+int constexpr seconds_per_week {seconds_per_day * 7};
+// NOTE: there are actually 365.25 days per year but our time clock
+// doesn't acknowledge leap years so we use a slightly lower factor.
+// Hopefully, this won't bite us... For this simulation, one year is
+// always 365 days
+int constexpr days_per_year {365};
+int constexpr seconds_per_year {seconds_per_day * days_per_year};
 
-  std::ostream& operator<<(std::ostream& os, const Months_days_elapsed& mdd); 
+struct Months_days_elapsed
+{
+    // months of time that have ELAPSED January 1 at 00:00:00
+    flow_t months;
+    // days of the next month
+    flow_t days;
+};
 
-  std::string time_to_iso_8601_period(RealTimeType time_seconds);
+Months_days_elapsed day_of_year_to_months_days_elapsed(uint64_t day_of_year);
 
-  Months_days_elapsed day_of_year_to_months_days_elapsed(RealTimeType day_of_year);
+std::string time_to_ISO8601_period(uint64_t time_seconds);
 
-  bool is_superset(
-      const std::vector<std::string>& superset,
-      const std::vector<std::string>& compared_to);
+double time_in_seconds_to_hours(uint64_t time_seconds);
 
-  std::string path_to_filename(const std::string& path);
+void write_tagged_category_message(std::string const& category,
+                                   std::string const& tag,
+                                   std::string const& message);
 
-  template <class T>
-  bool
-  compare_vectors_unordered(const std::vector<T>& xs, const std::vector<T>& ys)
-  {
-    using size_type = typename std::vector<T>::size_type;
-    if (xs.size() != ys.size()) {
-      return false;
-    }
-    std::vector<bool> used_ys(ys.size(), false);
-    for (size_type i{0}; i < xs.size(); ++i) {
-      const auto& x = xs.at(i);
-      bool found_matching_y{false};
-      for (size_type j{0}; j < xs.size(); ++j) {
-        if (!used_ys.at(j)) {
-          const auto& y = ys.at(j);
-          if (x == y) {
-            used_ys[j] = true;
-            found_matching_y = true;
-            break;
-          }
-        }
-      }
-      if (!found_matching_y) {
-        return false;
-      }
-    }
-    return true;
-  }
+void write_warning_message(std::string const& tag, std::string const& message);
 
-  template <class T>
-  bool
-  compare_vectors_unordered_with_fn(const std::vector<T>& xs, const std::vector<T>& ys, const std::function<bool(const T&, const T&)>& f)
-  {
-    using size_type = typename std::vector<T>::size_type;
-    if (xs.size() != ys.size()) {
-      return false;
-    }
-    std::vector<bool> used_ys(ys.size(), false);
-    for (size_type i{0}; i < xs.size(); ++i) {
-      const auto& x = xs.at(i);
-      bool found_matching_y{false};
-      for (size_type j{0}; j < xs.size(); ++j) {
-        if (!used_ys.at(j)) {
-          const auto& y = ys.at(j);
-          if (f(x, y)) {
-            used_ys[j] = true;
-            found_matching_y = true;
-            break;
-          }
-        }
-      }
-      if (!found_matching_y) {
-        return false;
-      }
-    }
-    return true;
-  }
+void write_error_message(std::string const& tag, std::string const& message);
 
-  FlowValueType
-  interpolate_value(
-      RealTimeType t,
-      const std::vector<RealTimeType>& ts,
-      const std::vector<FlowValueType>& fs);
+std::string write_tagged_category_to_string(std::string const& category,
+                                            std::string const& tag,
+                                            std::string const& message);
 
-  FlowValueType
-  integrate_value(
-      RealTimeType t,
-      const std::vector<RealTimeType>& ts,
-      const std::vector<FlowValueType>& fs);
+std::string write_warning_to_string(std::string const& tag, std::string const& message);
 
-  FlowValueType
-  integrate_value(
-      RealTimeType time,
-      const std::vector<Datum>& datums);
-}
+std::string write_error_to_string(std::string const& tag, std::string const& msg);
 
-#endif // ERIN_UTILS_H
+std::string double_to_string(double value, unsigned int precision);
+
+} // namespace erin
+
+#endif

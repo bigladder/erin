@@ -1,0 +1,98 @@
+digraph  {
+  "41_bu_gen_fuel_tank" [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="name">41_bu_gen_fuel_tank</TD>
+        <TD PORT="O0" BGCOLOR="lightgrey">O(0)</TD>
+      </TR>
+    </TABLE>>];
+  "41_firehouse_load__chilled_water" [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="I0" BGCOLOR="lightgrey">I(0)</TD>
+        <TD PORT="name">41_firehouse_load__chilled_water</TD>
+      </TR>
+    </TABLE>>];
+  "41_firehouse_load__electricity" [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="I0" BGCOLOR="lightgrey">I(0)</TD>
+        <TD PORT="name">41_firehouse_load__electricity</TD>
+      </TR>
+    </TABLE>>];
+  "41_generator" [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="I0" BGCOLOR="lightgrey">I(0)</TD>
+        <TD PORT="name">41_generator</TD>
+        <TD PORT="O0" BGCOLOR="lightgrey">O(0)</TD>
+        <TD PORT="O2" BGCOLOR="lightgrey">O(2)</TD>
+      </TR>
+    </TABLE>>];
+  "ENV0" [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="name">ENV0</TD>
+        <TD PORT="O0" BGCOLOR="lightgrey">O(0)</TD>
+      </TR>
+    </TABLE>>];
+  "WASTE0" [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="I0" BGCOLOR="lightgrey">I(0)</TD>
+        <TD PORT="name">WASTE0</TD>
+      </TR>
+    </TABLE>>];
+  "WASTE1" [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="I0" BGCOLOR="lightgrey">I(0)</TD>
+        <TD PORT="name">WASTE1</TD>
+      </TR>
+    </TABLE>>];
+  "ameren_electric_power_utility" [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="name">ameren_electric_power_utility</TD>
+        <TD PORT="O0" BGCOLOR="lightgrey">O(0)</TD>
+      </TR>
+    </TABLE>>];
+  "chiller" [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="I0" BGCOLOR="lightgrey">I(0)</TD>
+        <TD PORT="I1" BGCOLOR="lightgrey">I(1)</TD>
+        <TD PORT="name">chiller</TD>
+        <TD PORT="O0" BGCOLOR="lightgrey">O(0)</TD>
+        <TD PORT="O1" BGCOLOR="lightgrey">O(1)</TD>
+      </TR>
+    </TABLE>>];
+  "substation" [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="I0" BGCOLOR="lightgrey">I(0)</TD>
+        <TD PORT="name">substation</TD>
+        <TD PORT="O0" BGCOLOR="lightgrey">O(0)</TD>
+      </TR>
+    </TABLE>>];
+  "xfer_switch" [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="I0" BGCOLOR="lightgrey">I(0)</TD>
+        <TD PORT="I1" BGCOLOR="lightgrey">I(1)</TD>
+        <TD PORT="name">xfer_switch</TD>
+        <TD PORT="O0" BGCOLOR="lightgrey">O(0)</TD>
+        <TD PORT="O1" BGCOLOR="lightgrey">O(1)</TD>
+      </TR>
+    </TABLE>>];
+  "41_generator":O2:s -> "WASTE0":I0:n;
+  "chiller":O1:s -> "WASTE1":I0:n;
+  "ENV0":O0:s -> "chiller":I1:n;
+  "ameren_electric_power_utility":O0:s -> "substation":I0:n;
+  "substation":O0:s -> "xfer_switch":I0:n;
+  "xfer_switch":O0:s -> "41_firehouse_load__electricity":I0:n;
+  "41_generator":O0:s -> "xfer_switch":I1:n;
+  "xfer_switch":O1:s -> "chiller":I0:n;
+  "chiller":O0:s -> "41_firehouse_load__chilled_water":I0:n;
+  "41_bu_gen_fuel_tank":O0:s -> "41_generator":I0:n;
+}

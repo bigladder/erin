@@ -1,4 +1,7 @@
+[meta]
+description = "tests a quantile table statistical distribution"
 [simulation_info]
+input_format_version = "0.2"
 rate_unit = "kW"
 quantity_unit = "kJ"
 time_unit = "hours"
@@ -37,7 +40,7 @@ time_unit = "minutes"
 failure_dist = "grid_failure"
 repair_dist = "grid_repair"
 ############## Networks ################
-[networks.nw_electric]
+[network]
 connections = [
   ["utility_electrical:OUT(0)", "bldg_a_electric:IN(0)", "electricity"],
 ]
@@ -47,5 +50,3 @@ time_unit = "hours"
 occurrence_distribution = "immediately"
 duration = 20
 max_occurrences = 1
-network = "nw_electric"
-calculate_reliability = true

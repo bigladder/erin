@@ -1,0 +1,101 @@
+digraph nw_electric {
+  bldg_a_electric [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="I0" BGCOLOR="lightgrey">I(0)</TD>
+        <TD PORT="name">bldg_a_electric</TD>
+      </TR>
+    </TABLE>>];
+  bldg_b_electric [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="I0" BGCOLOR="lightgrey">I(0)</TD>
+        <TD PORT="name">bldg_b_electric</TD>
+      </TR>
+    </TABLE>>];
+  bldg_c_electric [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="I0" BGCOLOR="lightgrey">I(0)</TD>
+        <TD PORT="name">bldg_c_electric</TD>
+      </TR>
+    </TABLE>>];
+  diesel_resupply [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="name">diesel_resupply</TD>
+        <TD PORT="O0" BGCOLOR="lightgrey">O(0)</TD>
+      </TR>
+    </TABLE>>];
+  fuel_truck [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="I0" BGCOLOR="lightgrey">I(0)</TD>
+        <TD PORT="name">fuel_truck</TD>
+        <TD PORT="O0" BGCOLOR="lightgrey">O(0)</TD>
+        <TD PORT="O1" BGCOLOR="lightgrey">O(1)</TD>
+      </TR>
+    </TABLE>>];
+  gen_a [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="I0" BGCOLOR="lightgrey">I(0)</TD>
+        <TD PORT="name">gen_a</TD>
+        <TD PORT="O0" BGCOLOR="lightgrey">O(0)</TD>
+      </TR>
+    </TABLE>>];
+  gen_b [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="I0" BGCOLOR="lightgrey">I(0)</TD>
+        <TD PORT="name">gen_b</TD>
+        <TD PORT="O0" BGCOLOR="lightgrey">O(0)</TD>
+      </TR>
+    </TABLE>>];
+  sub_sta_1 [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="I0" BGCOLOR="lightgrey">I(0)</TD>
+        <TD PORT="name">sub_sta_1</TD>
+        <TD PORT="O0" BGCOLOR="lightgrey">O(0)</TD>
+        <TD PORT="O1" BGCOLOR="lightgrey">O(1)</TD>
+        <TD PORT="O2" BGCOLOR="lightgrey">O(2)</TD>
+      </TR>
+    </TABLE>>];
+  utility_electrical [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="name">utility_electrical</TD>
+        <TD PORT="O0" BGCOLOR="lightgrey">O(0)</TD>
+      </TR>
+    </TABLE>>];
+  xfer_a [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="I0" BGCOLOR="lightgrey">I(0)</TD>
+        <TD PORT="I1" BGCOLOR="lightgrey">I(1)</TD>
+        <TD PORT="name">xfer_a</TD>
+        <TD PORT="O0" BGCOLOR="lightgrey">O(0)</TD>
+      </TR>
+    </TABLE>>];
+  xfer_b [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="I0" BGCOLOR="lightgrey">I(0)</TD>
+        <TD PORT="I1" BGCOLOR="lightgrey">I(1)</TD>
+        <TD PORT="name">xfer_b</TD>
+        <TD PORT="O0" BGCOLOR="lightgrey">O(0)</TD>
+      </TR>
+    </TABLE>>];
+  utility_electrical:O0:s -> sub_sta_1:I0:n;
+  sub_sta_1:O0:s -> xfer_a:I0:n;
+  sub_sta_1:O1:s -> xfer_b:I0:n;
+  sub_sta_1:O2:s -> bldg_c_electric:I0:n;
+  xfer_a:O0:s -> bldg_a_electric:I0:n;
+  xfer_b:O0:s -> bldg_b_electric:I0:n;
+  diesel_resupply:O0:s -> fuel_truck:I0:n;
+  fuel_truck:O0:s -> gen_a:I0:n;
+  fuel_truck:O1:s -> gen_b:I0:n;
+  gen_a:O0:s -> xfer_a:I1:n;
+  gen_b:O0:s -> xfer_b:I1:n;
+}

@@ -1,0 +1,48 @@
+[meta]
+description = """
+This example just expands the converter_with_thermoelectric template.
+"""
+[simulation_info]
+input_format_version = "0.2"
+max_time = 10
+quantity_unit = "kJ"
+rate_unit = "kW"
+time_unit = "hours"
+############################################################
+[loads.building_electrical]
+time_unit = "hours"
+rate_unit = "kW"
+time_rate_pairs = [[0.0,10.0],[10.0,0.0]]
+############################################################
+[components.diesel_source]
+type = "source"
+max_outflow = 100.0
+rate_unit = "kW"
+outflow = "diesel"
+[components.te_converter]
+type = "template"
+template_name = "converter_with_thermoelectric"
+diesel_generator_efficiency = 0.32
+thermoelectric_efficiency = 0.10
+max_outflow = 45.0 # kW
+[components.electric_load]
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "building_electrical"
+############################################################
+[network]
+connections = [
+  ["diesel_source:OUT(0)", "te_converter:IN(0)", "diesel"],
+  ["te_converter:OUT(0)", "electric_load:IN(0)", "electricity"],
+]
+############################################################
+[dist.immediately]
+type = "fixed"
+value = 0
+time_unit = "hours"
+############################################################
+[scenarios.blue_sky]
+time_unit = "hours"
+occurrence_distribution = "immediately"
+duration = 10
+max_occurrences = 1

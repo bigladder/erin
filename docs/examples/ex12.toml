@@ -1,4 +1,7 @@
+[meta]
+description = "Example of a failure mode applied to a source"
 [simulation_info]
+input_format_version = "0.2"
 rate_unit = "kW"
 quantity_unit = "kJ"
 time_unit = "hours"
@@ -7,7 +10,10 @@ max_time = 40
 [loads.building_electrical]
 time_unit = "hours"
 rate_unit = "kW"
-time_rate_pairs = [[0.0,1.0],[40.0,0.0]]
+time_rate_pairs = [
+  [0.0,1.0],
+  [40.0,0.0],
+  ]
 ############################################################
 [components.S]
 type = "source"
@@ -31,8 +37,10 @@ time_unit = "hours"
 failure_dist = "every_10"
 repair_dist = "every_5"
 ############################################################
-[networks.nw]
-connections = [["S:OUT(0)", "L:IN(0)", "electricity"]]
+[network]
+connections = [
+  ["S:OUT(0)", "L:IN(0)", "electricity"],
+  ]
 ############################################################
 [dist.immediately]
 type = "fixed"
@@ -44,5 +52,3 @@ time_unit = "hours"
 occurrence_distribution = "immediately"
 duration = 40
 max_occurrences = 1
-network = "nw"
-calculate_reliability = true

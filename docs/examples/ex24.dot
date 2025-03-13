@@ -1,0 +1,50 @@
+digraph normal_operations {
+  electric_battery_A [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="I0" BGCOLOR="lightgrey">I(0)</TD>
+        <TD PORT="name">electric_battery_A</TD>
+        <TD PORT="O0" BGCOLOR="lightgrey">O(0)</TD>
+      </TR>
+    </TABLE>>];
+  electric_battery_B [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="I0" BGCOLOR="lightgrey">I(0)</TD>
+        <TD PORT="name">electric_battery_B</TD>
+        <TD PORT="O0" BGCOLOR="lightgrey">O(0)</TD>
+      </TR>
+    </TABLE>>];
+  electric_load_A [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="I0" BGCOLOR="lightgrey">I(0)</TD>
+        <TD PORT="name">electric_load_A</TD>
+      </TR>
+    </TABLE>>];
+  electric_load_B [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="I0" BGCOLOR="lightgrey">I(0)</TD>
+        <TD PORT="name">electric_load_B</TD>
+      </TR>
+    </TABLE>>];
+  electric_source_A [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="name">electric_source_A</TD>
+        <TD PORT="O0" BGCOLOR="lightgrey">O(0)</TD>
+      </TR>
+    </TABLE>>];
+  electric_source_B [shape=none,label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+      <TR>
+        <TD PORT="name">electric_source_B</TD>
+        <TD PORT="O0" BGCOLOR="lightgrey">O(0)</TD>
+      </TR>
+    </TABLE>>];
+  electric_source_A:O0:s -> electric_battery_A:I0:n;
+  electric_battery_A:O0:s -> electric_load_A:I0:n;
+  electric_source_B:O0:s -> electric_battery_B:I0:n;
+  electric_battery_B:O0:s -> electric_load_B:I0:n;
+}

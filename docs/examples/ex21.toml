@@ -1,4 +1,8 @@
+[meta]
+description = "Another Weibull distribution test"
+
 [simulation_info]
+input_format_version = "0.2"
 rate_unit = "kW"
 quantity_unit = "kJ"
 time_unit = "hours"
@@ -18,43 +22,42 @@ time_rate_pairs = [[0.0,100.0],[2.0,0.0]]
 ############## Components #################
 #### Loads   ####
 [components.elec_load]
-type="load"
-inflow="electricity"
+type = "load"
+inflow = "electricity"
 loads_by_scenario.blue_sky = "electric"
 
 [components.steam_load]
-type="load"
-inflow="steam"
+type = "load"
+inflow = "steam"
 loads_by_scenario.blue_sky = "steam"
 
 #### Sources ####
-[components.electric_utility] #O
+[components.electric_utility]
 type = "source"
 outflow = "electricity"
 max_outflow = 20.0
 
-[components.coal_utility] #O
-type="source"
-outflow="coal"
-max_outflow=15.0
+[components.coal_utility]
+type = "source"
+outflow = "coal"
+max_outflow = 15.0
 
 #### Electrical Components ###
 [components.transmission]
 type = "pass_through"
-stream = "electricity"
+flow = "electricity"
 failure_modes = ["grid_outage"]
 
 [components.substation]
 type = "muxer"
-stream = "electricity"
+flow = "electricity"
 num_inflows = 2
 num_outflows = 1 
-dispatch_strategy = "in_order"
 
 [components.coal_pile]
-type="pass_through"
-flow="coal"
-max_outflow=20.0
+type = "pass_through"
+flow = "coal"
+max_outflow = 20.0
 
 [components.boiler]
 type = "converter"
@@ -63,31 +66,29 @@ outflow = "steam"
 constant_efficiency = 0.5
 
 [components.steam_split]
-type="muxer"
-flow="steam"
+type = "muxer"
+flow = "steam"
 num_inflows = 1
 num_outflows = 2
-dispatch_strategy = "in_order"
 
 [components.steam_loop]
 type = "muxer"
 flow = "steam"
 num_inflows = 2
 num_outflows = 1
-dispatch_strategy = "in_order"
 
 [components.turbine]
-type="converter"
-inflow="steam"
-outflow="electricity"
+type = "converter"
+inflow = "steam"
+outflow = "electricity"
 lossflow = "waste_heat"
 constant_efficiency = 0.5
 
 [components.waste_to_steam]
-type="converter"
-inflow="waste_heat"
-outflow="steam"
-constant_efficiency=1
+type = "converter"
+inflow = "waste_heat"
+outflow = "steam"
+constant_efficiency = 1
 
 ############## dist ###########################
 [dist.immediately]
@@ -115,7 +116,7 @@ failure_dist = "grid_failure"
 repair_dist = "grid_repair"
 
 ############## Networks #################
-[networks.nw_electric]
+[network]
 connections = [
   # Electric Network
   ["electric_utility:OUT(0)", "transmission:IN(0)","electricity"],
@@ -134,7 +135,7 @@ connections = [
   #Thermal to Electric
   ["steam_split:OUT(0)","turbine:IN(0)","steam"],
   ["turbine:OUT(0)","substation:IN(0)","electricity"],
-]
+  ]
 
 ############## Scenarios #################
 [scenarios.blue_sky]
@@ -142,5 +143,3 @@ time_unit = "hours"
 occurrence_distribution = "immediately"
 duration = 2
 max_occurrences = 1
-network = "nw_electric"
-calculate_reliability = true

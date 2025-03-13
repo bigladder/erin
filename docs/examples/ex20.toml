@@ -1,4 +1,7 @@
+[meta]
+description = "demonstrate Weibull distribution"
 [simulation_info]
+input_format_version = "0.2"
 rate_unit = "kW"
 quantity_unit = "kJ"
 time_unit = "hours"
@@ -8,7 +11,10 @@ fixed_random = 0.0
 [loads.electric_load]
 time_unit = "hours"
 rate_unit = "kW"
-time_rate_pairs = [[0.0, 10.0],[20.0, 0.0]]
+time_rate_pairs = [
+  [0.0, 10.0],
+  [20.0, 0.0],
+  ]
 ############## Components ##############
 [components.utility_electrical]
 type = "source"
@@ -41,15 +47,13 @@ time_unit = "minutes"
 failure_dist = "grid_failure"
 repair_dist = "grid_repair"
 ############## Networks ################
-[networks.nw_electric]
+[network]
 connections = [
   ["utility_electrical:OUT(0)", "bldg_a_electric:IN(0)", "electricity"],
-]
+  ]
 ############## Scenarios ###############
 [scenarios.blue_sky]
 time_unit = "hours"
 occurrence_distribution = "immediately"
 duration = 20
 max_occurrences = 1
-network = "nw_electric"
-calculate_reliability = true

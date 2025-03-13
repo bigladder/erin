@@ -1,4 +1,5 @@
 [simulation_info]
+input_format_version = "0.2"
 rate_unit = "kW"
 quantity_unit = "kJ"
 time_unit = "seconds"
@@ -35,15 +36,13 @@ type = "load"
 inflow = "electricity"
 loads_by_scenario.blue_sky = "profile1"
 ############################################################
-[networks.normal_operations]
+[network]
 connections = [
   ["S1:OUT(0)", "L1:IN(0)", "electricity"]
-  ]
+]
 ############################################################
 [scenarios.blue_sky]
 time_unit = "seconds"
 occurrence_distribution = "immediately"
 duration = 10
 max_occurrences = 1
-network = "normal_operations"
-calculate_reliability = true

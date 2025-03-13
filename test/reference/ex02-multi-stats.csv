@@ -1,8 +1,0 @@
-scenario id,number of occurrences,total time in scenario (hours),component id,type,stream,energy availability,max downtime (hours),load not served (kJ),electricity energy used (kJ)
-blue_sky,1,4,cluster_01_electric,load,electricity,1,0,0,14400
-blue_sky,1,4,electric_utility,source,electricity,1,0,0,14400
-blue_sky,1,4,TOTAL (source),,,,,,14400
-blue_sky,1,4,TOTAL (load),,,,,,14400
-blue_sky,1,4,TOTAL (storage),,,,,,0.0
-blue_sky,1,4,TOTAL (waste),,,,,,0.0
-blue_sky,1,4,ENERGY BALANCE (source-(load+storage+waste)),0,,,,,

@@ -1,152 +1,163 @@
-/* Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
- * See the LICENSE.txt file for additional terms and conditions. */
-
+// Copyright (c) 2020 - 2024 Big Ladder Software, LLC.
+// See the LICENSE.txt file for additional terms and conditions.
 #ifndef ERIN_DISTRIBUTION_H
 #define ERIN_DISTRIBUTION_H
-#include "erin/type.h"
 #include <chrono>
 #include <exception>
 #include <functional>
+#include <optional>
 #include <random>
 #include <sstream>
+#include <stdint.h>
 #include <string>
 
-namespace erin::distribution
+#include "../vendor/toml11/toml.hpp"
+
+#include "erin/logging.h"
+#include "erin/result.h"
+#include "erin/valdata.h"
+
+namespace erin
 {
-  using size_type = std::vector<std::int64_t>::size_type;
-  using RealTimeType = ERIN::RealTimeType;
-  using FlowValueType = ERIN::FlowValueType;
 
-  template <class T>
-  std::function<T(void)>
-  make_fixed(const T& value) 
-  {
+template <class T>
+std::function<T(void)> make_fixed(const T& value)
+{
     return [value]() -> T { return value; };
-  };
+};
 
-  template <class T>
-  std::function<T(void)>
-  make_random_integer(
-      const std::default_random_engine& generator, const T& lb, const T& ub)
-  {
-    if (lb >= ub) {
-      std::ostringstream oss{};
-      oss << "expected lower_bound < upper_bound but lower_bound = "
-        << lb << " and upper_bound = " << ub;
-      throw std::invalid_argument(oss.str());
+template <class T>
+std::function<T(void)>
+make_random_integer(const std::default_random_engine& generator, const T& lb, const T& ub)
+{
+    if (lb >= ub)
+    {
+        std::ostringstream oss {};
+        oss << "expected lower_bound < upper_bound but lower_bound = " << lb
+            << " and upper_bound = " << ub;
+        throw std::invalid_argument(oss.str());
     }
-    std::uniform_int_distribution<T> d{lb, ub};
-    auto g = generator; // copy-assignment constructor
+    std::uniform_int_distribution<T> d {lb, ub};
+    std::default_random_engine g = generator; // copy-assignment constructor
     return [d, g]() mutable -> T { return d(g); };
-  }
+}
 
-  enum class DistType
-  {
+enum class DistType
+{
     Fixed = 0,
     Uniform,
     Normal,
     Weibull,
-    QuantileTable // from times and variate: variate is from (0,1) time and variate
-                  // must be always increasing
-  };
+    QuantileTable // from times and variate: variate is from (0,1) time and
+                  // variate must be always increasing
+};
 
-  std::string dist_type_to_tag(DistType dist_type);
-  DistType tag_to_dist_type(const std::string& tag);
+std::string dist_type_to_tag(DistType dist_type);
 
-  struct Dist {
-    std::vector<std::string> tag{};
-    std::vector<size_type> subtype_id{};
-    std::vector<DistType> dist_type{};
-  };
+std::optional<DistType> tag_to_dist_type(const std::string& tag);
 
-  struct FixedDist
-  {
-    std::vector<RealTimeType> value{};
-  };
+// SOA version of AOS, std::vector<Distribution>
+struct Dist
+{
+    std::vector<std::string> tag {};
+    std::vector<size_t> subtype_id {};
+    std::vector<DistType> dist_type {};
+};
 
-  struct UniformDist
-  {
-    std::vector<RealTimeType> lower_bound{};
-    std::vector<RealTimeType> upper_bound{};
-  };
+struct Distribution
+{
+    std::string Tag;
+    size_t SubtypeIdx;
+    DistType Type;
+};
 
-  struct NormalDist
-  {
-    std::vector<RealTimeType> average{};
-    std::vector<RealTimeType> stddev{};
-  };
+struct FixedDist
+{
+    std::vector<double> value {};
+};
 
-  struct QuantileTableDist
-  {
-    std::vector<double> variates{};
-    std::vector<double> times{};
-    std::vector<size_type> start_idx{};
-    std::vector<size_type> end_idx{};
-  };
+struct UniformDist
+{
+    std::vector<double> lower_bound {};
+    std::vector<double> upper_bound {};
+};
 
-  struct WeibullDist
-  {
-    std::vector<double> shape_params{}; // k
-    std::vector<double> scale_params{}; // lambda
-    std::vector<double> location_params{}; // gamma
-  };
+struct NormalDist
+{
+    std::vector<double> average {};
+    std::vector<double> stddev {};
+};
 
-  class DistributionSystem
-  {
-    public:
-      DistributionSystem();
+struct QuantileTableDist
+{
+    std::vector<double> variates {};
+    std::vector<double> times {};
+    std::vector<size_t> start_idx {};
+    std::vector<size_t> end_idx {};
+};
 
-      size_type add_fixed(
-          const std::string& tag,
-          RealTimeType value_in_seconds);
+struct WeibullDist
+{
+    std::vector<double> shape_params {};    // k
+    std::vector<double> scale_params {};    // lambda
+    std::vector<double> location_params {}; // gamma
+};
 
-      size_type add_uniform(
-          const std::string& tag,
-          RealTimeType lower_bound_s,
-          RealTimeType upper_bound_s);
+class DistributionSystem
+{
+  public:
+    DistributionSystem();
 
-      size_type add_normal(
-          const std::string& tag,
-          RealTimeType mean_s,
-          RealTimeType stddev_s);
+    size_t add_fixed(const std::string& tag, double value_in_seconds);
 
-      size_type add_quantile_table(
-          const std::string& tag,
-          const std::vector<double>& xs,
-          const std::vector<double>& dtimes_s);
+    size_t add_uniform(const std::string& tag, double lower_bound_s, double upper_bound_s);
 
-      /*
-      size_type add_pdf_table(
+    size_t add_normal(const std::string& tag, double mean_s, double stddev_s);
+
+    size_t add_quantile_table(const std::string& tag,
+                              const std::vector<double>& xs,
+                              const std::vector<double>& dtimes_s);
+
+    /*
+    size_t add_pdf_table(
         const std::string& tag,
         const std::vector<double>& dtimes_s,
         const std::vector<double>& occurrences
         );
-      */
+    */
 
-      size_type add_weibull(
-          const std::string& tag,
-          const double shape_parameter,    // k
-          const double scale_parameter,    // lambda
-          const double location_parameter=0.0); // gamma
+    size_t add_weibull(const std::string& tag,
+                       const double shape_parameter,           // k
+                       const double scale_parameter,           // lambda
+                       const double location_parameter = 0.0); // gamma
 
-      [[nodiscard]] size_type lookup_dist_by_tag(const std::string& tag) const;
+    [[nodiscard]] size_t lookup_dist_by_tag(std::string const& tag) const;
 
-      RealTimeType next_time_advance(size_type dist_id);
+    std::optional<Distribution> get_dist_by_id(size_t id) const;
 
-      RealTimeType next_time_advance(size_type dist_id, double fraction) const;
+    double next_time_advance(size_t dist_id);
 
-      //[[nodiscard]] std::vector<RealTimeType>
-      //  sample_upto_including(const RealTimeType max_time_s);
+    double next_time_advance(size_t dist_id, double fraction) const;
 
-    private:
-      Dist dist;
-      FixedDist fixed_dist;
-      UniformDist uniform_dist;
-      NormalDist normal_dist;
-      QuantileTableDist quantile_table_dist;
-      WeibullDist weibull_dist;
-      std::default_random_engine g;
-      std::uniform_real_distribution<double> roll;
-  };
-}
-#endif // ERIN_DISTRIBUTION_H
+    //[[nodiscard]] std::vector<double>
+    //  sample_upto_including(const double max_time_s);
+    void print_distributions() const;
+
+  private:
+    Dist dist;
+    FixedDist fixed_dist;
+    UniformDist uniform_dist;
+    NormalDist normal_dist;
+    QuantileTableDist quantile_table_dist;
+    WeibullDist weibull_dist;
+    std::default_random_engine g;
+    std::uniform_real_distribution<double> roll;
+};
+
+Result ParseDistributions(DistributionSystem& ds,
+                          toml::table const& table,
+                          DistributionValidationMap const& dvm,
+                          Log const& log);
+
+} // namespace erin
+#endif

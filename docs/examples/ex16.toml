@@ -1,4 +1,7 @@
+[meta]
+description = ""
 [simulation_info]
+input_format_version = "0.2"
 rate_unit = "kW"
 quantity_unit = "kJ"
 time_unit = "hours"
@@ -43,13 +46,13 @@ loads_by_scenario.blue_sky = "normal_electric_bldg_c"
 #### Electrical Components ###
 [components.sub_sta_1]
 type = "muxer"
-stream = "electricity"
+flow = "electricity"
 failure_modes = ["grid_outage"]
 num_inflows = 1
 num_outflows = 3
 [components.xfer_a]
 type = "muxer"
-stream = "electricity"
+flow = "electricity"
 num_inflows = 2  
 num_outflows = 1
 [components.gen_a]
@@ -59,7 +62,7 @@ outflow = "electricity"
 constant_efficiency = 0.2
 [components.xfer_b]
 type = "muxer"
-stream = "electricity"
+flow = "electricity"
 num_inflows = 2  
 num_outflows = 1
 [components.gen_b]
@@ -69,8 +72,8 @@ outflow = "electricity"
 constant_efficiency = 0.2
 #### Fuel System Components ####
 [components.fuel_truck]
-type="muxer"
-stream="fuel"
+type = "muxer"
+flow = "fuel"
 num_inflows = 1
 num_outflows = 2
 ########################################
@@ -94,7 +97,7 @@ failure_dist = "every_10"
 repair_dist = "every_3"
 ########################################
 # Networks
-[networks.nw_electric]
+[network]
 connections = [
   # Electric Network
   ["utility_electrical:OUT(0)", "sub_sta_1:IN(0)", "electricity"],
@@ -107,8 +110,8 @@ connections = [
   ["fuel_truck:OUT(0)", "gen_a:IN(0)", "fuel"],
   ["fuel_truck:OUT(1)", "gen_b:IN(0)", "fuel"],
   ["gen_a:OUT(0)", "xfer_a:IN(1)", "electricity"],
-  ["gen_b:OUT(0)", "xfer_b:IN(1)", "electricity"]
-]
+  ["gen_b:OUT(0)", "xfer_b:IN(1)", "electricity"],
+  ]
 ########################################
 # Scenarios
 [scenarios.blue_sky]
@@ -116,5 +119,3 @@ time_unit = "hours"
 occurrence_distribution = "immediately"
 duration = 20
 max_occurrences = 1
-network = "nw_electric"
-calculate_reliability = true

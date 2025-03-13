@@ -1,0 +1,11 @@
+FROM silkeh/clang:16
+
+RUN mkdir /app
+
+WORKDIR /app
+
+SHELL ["/bin/sh", "-c"]
+CMD find src/ -iname '*.h' -o -iname '*.cpp' | xargs clang-format -i --style=file && \
+  find include/ -iname '*.h' -o -iname '*.cpp' | xargs clang-format -i --style=file && \
+  find test/ -iname '*.h' -o -iname '*.cpp' | xargs clang-format -i --style=file && \
+  find app/ -iname '*.h' -o -iname '*.cpp' | xargs clang-format -i --style=file

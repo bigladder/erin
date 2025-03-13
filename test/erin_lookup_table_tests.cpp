@@ -1,0 +1,37 @@
+// Copyright (c) 2020 - 2024 Big Ladder Software, LLC.
+// See the LICENSE.txt file for additional terms and conditions.
+#include <vector>
+
+#include <gtest/gtest.h>
+
+#include "erin/lookup_table.h"
+
+TEST(LookupTable, TestInterp)
+{
+    std::vector<double> xs {0.0, 1.0};
+    std::vector<double> ys {0.0, 1.0};
+    double x = 0.5;
+    double expected = 0.5;
+    double actual = erin::lookup_linear_interp(xs, ys, x);
+    EXPECT_NEAR(expected, actual, 1e-6);
+}
+
+TEST(LookupTable, TestInterp2)
+{
+    std::vector<double> xs {0.0, 100.0};
+    std::vector<double> ys {0.0, 10.0};
+    double x = 50.0;
+    double expected = 5.0;
+    double actual = erin::lookup_linear_interp(xs, ys, x);
+    EXPECT_NEAR(expected, actual, 1e-6);
+}
+
+TEST(LookupTable, TestLookupStairstep)
+{
+    std::vector<double> xs {0.0, 50.0, 100.0};
+    std::vector<double> ys {0.0, 5.0, 10.0};
+    double x = 75.0;
+    double expected = 5.0;
+    double actual = erin::lookup_stair_step(xs, ys, x);
+    EXPECT_NEAR(expected, actual, 1e-6);
+}

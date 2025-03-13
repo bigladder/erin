@@ -1,64 +1,54 @@
-/* Copyright (c) 2020 Big Ladder Software LLC. All rights reserved.
- * See the LICENSE.txt file for additional terms and conditions. */
-
+// Copyright (c) 2020 - 2024 Big Ladder Software, LLC.
+// See the LICENSE.txt file for additional terms and conditions.
 #ifndef ERIN_SCENARIO_H
 #define ERIN_SCENARIO_H
-#include "erin/type.h"
+#include <cstdlib>
+#include <optional>
 #include <string>
-#include <iostream>
+#include <vector>
 
-namespace ERIN
+#include "../vendor/toml11/toml.hpp"
+
+#include "erin/distribution.h"
+#include "erin/result.h"
+#include "erin/units.h"
+
+namespace erin
 {
-  ////////////////////////////////////////////////////////////
-  // Scenario
-  class Scenario
-  {
-    public:
-      Scenario(
-          std::string name,
-          std::string network_id,
-          RealTimeType duration_in_seconds,
-          int max_occurrences,
-          size_type occurrence_distribution_id,
-          std::unordered_map<std::string, double> intensities,
-          bool calc_reliability);
+struct ScenarioDict
+{
+    std::vector<std::string> tag;
+    std::vector<size_t> occurrence_distribution_id;
+    // TODO: remove TimeUnits and pre-convert to make Durations in seconds
+    std::vector<TimeUnit> time_unit;
+    std::vector<double> duration;
+    std::vector<double> time_offset_in_seconds;
+    // NOTE: an entry of none means "no max occurrences"; will take as
+    // many as fit in the max time of the simulation (see SimulationInfo)
+    std::vector<std::optional<size_t>> max_occurrence;
+};
 
-      [[nodiscard]] const std::string& get_name() const { return name; }
-      [[nodiscard]] const std::string& get_network_id() const {
-        return network_id;
-      }
-      [[nodiscard]] RealTimeType get_duration() const { return duration; }
-      [[nodiscard]] int get_max_occurrences() const { return max_occurrences; }
-      [[nodiscard]] size_type get_occurrence_distribution_id() const {
-        return occurrence_distribution_id;
-      }
-      [[nodiscard]] int get_number_of_occurrences() const {
-        return num_occurrences;
-      }
-      [[nodiscard]] const std::unordered_map<std::string,double>&
-        get_intensities() const { return intensities; }
-      [[nodiscard]] bool get_calc_reliability() const {
-        return calc_reliability;
-      }
+std::optional<size_t> get_scenario_by_tag(ScenarioDict& sd, std::string const& tag);
 
-      friend std::ostream& operator<<(std::ostream& os, const Scenario& s);
-      friend bool operator==(const Scenario& a, const Scenario& b);
-      friend bool operator!=(const Scenario& a, const Scenario& b);
+size_t register_scenario(ScenarioDict& sd, std::string const& tag);
 
-    private:
-      std::string name;
-      std::string network_id;
-      RealTimeType duration;
-      int max_occurrences;
-      size_type occurrence_distribution_id;
-      std::unordered_map<std::string, double> intensities;
-      int num_occurrences;
-      bool calc_reliability;
-  };
+size_t register_scenario(ScenarioDict& sd,
+                         std::string const& tag,
+                         size_t occurrence_distribution_id,
+                         double duration,
+                         TimeUnit time_unit,
+                         std::optional<size_t> maximum_occurrences,
+                         double time_offset);
 
-  std::ostream& operator<<(std::ostream& os, const Scenario& s);
-  bool operator==(const Scenario& a, const Scenario& b);
-  bool operator!=(const Scenario& a, const Scenario& b);
-}
+std::optional<size_t> parse_single_scenario(ScenarioDict& sd,
+                                            DistributionSystem const& ds,
+                                            toml::table const& table,
+                                            std::string const& full_name,
+                                            std::string const& tag);
 
-#endif // ERIN_SCENARIO_H
+Result parse_scenarios(ScenarioDict& sd, DistributionSystem const& ds, toml::table const& table);
+
+void scenario_print(ScenarioDict const& sd, DistributionSystem const& ds);
+} // namespace erin
+
+#endif

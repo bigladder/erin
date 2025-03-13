@@ -1,0 +1,91 @@
+type = "template"
+name = "simple_backup_generator"
+equipment_type_name = "Diesel Backup Generator And Tank"
+category = "Power Generation"
+description = "Backup diesel-fueled electric generator with fuel tank behind ATS"
+mean_time_between_failures_in_hours = 100.0
+mean_time_to_repair_in_hours = 8.0
+first_cost_in_usd_per_size = 10.0
+annual_maintenance_cost_in_usd_per_size = 10.0
+num_inflows = 2
+num_outflows = 1
+connections = [
+  ["<0>", "ATS:IN(0)", "electricity", '{"portName":"Primary Electricity Inflow"}'],
+  ["ATS:OUT(0)", "<0>", "electricity", '{"portName":"Electricity Outflow"}'],
+  ["<1>", "diesel_fuel_tank:IN(0)", "diesel", '{"portName":"Diesel Fuel Inflow"}'],
+  ["diesel_fuel_tank:OUT(0)", "genset:IN(0)", "diesel"],
+  ["genset:OUT(0)", "ATS:IN(1)", "electricity"],
+]
+
+[parameters.required]
+tank_capacity.type = "number"
+tank_capacity.constraints = [">0"]
+tank_capacity.ui = '{"unit": "tank_capacity_unit", "label": "Diesel Fuel Tank Capacity", "display": "input", "erinUnit": "kJ"}'
+max_charge.type = "number"
+max_charge.constraints = [">=0"]
+max_charge.ui = '{"unit": "max_charge_unit", "label": "Max Fill Rate", "display": "input", "erinUnit": "kW"}'
+max_charge_unit.type = "enum"
+max_charge_unit.enum_options = ["gal dsl/h", "W", "kW", "MW"]
+max_charge_unit.ui = '{"display": "unit"}'
+max_charge_unit.default = "kW"
+max_discharge.type = "number"
+max_discharge.constraints = [">=0"]
+max_discharge.ui = '{"unit": "max_charge_unit", "label": "Max Discharge Rate", "display": "input", "erinUnit": "kW"}'
+genset_max_outflow.type = "number"
+genset_max_outflow.constraints = [">0"]
+genset_max_outflow.ui = '{"label": "Peak Output Power", "unit": "genset_max_outflow_unit", "display": "input", "erinUnit": "kW"}'
+efficiency_by_fraction_out.type = "[[number number]*]"
+efficiency_by_fraction_out.ui = '{"yMax": 100, "yMin": 0, "yUnit": "%", "xLabel": "Load Fraction", "yLabel": "Efficiency", "display": "input"}'
+
+[parameters.optional]
+tank_capacity_unit.type = "enum"
+tank_capacity_unit.enum_options = ["gal dsl", "J", "kJ", "kWh"]
+tank_capacity_unit.default = "kJ"
+tank_capacity_unit.ui = '{"display": "unit"}'
+charge_at_soc.type = "frac"
+charge_at_soc.constraints = ["<1"]
+charge_at_soc.default = 0.8
+charge_at_soc.ui = '{"display": "input"}'
+init_soc.type = "frac"
+init_soc.default = 1.0
+init_soc.ui = '{"display": "input"}'
+diesel_tank_efficiency.type = "frac"
+diesel_tank_efficiency.default = 1
+diesel_tank_efficiency.constraints = [">0"]
+diesel_tank_efficiency.ui = '{"display": "input"}'
+genset_max_outflow_unit.type = "enum"
+genset_max_outflow_unit.enum_options = ["W", "kW", "MW"]
+genset_max_outflow_unit.default = "kW"
+genset_max_outflow_unit.ui = '{"display": "unit"}'
+
+[[components]]
+id = "ATS"
+type = "switch" 
+flow = "electricity"
+
+[[components]]
+id = "diesel_fuel_tank"
+type = "store"
+flow = "diesel"
+capacity.param = "tank_capacity"
+rate_unit.param = "max_charge_unit"
+rate_unit.inherit_from = "simulation_info.rate_unit"
+rate_unit.default = "kW"
+max_charge.param = "max_charge"
+max_discharge.param = "max_discharge"
+capacity_unit.param = "tank_capacity_unit"
+capacity_unit.inherit_from = "simulation_info.capacity_unit"
+capacity_unit.default = "kJ"
+charge_at_soc.param = "charge_at_soc"
+init_soc.param = "init_soc"
+roundtrip_efficiency.param = "diesel_tank_efficiency"
+
+[[components]]
+id = "genset"
+type = "variable_efficiency_converter"
+inflow = "diesel"
+outflow = "electricity"
+lossflow = "waste_heat"
+rate_unit = "kW"
+max_outflow.param = "genset_max_outflow"
+efficiency_by_fraction_out.param = "efficiency_by_fraction_out"

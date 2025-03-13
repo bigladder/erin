@@ -1,4 +1,5 @@
 [simulation_info]
+input_format_version = "0.2"
 rate_unit = "kW"
 quantity_unit = "kJ"
 time_unit = "seconds"
@@ -39,7 +40,7 @@ inflow = "waste_heat"
 outflow = "district_hot_water"
 lossflow = "waste_heat"
 constant_efficiency = 0.5
-[networks.nw01]
+[network]
 connections = [["S:OUT(0)", "C0:IN(0)", "natural_gas"],
                ["C0:OUT(0)", "LE:IN(0)", "electricity"],
                ["C0:OUT(1)", "C1:IN(0)", "waste_heat"],
@@ -53,4 +54,3 @@ time_unit = "seconds"
 occurrence_distribution = "immediately"
 duration = 10
 max_occurrences = 1
-network = "nw01"

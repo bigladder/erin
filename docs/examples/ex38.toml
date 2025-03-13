@@ -1,0 +1,103 @@
+[simulation_info]
+input_format_version = "0.2"
+rate_unit = "kW"
+quantity_unit = "kJ"
+time_unit = "year"
+max_time = 1
+fixed_random = 0.5
+[loads.building_load]
+time_unit = "day"
+rate_unit = "kW"
+time_rate_pairs = [[0.0,1.0],[20.0,0.0]]
+[components.S1]
+type = "source"
+outflow = "electricity"
+failure_modes = ["fm", "fm_long"]
+fragility_modes = ["vulnerable_to_wind"]
+[components.L1]
+type = "load"
+inflow = "electricity"
+loads_by_scenario.offset0 = "building_load"
+loads_by_scenario.offset100 = "building_load"
+loads_by_scenario.offset200 = "building_load"
+loads_by_scenario.offset300 = "building_load"
+[components.S2]
+type = "source"
+outflow = "electricity"
+failure_modes = ["fm", "fm_long"]
+fragility_modes = ["vulnerable_to_wind"]
+initial_age = 5
+time_unit = "year"
+[components.L2]
+type = "load"
+inflow = "electricity"
+loads_by_scenario.offset0 = "building_load"
+loads_by_scenario.offset100 = "building_load"
+loads_by_scenario.offset200 = "building_load"
+loads_by_scenario.offset300 = "building_load"
+[network]
+connections = [
+  ["S1:OUT(0)", "L1:IN(0)", "electricity"],
+  ["S2:OUT(0)", "L2:IN(0)", "electricity"],
+]
+[dist.immediately]
+type = "fixed"
+value = 0
+time_unit = "year"
+[dist.break]
+type = "fixed"
+value = 105
+time_unit = "day"
+[dist.repair]
+type = "fixed"
+value = 20
+time_unit = "day"
+[dist.long_break]
+type = "fixed"
+value = 5
+time_unit = "year"
+[dist.extended_repair]
+type = "fixed"
+value = 4
+time_unit = "day"
+[failure_mode.fm]
+failure_dist = "break"
+repair_dist = "repair"
+[failure_mode.fm_long]
+failure_dist = "long_break"
+repair_dist = "extended_repair"
+[fragility_mode.vulnerable_to_wind]
+fragility_curve = "vulnerable_to_wind_curve"
+repair_dist = "extended_repair"
+[fragility_curve.vulnerable_to_wind_curve]
+vulnerable_to = "wind_speed_mph"
+type = "linear"
+lower_bound = 100.0
+upper_bound = 200.0
+[scenarios.offset0]
+time_unit = "day"
+occurrence_distribution = "immediately"
+duration = 20
+max_occurrences = 1
+intensity.wind_speed_mph = 100
+[scenarios.offset100]
+time_unit = "day"
+occurrence_distribution = "immediately"
+duration = 20
+time_offset = 100
+max_occurrences = 1
+intensity.wind_speed_mph = 120
+[scenarios.offset200]
+time_unit = "day"
+occurrence_distribution = "immediately"
+duration = 20
+time_offset = 200
+max_occurrences = 1
+intensity.wind_speed_mph = 180
+[scenarios.offset300]
+time_unit = "day"
+occurrence_distribution = "immediately"
+duration = 20
+time_offset = 300
+max_occurrences = 1
+intensity.wind_speed_mph = 160

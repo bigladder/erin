@@ -1,3 +1,0 @@
-time (hours),bus-inflow(0):achieved (kW),bus-inflow(0):requested (kW),bus-inflow(1):achieved (kW),bus-inflow(1):requested (kW),bus-outflow(0):achieved (kW),bus-outflow(0):requested (kW),cluster_01_electric:achieved (kW),cluster_01_electric:requested (kW),electric_utility:achieved (kW),electric_utility:requested (kW),emergency_generator:achieved (kW),emergency_generator:requested (kW)
-0,1,1,0,0,1,1,1,1,1,1,0,0
-336,0,0,0,0,0,0,0,0,0,0,0,0

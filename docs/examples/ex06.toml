@@ -1,24 +1,73 @@
 [simulation_info]
+input_format_version = "0.2"
 rate_unit = "kW"
 quantity_unit = "kJ"
 time_unit = "years"
-max_time = 1000
+max_time = 1_000
 [loads.normal_electric_cluster_1]
-csv_file = "ex06-normal-electric-1.csv"
+#csv_file = "ex06-normal-electric-1.csv"
+time_unit = "hours"
+rate_unit = "kW"
+time_rate_pairs = [
+  [0,2_000],
+  [8_760,0],
+]
 [loads.normal_electric_cluster_2]
-csv_file = "ex06-normal-electric-2.csv"
+#csv_file = "ex06-normal-electric-2.csv"
+time_unit = "hours"
+rate_unit = "kW"
+time_rate_pairs = [
+  [0,4_000],
+  [8_760,0],
+]
 [loads.normal_steam_cluster_1]
-csv_file = "ex06-normal-heating-1.csv"
+#csv_file = "ex06-normal-heating-1.csv"
+time_unit = "hours"
+rate_unit = "kW"
+time_rate_pairs = [
+  [0,10_000],
+  [8_760,0],
+]
 [loads.normal_steam_cluster_2]
-csv_file = "ex06-normal-heating-2.csv"
+#csv_file = "ex06-normal-heating-2.csv"
+time_unit = "hours"
+rate_unit = "kW"
+time_rate_pairs = [
+  [0,20_000],
+  [8_760,0],
+]
 [loads.emergency_electric_cluster_1]
-csv_file = "ex06-emergency-electric-1.csv"
+#csv_file = "ex06-emergency-electric-1.csv"
+time_unit = "hours"
+rate_unit = "kW"
+time_rate_pairs = [
+  [0,1_000],
+  [336,0],
+]
 [loads.emergency_electric_cluster_2]
-csv_file = "ex06-emergency-electric-2.csv"
+#csv_file = "ex06-emergency-electric-2.csv"
+time_unit = "hours"
+rate_unit = "kW"
+time_rate_pairs = [
+  [0,2_000],
+  [336,0],
+]
 [loads.emergency_steam_cluster_1]
-csv_file = "ex06-emergency-heating-1.csv"
+#csv_file = "ex06-emergency-heating-1.csv"
+time_unit = "hours"
+rate_unit = "kW"
+time_rate_pairs = [
+  [0,10_000],
+  [336,0],
+]
 [loads.emergency_steam_cluster_2]
-csv_file = "ex06-emergency-heating-2.csv"
+#csv_file = "ex06-emergency-heating-2.csv"
+time_unit = "hours"
+rate_unit = "kW"
+time_rate_pairs = [
+  [0,20_000],
+  [336,0],
+]
 [components.electric_utility]
 type = "source"
 outflow = "electricity"
@@ -56,7 +105,6 @@ type = "muxer"
 flow = "steam"
 num_inflows = 1
 num_outflows = 2
-dispatch_strategy = "in_order"
 [components.waste_heat_to_electricity]
 type = "converter"
 inflow = "waste_heat"
@@ -68,7 +116,6 @@ type = "muxer"
 flow = "electricity"
 num_inflows = 2
 num_outflows = 2
-dispatch_strategy = "in_order"
 [components.elec_line_from_utility]
 type = "pass_through"
 flow = "electricity"
@@ -89,32 +136,28 @@ type = "muxer"
 flow = "steam"
 num_inflows = 1
 num_outflows = 2
-dispatch_strategy = "in_order"
 [components.c2_steam_mux]
 type = "muxer"
 flow = "steam"
 num_inflows = 1
 num_outflows = 2
-dispatch_strategy = "in_order"
 [components.c1_steam_combiner]
 type = "muxer"
 flow = "steam"
 num_inflows = 2
 num_outflows = 1
-dispatch_strategy = "in_order"
 [components.c2_steam_combiner]
 type = "muxer"
 flow = "steam"
 num_inflows = 2
 num_outflows = 1
-dispatch_strategy = "in_order"
 [components.steam_c1_to_c2]
 type = "pass_through"
 flow = "steam"
 [components.steam_c2_to_c1]
 type = "pass_through"
 flow = "steam"
-[networks.nw_1]
+[network]
 connections = [
   # Electric Network
   ["electric_utility:OUT(0)", "elec_line_from_utility:IN(0)", "electricity"],
@@ -153,10 +196,8 @@ time_unit = "hours"
 occurrence_distribution = "immediately"
 duration = 8760
 max_occurrences = 1
-network = "nw_1"
 [scenarios.ice_jam_flood]
 time_unit = "hours"
 occurrence_distribution = "every_100_years"
 duration = 336
 max_occurrences = -1
-network = "nw_1"

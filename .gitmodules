@@ -1,13 +1,15 @@
 [submodule "vendor/googletest"]
 	path = vendor/googletest
 	url = https://github.com/google/googletest.git
-[submodule "vendor/bdevs"]
-	path = vendor/bdevs
-	url = https://bitbucket.org/bigladder/bdevs.git
-	branch = add_cmake
 [submodule "vendor/toml11"]
 	path = vendor/toml11
 	url = https://github.com/ToruNiina/toml11.git
-[submodule "vendor/gsl"]
-	path = vendor/gsl
-	url = https://github.com/microsoft/GSL.git
+[submodule "vendor/CLI11"]
+	path = vendor/CLI11
+	url = https://github.com/CLIUtils/CLI11.git
+[submodule "vendor/fmt"]
+	path = vendor/fmt
+	url = https://github.com/fmtlib/fmt.git
+[submodule "vendor/courier"]
+	path = vendor/courier
+	url = https://github.com/bigladder/courier.git

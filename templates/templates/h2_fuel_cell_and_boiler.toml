@@ -10,11 +10,11 @@ annual_maintenance_cost_in_usd_per_size = 10.0
 num_inflows = 2
 num_outflows = 2
 connections = [
- ["<0>", "electrical_substation:IN(0)", "electricity"],
+ ["<0>", "electrical_substation:IN(0)", "electricity", '{"portName":"Primary Electricity Inflow"}'],
  ["electrical_substation:OUT(1)", "pem_electrolyzer:IN(0)", "electricity"],
  ["pem_fuel_cell:OUT(0)", "electrical_bus:IN(0)", "electricity"],
  ["electrical_substation:OUT(0)", "electrical_bus:IN(1)", "electricity"],
- ["electrical_bus:OUT(0)", "<0>", "electricity"],
+ ["electrical_bus:OUT(0)", "<0>", "electricity", '{"portName":"Electricity Outflow"}'],
  ["pem_electrolyzer:OUT(0)", "h2_storage:IN(0)", "hydrogen"],
  ["h2_storage:OUT(0)", "h2_storage_splitter:IN(0)", "hydrogen"],
  ["h2_storage_splitter:OUT(0)", "pem_fuel_cell:IN(0)", "hydrogen"],
@@ -22,15 +22,15 @@ connections = [
  ["blend_input_h2:OUT(0)", "h2_ng_mixer:IN(0)", "h2_ng_blend"],
  ["blend_input_ng:OUT(0)", "h2_ng_mixer:IN(1)", "h2_ng_blend"],
  ["h2_ng_mixer:OUT(0)", "h2_ng_boiler:IN(0)", "h2_ng_blend"],
- ["h2_ng_boiler:OUT(0)", "<1>", "hot_water"],
- ["<1>", "blend_input_ng:IN(0)", "natural_gas"],
+ ["h2_ng_boiler:OUT(0)", "<1>", "hot_water", '{"portName": "Hot Water Outflow"}'],
+ ["<1>", "blend_input_ng:IN(0)", "natural_gas", '{"portName": "Natural Gas Inflow"}'],
 ]
 
 [parameters.required]
 
 [parameters.optional]
 electrolyzer_efficiency.type = "[[number number]*]"
-electrolyzer_efficiency.ui = '{"yMax": 100, "yMin": 0, "yUnit": "%", "xLabel": "Load Fraction", "yLabel": "Efficiency", "display": "input"}'
+electrolyzer_efficiency.ui = '{"yMax": 100, "yMin": 0, "yUnit": "%", "xLabel": "Load Fraction", "yLabel": "Efficiency", "label": "Electrolyzer Efficiency", "display": "input"}'
 electrolyzer_efficiency.default = [[0.0, 0.22], [0.8, 0.3], [1.0, 0.28]]
 electrolyzer_max_outflow.type = "number"
 electrolyzer_max_outflow.constraints = [">0"]
@@ -62,7 +62,7 @@ h2_storage_max_discharge.default = 200.0
 h2_storage_max_discharge.ui = '{"unit": "h2_storage_rate_unit", "label": "Max Hydrogen Discharge Rate", "display": "input", "erinUnit": "kW"}'
 h2_storage_init_soc.type = "frac"
 h2_storage_init_soc.default = 1.0
-h2_storage_init_soc.ui = '{"unit": "h2_storage_capacity_unit", "label": "Initial Hydrogen Capacity", "display": "input", "erinUnit": "kJ"}'
+h2_storage_init_soc.ui = '{"label": "Initial Hydrogen SOC", "display": "input"}'
 fuel_cell_max_outflow.type = "number"
 fuel_cell_max_outflow.constraints = [">0"]
 fuel_cell_max_outflow.default = 750.0
@@ -73,7 +73,7 @@ fuel_cell_rate_unit.default = "kW"
 fuel_cell_rate_unit.ui = '{"display": "unit"}'
 fuel_cell_efficiency.type = "[[number number]*]"
 fuel_cell_efficiency.default = [[0.0, 0.6], [1.0, 0.6]]
-fuel_cell_efficiency.ui = '{"yMax": 100, "yMin": 0, "yUnit": "%", "xLabel": "Load Fraction", "yLabel": "Efficiency", "display": "input"}'
+fuel_cell_efficiency.ui = '{"yMax": 100, "yMin": 0, "yUnit": "%", "xLabel": "Load Fraction", "yLabel": "Efficiency", "label": "Fuel Cell Efficiency", "display": "input"}'
 boiler_max_outflow.type = "number"
 boiler_max_outflow.constraints = [">0"]
 boiler_max_outflow.default = 750.0
@@ -84,7 +84,7 @@ boiler_max_outflow_unit.default = "kW"
 boiler_max_outflow_unit.ui = '{"display": "unit"}'
 boiler_efficiency.type = "[[number number]*]"
 boiler_efficiency.default = [[0.0, 0.94], [1.0, 0.94]]
-boiler_efficiency.ui = '{"yMax": 100, "yMin": 0, "yUnit": "%", "xLabel": "Load Fraction", "yLabel": "Efficiency", "display": "input"}'
+boiler_efficiency.ui = '{"yMax": 100, "yMin": 0, "yUnit": "%", "xLabel": "Load Fraction", "yLabel": "Efficiency", "label": "Boiler Efficiency", "display": "input"}'
 
 [[components]]
 id = "electrical_substation"

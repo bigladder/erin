@@ -1,23 +1,24 @@
 type = "template"
 name = "pv_wind_and_battery"
-category = "Solar Energy"
 equipment_type_name = "PV Array, Wind Turbines, and Battery"
+category = "Power Generation"
 description = "A PV array and Wind Turbines with battery storage"
 mean_time_between_failures_in_hours = 87600.0
 mean_time_to_repair_in_hours = 48.0
 first_cost_in_usd_per_size = 10.0
 annual_maintenance_cost_in_usd_per_size = 45.0
+can_use_custom_profile = true
 num_inflows = 1
 num_outflows = 1
 connections = [
   ["pv_array:OUT(0)", "main_electric_bus:IN(0)", "electricity"],
   ["wind_turbines:OUT(0)", "main_electric_bus:IN(1)", "electricity"],
-  ["<0>", "main_electric_bus:IN(2)", "electricity"],
+  ["<0>", "main_electric_bus:IN(2)", "electricity", '{"portName":"Electricity Inflow"}'],
   ["main_electric_bus:OUT(0)", "splitter:IN(0)", "electricity"],
   ["splitter:OUT(0)", "battery:IN(0)", "electricity"],
   ["splitter:OUT(1)", "electric_bus:IN(0)", "electricity"],
   ["battery:OUT(0)", "electric_bus:IN(1)", "electricity"],
-  ["electric_bus:OUT(0)", "<0>", "electricity"],
+  ["electric_bus:OUT(0)", "<0>", "electricity", '{"portName":"Electricity Outflow"}'],
 ]
 
 [parameters.required]

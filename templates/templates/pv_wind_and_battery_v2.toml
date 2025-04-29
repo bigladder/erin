@@ -1,0 +1,89 @@
+type = "template"
+name = "pv_wind_and_battery_v2"
+equipment_type_name = "PV Array, Wind Turbines, and Battery"
+category = "Power Generation"
+description = "A PV array and Wind Turbines with battery storage"
+mean_time_between_failures_in_hours = 87600.0
+mean_time_to_repair_in_hours = 48.0
+first_cost_in_usd_per_size = 10.0
+annual_maintenance_cost_in_usd_per_size = 45.0
+can_use_custom_profile = true
+num_inflows = 3
+num_outflows = 1
+connections = [
+  ["<0>", "main_electric_bus:IN(0)", "electricity", '{"portName":"PV Inflow"}'],
+  ["<1>", "main_electric_bus:IN(1)", "electricity", '{"portName":"Wind Turbine Inflow"}'],
+  ["<2>", "main_electric_bus:IN(2)", "electricity", '{"portName":"Utility Electricity Inflow"}'],
+  ["main_electric_bus:OUT(0)", "splitter:IN(0)", "electricity"],
+  ["splitter:OUT(0)", "battery:IN(0)", "electricity"],
+  ["splitter:OUT(1)", "electric_bus:IN(0)", "electricity"],
+  ["battery:OUT(0)", "electric_bus:IN(1)", "electricity"],
+  ["electric_bus:OUT(0)", "<0>", "electricity", '{"portName":"Electricity Outflow"}'],
+]
+
+[parameters.optional]
+battery_capacity.type = "number"
+battery_capacity.constraints = [">0"]
+battery_capacity.default = 500.0
+battery_capacity.ui = '{"unit": "battery_capacity_unit", "label": "Battery Max Capacity", "erinUnit": "kWh", "display": "input"}'
+battery_capacity_unit.type = "enum"
+battery_capacity_unit.enum_options = ["kWh", "J", "kJ", "MJ"]
+battery_capacity_unit.default = "kWh"
+battery_capacity_unit.ui = '{"display": "unit"}'
+battery_max_charge.type = "number"
+battery_max_charge.constraints = [">0"]
+battery_max_charge.default = 100.0
+battery_max_charge.ui = '{"unit": "battery_rate_unit", "label": "Battery Max Charge Rate", "erinUnit": "kW", "display": "input"}'
+battery_max_discharge.type = "number"
+battery_max_discharge.constraints = [">0"]
+battery_max_discharge.default = 100.0
+battery_max_discharge.ui = '{"unit": "battery_rate_unit", "label": "Battery Max Discharge Rate", "erinUnit": "kW", "display": "input"}'
+battery_rate_unit.type = "enum"
+battery_rate_unit.enum_options = ["W", "kW", "MW"]
+battery_rate_unit.default = "kW"
+battery_rate_unit.ui = '{"display": "unit"}'
+battery_soc_to_start_charging.type = "frac"
+battery_soc_to_start_charging.constraints = ["<1"]
+battery_soc_to_start_charging.default = 0.8
+battery_soc_to_start_charging.ui = '{"label": "SOC to Initiate Charging", "display": "input"}'
+battery_roundtrip_efficiency.type = "frac"
+battery_roundtrip_efficiency.default = 0.9
+battery_roundtrip_efficiency.ui = '{"label": "Roundtrip Efficiency", "display": "input"}'
+battery_init_soc.type = "frac"
+battery_init_soc.default = 1.0
+battery_init_soc.ui = '{"label": "Initial SOC", "display": "input"}'
+
+[[components]]
+id = "main_electric_bus"
+type = "mux"
+flow = "electricity"
+num_inflows = 3
+num_outflows = 1
+
+[[components]]
+id = "splitter"
+type = "mux"
+flow = "electricity"
+num_inflows = 1
+num_outflows = 2
+
+[[components]]
+id = "battery"
+type = "store"
+flow = "electricity"
+max_charge = 100
+capacity.param = "battery_capacity"
+capacity_unit = "kWh"
+max_discharge.param = "battery_max_discharge"
+max_outflow.param = "battery_max_discharge"
+charge_at_soc.param = "battery_soc_to_start_charging"
+roundtrip_efficiency.param = "battery_roundtrip_efficiency"
+init_soc.param = "battery_init_soc"
+
+[[components]]
+id = "electric_bus"
+type = "mux"
+num_inflows = 2
+num_outflows = 1
+flow = "electricity"
+

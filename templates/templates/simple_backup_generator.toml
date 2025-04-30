@@ -18,24 +18,6 @@ connections = [
 ]
 
 [parameters.required]
-tank_capacity.type = "number"
-tank_capacity.constraints = [">0"]
-tank_capacity.ui = '{"unit": "tank_capacity_unit", "label": "Diesel Fuel Tank Capacity", "display": "input", "erinUnit": "kJ"}'
-max_charge.type = "number"
-max_charge.constraints = [">=0"]
-max_charge.ui = '{"unit": "max_charge_unit", "label": "Max Fill Rate", "display": "input", "erinUnit": "kW"}'
-max_charge_unit.type = "enum"
-max_charge_unit.enum_options = ["gal dsl/h", "W", "kW", "MW"]
-max_charge_unit.ui = '{"display": "unit"}'
-max_charge_unit.default = "kW"
-max_discharge.type = "number"
-max_discharge.constraints = [">=0"]
-max_discharge.ui = '{"unit": "max_charge_unit", "label": "Max Discharge Rate", "display": "input", "erinUnit": "kW"}'
-genset_max_outflow.type = "number"
-genset_max_outflow.constraints = [">0"]
-genset_max_outflow.ui = '{"label": "Peak Output Power", "unit": "genset_max_outflow_unit", "display": "input", "erinUnit": "kW"}'
-efficiency_by_fraction_out.type = "[[number number]*]"
-efficiency_by_fraction_out.ui = '{"yMax": 100, "yMin": 0, "yUnit": "%", "xLabel": "Load Fraction", "yLabel": "Efficiency", "display": "input"}'
 
 [parameters.optional]
 tank_capacity_unit.type = "enum"
@@ -53,10 +35,33 @@ diesel_tank_efficiency.type = "frac"
 diesel_tank_efficiency.default = 1
 diesel_tank_efficiency.constraints = [">0"]
 diesel_tank_efficiency.ui = '{"display": "input"}'
+tank_capacity.type = "number"
+tank_capacity.constraints = [">0"]
+tank_capacity.ui = '{"unit": "tank_capacity_unit", "label": "Diesel Fuel Tank Capacity", "display": "input", "erinUnit": "kJ"}'
+tank_capacity.default = 1000000.0
+max_charge.type = "number"
+max_charge.constraints = [">=0"]
+max_charge.ui = '{"unit": "max_charge_unit", "label": "Max Fill Rate", "display": "input", "erinUnit": "kW"}'
+max_charge.default = 1000.0
+max_charge_unit.type = "enum"
+max_charge_unit.enum_options = ["gal dsl/h", "W", "kW", "MW"]
+max_charge_unit.ui = '{"display": "unit"}'
+max_charge_unit.default = "kW"
+max_discharge.type = "number"
+max_discharge.constraints = [">=0"]
+max_discharge.ui = '{"unit": "max_charge_unit", "label": "Max Discharge Rate", "display": "input", "erinUnit": "kW"}'
+max_discharge.default = 1000.0
 genset_max_outflow_unit.type = "enum"
 genset_max_outflow_unit.enum_options = ["W", "kW", "MW"]
 genset_max_outflow_unit.default = "kW"
 genset_max_outflow_unit.ui = '{"display": "unit"}'
+genset_max_outflow.type = "number"
+genset_max_outflow.constraints = [">0"]
+genset_max_outflow.ui = '{"label": "Peak Output Power", "unit": "genset_max_outflow_unit", "display": "input", "erinUnit": "kW"}'
+genset_max_outflow.default = 150.0
+efficiency_by_fraction_out.type = "[[number number]*]"
+efficiency_by_fraction_out.ui = '{"yMax": 1, "yMin": 0, "yUnit": "fraction", "xLabel": "Load Fraction", "yLabel": "Efficiency Fraction", "display": "input"}'
+efficiency_by_fraction_out.default = [[0.0,0.34], [1.0,0.34]]
 
 [[components]]
 id = "ATS"

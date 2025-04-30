@@ -30,8 +30,8 @@ connections = [
 
 [parameters.optional]
 electrolyzer_efficiency.type = "[[number number]*]"
-electrolyzer_efficiency.ui = '{"yMax": 100, "yMin": 0, "yUnit": "%", "xLabel": "Load Fraction", "yLabel": "Efficiency", "label": "Electrolyzer Efficiency", "display": "input"}'
-electrolyzer_efficiency.default = [[0.0, 0.22], [0.8, 0.3], [1.0, 0.28]]
+electrolyzer_efficiency.ui = '{"yMax": 1, "yMin": 0, "yUnit": "fraction", "xLabel": "Load Fraction", "yLabel": "Efficiency Fraction", "label": "Electrolyzer Efficiency", "display": "input"}'
+electrolyzer_efficiency.default = [[0.0, 0.22], [0.8, 0.30], [1.0, 0.28]]
 electrolyzer_max_outflow.type = "number"
 electrolyzer_max_outflow.constraints = [">0"]
 electrolyzer_max_outflow.default = 200.0
@@ -72,8 +72,8 @@ fuel_cell_rate_unit.enum_options = ["W", "kW", "MW"]
 fuel_cell_rate_unit.default = "kW"
 fuel_cell_rate_unit.ui = '{"display": "unit"}'
 fuel_cell_efficiency.type = "[[number number]*]"
-fuel_cell_efficiency.default = [[0.0, 0.6], [1.0, 0.6]]
-fuel_cell_efficiency.ui = '{"yMax": 100, "yMin": 0, "yUnit": "%", "xLabel": "Load Fraction", "yLabel": "Efficiency", "label": "Fuel Cell Efficiency", "display": "input"}'
+fuel_cell_efficiency.default = [[0.0, 0.60], [1.0, 0.60]]
+fuel_cell_efficiency.ui = '{"yMax": 1, "yMin": 0, "yUnit": "fraction", "xLabel": "Load Fraction", "yLabel": "Efficiency Fraction", "label": "Fuel Cell Efficiency", "display": "input"}'
 boiler_max_outflow.type = "number"
 boiler_max_outflow.constraints = [">0"]
 boiler_max_outflow.default = 750.0
@@ -84,7 +84,7 @@ boiler_max_outflow_unit.default = "kW"
 boiler_max_outflow_unit.ui = '{"display": "unit"}'
 boiler_efficiency.type = "[[number number]*]"
 boiler_efficiency.default = [[0.0, 0.94], [1.0, 0.94]]
-boiler_efficiency.ui = '{"yMax": 100, "yMin": 0, "yUnit": "%", "xLabel": "Load Fraction", "yLabel": "Efficiency", "label": "Boiler Efficiency", "display": "input"}'
+boiler_efficiency.ui = '{"yMax": 1, "yMin": 0, "yUnit": "fraction", "xLabel": "Load Fraction", "yLabel": "Efficiency Fraction", "label": "Boiler Efficiency", "display": "input"}'
 
 [[components]]
 id = "electrical_substation"

@@ -1,5 +1,5 @@
 type = "template"
-name = "pv_wind_and_battery"
+name = "pv_wind_and_battery_v2"
 equipment_type_name = "PV Array, Wind Turbines, and Battery"
 category = "Power Generation"
 description = "A PV array and Wind Turbines with battery storage"
@@ -8,24 +8,18 @@ mean_time_to_repair_in_hours = 48.0
 first_cost_in_usd_per_size = 10.0
 annual_maintenance_cost_in_usd_per_size = 45.0
 can_use_custom_profile = true
-num_inflows = 1
+num_inflows = 3
 num_outflows = 1
 connections = [
-  ["pv_array:OUT(0)", "main_electric_bus:IN(0)", "electricity"],
-  ["wind_turbines:OUT(0)", "main_electric_bus:IN(1)", "electricity"],
-  ["<0>", "main_electric_bus:IN(2)", "electricity", '{"portName":"Electricity Inflow"}'],
+  ["<0>", "main_electric_bus:IN(0)", "electricity", '{"portName":"PV Inflow"}'],
+  ["<1>", "main_electric_bus:IN(1)", "electricity", '{"portName":"Wind Turbine Inflow"}'],
+  ["<2>", "main_electric_bus:IN(2)", "electricity", '{"portName":"Utility Electricity Inflow"}'],
   ["main_electric_bus:OUT(0)", "splitter:IN(0)", "electricity"],
   ["splitter:OUT(0)", "battery:IN(0)", "electricity"],
   ["splitter:OUT(1)", "electric_bus:IN(0)", "electricity"],
   ["battery:OUT(0)", "electric_bus:IN(1)", "electricity"],
   ["electric_bus:OUT(0)", "<0>", "electricity", '{"portName":"Electricity Outflow"}'],
 ]
-
-[parameters.required]
-pv_supply_by_scenario.type = "(table string string)"
-pv_supply_by_scenario.ui = '{"display": "input-by-scenario", "label": "PV Supply by Scenario"}'
-wind_supply_by_scenario.type = "(table string string)"
-wind_supply_by_scenario.ui = '{"display": "input-by-scenario", "label": "Wind Supply by Scenario"}'
 
 [parameters.optional]
 battery_capacity.type = "number"
@@ -58,18 +52,6 @@ battery_roundtrip_efficiency.ui = '{"label": "Roundtrip Efficiency", "display": 
 battery_init_soc.type = "frac"
 battery_init_soc.default = 1.0
 battery_init_soc.ui = '{"label": "Initial SOC", "display": "input"}'
-
-[[components]]
-id = "pv_array"
-type = "uncontrolled_source"
-outflow = "electricity"
-supply_by_scenario.param = "pv_supply_by_scenario"
-
-[[components]]
-id = "wind_turbines"
-type = "uncontrolled_source"
-outflow = "electricity"
-supply_by_scenario.param = "wind_supply_by_scenario"
 
 [[components]]
 id = "main_electric_bus"

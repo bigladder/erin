@@ -2495,8 +2495,7 @@ void UpdateStoresPerElapsedTime(Model const& m, SimulationState& ss, double elap
             }
             std::cout << "flow balance (inflow - (outflow + wasteflow)): "
                       << (inflow - (outflow + wasteflow)) << std::endl;
-            std::cout << "setting netEnergyAdded_J to availableCharge_J"
-                      << std::endl;
+            std::cout << "setting netEnergyAdded_J to availableCharge_J" << std::endl;
             netEnergyAdded_J = availableCharge_J;
         }
         assert(availableCharge_J >= netEnergyAdded_J &&
@@ -2543,8 +2542,7 @@ void UpdateStoresPerElapsedTime(Model const& m, SimulationState& ss, double elap
             }
             std::cout << "flow balance (inflow - (outflow + wasteflow)): "
                       << (inflow_W - (outflow_W + wasteflow_W)) << std::endl;
-            std::cout << "setting netEnergyAdded_J to availableDischarge_J"
-                      << std::endl;
+            std::cout << "setting netEnergyAdded_J to availableDischarge_J" << std::endl;
             netEnergyAdded_J = availableDischarge_J;
         }
         assert(netEnergyAdded_J >= availableDischarge_J &&

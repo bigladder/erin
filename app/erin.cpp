@@ -12,6 +12,7 @@
 #include <toml.hpp>
 
 #include "erin/all.h"
+#include "erin/csv.h"
 #include "compilation_settings.h"
 
 int exit_code = EXIT_SUCCESS;
@@ -544,6 +545,339 @@ CLI::App* add_pack_loads(CLI::App& app)
     return subcommand;
 }
 
+CLI::App* add_distribution_sampling(CLI::App& app)
+{
+    auto subcommand = app.add_subcommand("sample-dist", "Sample statistical distributions");
+    static std::string distribution_name;
+    subcommand
+        ->add_option("distribution_name",
+                     distribution_name,
+                     "name of distribution: fixed, uniform, normal, weibull, or table")
+        ->required();
+
+    static std::string quantile_table_csv = "table.csv";
+    subcommand->add_option(
+        "-q,--table",
+        quantile_table_csv,
+        "csv file with the quantile (inverse cumulative distribution function) defined in two "
+        "columns: variate and elapsed time (no header) (unit: s)");
+
+    static std::string number_of_samples = "100";
+    subcommand->add_option("-n,--number-of-samples",
+                           number_of_samples,
+                           "the number of times to sample the distribution");
+
+    static std::string fixed_value_s = "3600";
+    subcommand->add_option(
+        "-f,--fixed", fixed_value_s, "fixed value of a fixed distribution (unit: s)");
+
+    static std::string uniform_lower_bound_s = "0";
+    subcommand->add_option("-l,--lower-bound",
+                           uniform_lower_bound_s,
+                           "lower bound of a uniform distribution (unit: s)");
+
+    static std::string normal_mean_s = "3600";
+    subcommand->add_option("-m,--mean", normal_mean_s, "mean of normal distribution (unit: s)");
+
+    static std::string weibull_shape = "3";
+    subcommand->add_option(
+        "-s,--shape", weibull_shape, "shape parameter of Weibull distribution (unitless)");
+
+    static std::string uniform_upper_bound_s = "3600";
+    subcommand->add_option("-u,--upper-bound",
+                           uniform_upper_bound_s,
+                           "upper bound of a uniform distribution (unit: s)");
+
+    static std::string normal_std_dev_s = "600";
+    subcommand->add_option(
+        "-d,--std-dev", normal_std_dev_s, "standard deviation of normal distribution (unit: s)");
+
+    static std::string weibull_scale_s = "3600";
+    subcommand->add_option(
+        "-k,--scale", weibull_scale_s, "scale of Weibull distribution (unit: s)");
+
+    static std::string weibull_location_s = "0";
+    subcommand->add_option(
+        "-z,--location", weibull_location_s, "location of Weibull distribution (unit: s)");
+
+    auto sample_dist = [&]()
+    {
+        std::optional<erin::DistType> maybe_dist_type = erin::tag_to_dist_type(distribution_name);
+        if (!maybe_dist_type.has_value())
+        {
+            std::ostringstream oss {};
+            oss << "issue parsing distribution type: \"" << distribution_name
+                << "\"; must be one of 'fixed', 'uniform', 'normal', 'weibull', or 'table'"
+                << std::endl;
+            std::cerr << oss.str();
+            exit_code = EXIT_FAILURE;
+            return;
+        }
+        erin::DistType dist_type = maybe_dist_type.value();
+        erin::DistributionSystem ds {};
+        std::string tag = "distribution";
+        size_t id;
+        size_t num_samples;
+        try
+        {
+            num_samples = static_cast<size_t>(std::stol(number_of_samples));
+        }
+        catch (const std::exception&)
+        {
+            std::cerr << "ERROR: number of samples must be convertable to size_t\n";
+            exit_code = EXIT_FAILURE;
+            return;
+        }
+        switch (dist_type)
+        {
+        case erin::DistType::Fixed:
+        {
+            std::int64_t value_in_seconds {0};
+            try
+            {
+                value_in_seconds = std::stol(fixed_value_s);
+            }
+            catch (const std::exception&)
+            {
+                std::cerr << "ERROR: value in seconds must be convertable to int64\n";
+                exit_code = EXIT_FAILURE;
+                return;
+            }
+            try
+            {
+                id = ds.add_fixed(tag, value_in_seconds);
+                std::cout << "Fixed Distribution" << std::endl;
+                std::cout << "- fixed: " << value_in_seconds << " s" << std::endl;
+            }
+            catch (const std::exception&)
+            {
+                std::cerr << "ERROR: could not create a fixed distribution\n";
+                exit_code = EXIT_FAILURE;
+                return;
+            }
+            break;
+        }
+        case erin::DistType::Uniform:
+        {
+            std::int64_t lower_bound_s = 0;
+            std::int64_t upper_bound_s = 3600;
+            try
+            {
+                lower_bound_s = std::stol(uniform_lower_bound_s);
+            }
+            catch (std::exception&)
+            {
+                std::cerr << "ERROR: lower bound must be convertable to int64_t\n";
+                exit_code = EXIT_FAILURE;
+                return;
+            }
+            try
+            {
+                upper_bound_s = std::stol(uniform_upper_bound_s);
+            }
+            catch (std::exception&)
+            {
+                std::cerr << "ERROR: upper bound must be convertable to int64_t\n";
+                exit_code = EXIT_FAILURE;
+                return;
+            }
+            try
+            {
+                id = ds.add_uniform(tag, lower_bound_s, upper_bound_s);
+                std::cout << "Uniform Distribution" << std::endl;
+                std::cout << "- lower bound: " << lower_bound_s << " s" << std::endl;
+                std::cout << "- upper bound: " << upper_bound_s << " s" << std::endl;
+            }
+            catch (std::exception&)
+            {
+                std::cerr << "ERROR: unable to create uniform distribution\n";
+                exit_code = EXIT_FAILURE;
+                return;
+            }
+            break;
+        }
+        case erin::DistType::Normal:
+        {
+            std::int64_t mean;
+            try
+            {
+                mean = std::stol(normal_mean_s);
+            }
+            catch (std::exception&)
+            {
+                std::cerr << "ERROR: unable to parse mean for normal\n";
+                exit_code = EXIT_FAILURE;
+                return;
+            }
+            std::int64_t std_dev;
+            try
+            {
+                std_dev = std::stol(normal_std_dev_s);
+            }
+            catch (std::exception&)
+            {
+                std::cerr << "ERROR: unable to parse standard deviation for normal\n";
+                exit_code = EXIT_FAILURE;
+                return;
+            }
+            try
+            {
+                id = ds.add_normal(tag, mean, std_dev);
+                std::cout << "Normal Distribution" << std::endl;
+                std::cout << "- mean              : " << mean << " s" << std::endl;
+                std::cout << "- standard deviation: " << std_dev << " s" << std::endl;
+            }
+            catch (std::exception&)
+            {
+                std::cerr << "ERROR: unable to create normal distribution\n";
+                exit_code = EXIT_FAILURE;
+                return;
+            }
+            break;
+        }
+        case erin::DistType::Weibull:
+        {
+            double shape;
+            double scale;
+            double location;
+            try
+            {
+                shape = std::stod(weibull_shape);
+            }
+            catch (const std::exception&)
+            {
+                std::cerr << "ERROR: shape must be convertable to a double for Weibull\n";
+                exit_code = EXIT_FAILURE;
+                return;
+            }
+            try
+            {
+                scale = std::stod(weibull_scale_s);
+            }
+            catch (const std::exception&)
+            {
+                std::cerr << "ERROR: scale must be convertable to a double for Weibull\n";
+                exit_code = EXIT_FAILURE;
+                return;
+            }
+            try
+            {
+                location = std::stod(weibull_location_s);
+            }
+            catch (const std::exception&)
+            {
+                std::cerr << "ERROR: location must be convertable to a double for Weibull\n";
+                exit_code = EXIT_FAILURE;
+                return;
+            }
+            try
+            {
+                id = ds.add_weibull(tag, shape, scale, location);
+            }
+            catch (const std::exception&)
+            {
+                std::cerr << "ERROR: could not create Weibull distribution\n";
+                exit_code = EXIT_FAILURE;
+                return;
+            }
+            break;
+        }
+        case erin::DistType::QuantileTable:
+        {
+            std::vector<double> xs {};
+            std::vector<double> dtimes_s {};
+            std::ifstream ifs {quantile_table_csv};
+            if (!ifs.is_open())
+            {
+                std::ostringstream oss {};
+                oss << "input file stream on \"" << quantile_table_csv
+                    << "\" failed to open for reading\n";
+                std::cerr << oss.str() << "\n";
+                exit_code = EXIT_FAILURE;
+                return;
+            }
+            for (int row {0}; ifs.good(); ++row)
+            {
+                std::string delim {""};
+                auto cells = erin::read_row(ifs);
+                auto csize {cells.size()};
+                if (csize == 0)
+                {
+                    break;
+                }
+                if (csize != 2)
+                {
+                    std::ostringstream oss {};
+                    oss << "issue reading input file csv \"" << quantile_table_csv
+                        << "\"; issue on row " << row << "; number of columns should be 2 but got "
+                        << csize << "\n";
+                    std::cerr << oss.str() << "\n";
+                    exit_code = EXIT_FAILURE;
+                    return;
+                }
+                try
+                {
+                    xs.emplace_back(std::stod(cells[0]));
+                    dtimes_s.emplace_back(std::stod(cells[1]));
+                }
+                catch (const std::exception&)
+                {
+                    std::ostringstream oss {};
+                    oss << "issue reading input file csv \"" << quantile_table_csv
+                        << "\"; issue on row " << row << "; could not conver xs (" << cells[0]
+                        << ") or dtimes (" << cells[1] << " to double\n";
+                    std::cerr << oss.str() << "\n";
+                    exit_code = EXIT_FAILURE;
+                    return;
+                }
+            }
+            ifs.close();
+            try
+            {
+                id = ds.add_quantile_table(tag, xs, dtimes_s);
+            }
+            catch (const std::exception&)
+            {
+                std::cerr << "ERROR: could not create tabular distribution\n";
+                exit_code = EXIT_FAILURE;
+                return;
+            }
+            break;
+        }
+        default:
+        {
+            std::ostringstream oss {};
+            oss << "unhandled distribution type '" << erin::dist_type_to_tag(dist_type) << "'"
+                << std::endl;
+            std::cerr << oss.str();
+            exit_code = EXIT_FAILURE;
+            return;
+        }
+        }
+        std::cout << "data\n";
+        for (size_t idx = 0; idx < num_samples; ++idx)
+        {
+            try
+            {
+                double dt = ds.next_time_advance(id);
+                std::uint64_t time_advance_s = static_cast<std::uint64_t>(dt);
+                std::cout << time_advance_s << "\n";
+            }
+            catch (const std::exception&)
+            {
+                std::cerr << "ERROR: unknown error attempting to sample distribution on sample "
+                          << idx << "\n";
+                exit_code = EXIT_FAILURE;
+                return;
+            }
+        }
+        return;
+    };
+    subcommand->callback([&]() { sample_dist(); });
+
+    return subcommand;
+}
+
 int main(int argc, char** argv)
 {
     CLI::App app {"erin"};
@@ -556,6 +890,7 @@ int main(int argc, char** argv)
     add_check_network(app);
     add_update(app);
     add_pack_loads(app);
+    add_distribution_sampling(app);
 
     CLI11_PARSE(app, argc, argv);
 

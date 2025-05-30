@@ -2629,7 +2629,8 @@ create_failure_schedules(std::vector<size_t> const& componentFailureModeComponen
         // (scenarioOffset + scenarioDuration). Offset will be from
         // the time the age is assessed.
         double endTime_s = age_s + scenarioOffset_s + scenarioDuration_s;
-        std::vector<TimeState> relSch = rc.make_schedule_for_link(fmId, randFn, ds, endTime_s);
+        std::vector<TimeState> relSch =
+            rc.make_schedule_for_link(compFailId, randFn, ds, endTime_s);
         for (auto& ts : relSch)
         {
             if (!ts.state)

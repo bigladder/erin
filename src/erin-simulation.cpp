@@ -1104,7 +1104,6 @@ Result Simulation_ParseDistributions(Simulation& s,
 {
     if (v.contains("dist") && v.at("dist").is_table())
     {
-        // TODO: have ParseDistributions return a Result
         return ParseDistributions(s.the_model.dist_sys, v.at("dist").as_table(), dvm, log);
     }
     Log_error(log, "required field 'dist' not found");

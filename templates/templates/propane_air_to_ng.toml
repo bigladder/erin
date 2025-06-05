@@ -36,6 +36,6 @@ inflow = "propane"
 outflow = "natural_gas"
 lossflow = "waste_heat"
 constant_efficiency = 1.0
-max_outflow.param = "hot_water_max_power"
+max_outflow.param = "output_power"
 rate_unit = "kW"
 

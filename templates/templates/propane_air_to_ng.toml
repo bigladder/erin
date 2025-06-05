@@ -1,0 +1,41 @@
+type = "template"
+name = "propane_air_to_ng"
+equipment_type_name = "Propane/Air Mixer"
+category = "Storage"
+description = "Enables propane to be used like natural gas"
+mean_time_between_failures_in_hours = 87600.0
+mean_time_to_repair_in_hours = 48.0
+first_cost_in_usd_per_size = 10.0
+size_param = "output_power"
+size_param_unit = "kW"
+annual_maintenance_cost_in_usd_per_size = 5.0
+can_use_custom_profile = false
+num_inflows = 1
+num_outflows = 1
+connections = [
+  ["<0>", "air_injector:IN(0)", "propane", '{"portName": "Propane Inflow"}'],
+  ["air_injector:OUT(0)", "<0>", "natural_gas", '{"portName": "Propane/Air Outflow"}'],
+]
+
+[parameters.required]
+
+[parameters.optional]
+output_power.type = "number"
+output_power.constraints = [">0"]
+output_power.default = 10000.0
+output_power.ui = '{"unit": "output_power_unit", "label": "Max Output Power", "display": "input"}'
+output_power_unit.type = "enum"
+output_power_unit.enum_options = ["W", "kW", "MW"]
+output_power_unit.default = "kW"
+output_power_unit.ui = '{"display": "unit"}'
+
+[[components]]
+id = "air_injector"
+type = "converter"
+inflow = "propane"
+outflow = "natural_gas"
+lossflow = "waste_heat"
+constant_efficiency = 1.0
+max_outflow.param = "hot_water_max_power"
+rate_unit = "kW"
+

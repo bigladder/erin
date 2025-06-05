@@ -1,0 +1,96 @@
+type = "template"
+name = "chp"
+equipment_type_name = "Natural Gas Combined Heat and Power"
+category = "Power Generation"
+description = "A CHP unit with Natural Gas turbine"
+mean_time_between_failures_in_hours = 87600.0
+mean_time_to_repair_in_hours = 48.0
+first_cost_in_usd_per_size = 2500.0
+size_param = "turbine_max_electric_power"
+size_param_unit = "kW"
+annual_maintenance_cost_in_usd_per_size = 45.0
+can_use_custom_profile = false
+num_inflows = 1
+num_outflows = 2
+connections = [
+  ["<0>", "ng_manifold:IN(0)", "natural_gas", '{"portName":"Natural Gas Inflow"}'],
+  ["ng_manifold:OUT(0)", "ng_turbine:IN(0)", "natural_gas"],
+  ["ng_manifold:OUT(1)", "supplemental_heater:IN(0)", "natural_gas"],
+  ["ng_turbine:OUT(0)", "<0>", "electricity", '{"portName": "Electricity Outflow"}'],
+  ["ng_turbine:OUT(1)", "heat_recovery_unit:IN(0)", "waste_heat"],
+  ["supplemental_heater:OUT(0)", "hot_water_manifold:IN(1)", "hot_water"],
+  ["heat_recovery_unit:OUT(0)", "hot_water_manifold:IN(0)", "hot_water"],
+  ["hot_water_manifold:OUT(0)", "<1>", "hot_water", '{"portName":"Hot Water Outflow"}'],
+]
+
+[parameters.optional]
+turbine_efficiency.type = "[[number number]*]"
+turbine_efficiency.ui = '{"yMax": 1, "yMin": 0, "yUnit": "fraction", "xLabel": "Load Fraction", "yLabel": "Efficiency Fraction", "label": "Turbine Electric Efficiency", "display": "input"}'
+turbine_efficiency.default = [[0.0, 0.14],[0.08,0.14],[0.1,0.165],[0.2,0.23],[0.3,0.27],[0.4,0.29],[0.5,0.31],[0.6,0.32],[0.7,0.33],[1.0,0.33]]
+turbine_max_electric_power.type = "number"
+turbine_max_electric_power.constraints = [">0"]
+turbine_max_electric_power.default = 500.0
+turbine_max_electric_power.ui = '{"unit":"turbine_max_electric_power_unit", "label": "Turbine Max Electric Power", "erinUnit": "kW", "display": "input"}'
+turbine_max_electric_power_unit.type = "enum"
+turbine_max_electric_power_unit.enum_options = ["W", "kW", "MW"]
+turbine_max_electric_power_unit.default = "kW"
+turbine_max_electric_power_unit.ui = '{"display": "unit"}'
+heat_recovery_efficiency.type = "frac"
+heat_recovery_efficiency.default = 0.7
+heat_recovery_efficiency.ui = '{"label": "Heat Recovery Fraction", "display": "input"}'
+supplemental_heat_efficiency.type = "frac"
+supplemental_heat_efficiency.default = 0.96
+supplemental_heat_efficiency.ui = '{"label": "Supplemental Heating Efficiency", "display": "input"}'
+hot_water_max_power.type = "number"
+hot_water_max_power.constraints = [">0"]
+hot_water_max_power.default = 1000.0
+hot_water_max_power.ui = '{"unit":"hot_water_max_power_unit", "label": "Max Hot Water", "erinUnit": "kW", "display": "input"}'
+hot_water_max_power_unit.type = "enum"
+hot_water_max_power_unit.enum_options = ["W", "kW", "MW"]
+hot_water_max_power_unit.default = "kW"
+hot_water_max_power_unit.ui = '{"display": "unit"}'
+
+[[components]]
+id = "ng_manifold"
+type = "mux"
+flow = "natural_gas"
+num_inflows = 1
+num_outflows = 2
+
+[[components]]
+id = "hot_water_manifold"
+type = "mux"
+flow = "hot_water"
+num_inflows = 2
+num_outflows = 1
+
+[[components]]
+id = "ng_turbine"
+type = "variable_efficiency_converter"
+inflow = "natural_gas"
+outflow = "electricity"
+lossflow = "waste_heat"
+efficiency_by_fraction_out.param = "turbine_efficiency"
+max_outflow.param = "turbine_max_electric_power"
+rate_unit = "kW"
+
+[[components]]
+id = "heat_recovery_unit"
+type = "converter"
+inflow = "waste_heat"
+outflow = "hot_water"
+lossflow = "waste_heat"
+constant_efficiency.param = "heat_recovery_efficiency"
+max_outflow.param = "hot_water_max_power"
+rate_unit = "kW"
+
+[[components]]
+id = "supplemental_heater"
+type = "converter"
+inflow = "natural_gas"
+outflow = "hot_water"
+lossflow = "waste_heat"
+constant_efficiency.param = "supplemental_heat_efficiency"
+max_outflow.param = "hot_water_max_power"
+rate_unit = "kW"
+

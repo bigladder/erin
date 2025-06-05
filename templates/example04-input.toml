@@ -1,0 +1,54 @@
+[meta]
+description = """
+This example expands the CHP template.
+"""
+[simulation_info]
+input_format_version = "0.2"
+max_time = 10
+quantity_unit = "kJ"
+rate_unit = "kW"
+time_unit = "hours"
+############################################################
+[loads.building_electrical]
+time_unit = "hours"
+rate_unit = "kW"
+time_rate_pairs = [[0.0,10.0],[10.0,0.0]]
+[loads.building_hot_water]
+time_unit = "hours"
+rate_unit = "kW"
+time_rate_pairs = [[0.0,10.0],[10.0,0.0]]
+############################################################
+[components.ng_source]
+type = "source"
+max_outflow = 100.0
+rate_unit = "kW"
+outflow = "natural_gas"
+[components.ng_chp]
+type = "template"
+template_name = "chp"
+[components.electric_load]
+type = "load"
+inflow = "electricity"
+loads_by_scenario.blue_sky = "building_electrical"
+[components.hot_water_load]
+type = "load"
+inflow = "hot_water"
+loads_by_scenario.blue_sky = "building_hot_water"
+############################################################
+[network]
+connections = [
+  ["ng_source:OUT(0)", "ng_chp:IN(0)", "natural_gas"],
+  ["ng_chp:OUT(0)", "electric_load:IN(0)", "electricity"],
+  ["ng_chp:OUT(1)", "hot_water_load:IN(0)", "hot_water"],
+]
+############################################################
+[dist.immediately]
+type = "fixed"
+value = 0
+time_unit = "hours"
+############################################################
+[scenarios.blue_sky]
+time_unit = "hours"
+occurrence_distribution = "immediately"
+duration = 10
+max_occurrences = 1

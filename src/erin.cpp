@@ -4862,7 +4862,8 @@ void list_component_tags_and_types(Model const& m)
     char sep = ':';
     for (size_t tag_idx = 0; tag_idx < m.component.tag.size(); ++tag_idx)
     {
-        std::cout << sep << " '" << m.component.tag[tag_idx] << "' [" << to_string(m.component.component_type[tag_idx]) << "]";
+        std::cout << sep << " '" << m.component.tag[tag_idx] << "' ["
+                  << to_string(m.component.component_type[tag_idx]) << "]";
         sep = ',';
     }
     std::cout << std::endl;
@@ -4942,7 +4943,8 @@ Result ParseNetwork(FlowDict const& fd, Model& m, toml::table const& table)
             std::cout << "[network] "
                       << "could not find component id for tag, from='" << from << "'" << std::endl;
             std::cout << "[network] "
-                      << "from tag = '" << fromTap.tag << "'; from port = " << fromTap.port << std::endl;
+                      << "from tag = '" << fromTap.tag << "'; from port = " << fromTap.port
+                      << std::endl;
             std::cout << "[network] available component tags: ";
             list_component_tags_and_types(m);
             return Result::failure;

@@ -4857,6 +4857,17 @@ std::optional<TagAndPort> ParseTagAndPort(std::string const& s, std::string cons
     return tap;
 }
 
+void list_component_tags_and_types(Model const& m)
+{
+    char sep = ':';
+    for (size_t tag_idx = 0; tag_idx < m.component.tag.size(); ++tag_idx)
+    {
+        std::cout << sep << " '" << m.component.tag[tag_idx] << "' [" << to_string(m.component.component_type[tag_idx]) << "]";
+        sep = ',';
+    }
+    std::cout << std::endl;
+}
+
 Result ParseNetwork(FlowDict const& fd, Model& m, toml::table const& table)
 {
     if (!table.contains("connections"))
@@ -4929,14 +4940,22 @@ Result ParseNetwork(FlowDict const& fd, Model& m, toml::table const& table)
         if (!maybeFromCompId.has_value())
         {
             std::cout << "[network] "
-                      << "could not find component id for tag '" << from << "'" << std::endl;
+                      << "could not find component id for tag, from='" << from << "'" << std::endl;
+            std::cout << "[network] "
+                      << "from tag = '" << fromTap.tag << "'; from port = " << fromTap.port << std::endl;
+            std::cout << "[network] available component tags: ";
+            list_component_tags_and_types(m);
             return Result::failure;
         }
         std::optional<size_t> maybeToCompId = Model_FindCompIdByTag(m, toTap.tag);
         if (!maybeToCompId.has_value())
         {
             std::cout << "[network] "
-                      << "could not find component id for tag '" << to << "'" << std::endl;
+                      << "could not find component id for tag, to='" << to << "'" << std::endl;
+            std::cout << "[network] "
+                      << "to tag = '" << toTap.tag << "'; to port = " << toTap.port << std::endl;
+            std::cout << "[network] available component tags: ";
+            list_component_tags_and_types(m);
             return Result::failure;
         }
         size_t fromCompId = maybeFromCompId.value();

@@ -1,0 +1,41 @@
+type = "template"
+name = "h2_to_ng"
+equipment_type_name = "H2/NG Mixer"
+category = "Storage"
+description = "Hydrogen blended to be compatible with natural gas"
+mean_time_between_failures_in_hours = 87600.0
+mean_time_to_repair_in_hours = 48.0
+first_cost_in_usd_per_size = 10.0
+size_param = "output_power"
+size_param_unit = "kW"
+annual_maintenance_cost_in_usd_per_size = 5.0
+can_use_custom_profile = false
+num_inflows = 1
+num_outflows = 1
+connections = [
+  ["<0>", "fuel_converter:IN(0)", "hydrogen", '{"portName": "Hydrogen Inflow"}'],
+  ["fuel_converter:OUT(0)", "<0>", "natural_gas", '{"portName": "Natural Gas Outflow"}'],
+]
+
+[parameters.required]
+
+[parameters.optional]
+output_power.type = "number"
+output_power.constraints = [">0"]
+output_power.default = 10000.0
+output_power.ui = '{"unit": "output_power_unit", "label": "Max Output Power", "display": "input"}'
+output_power_unit.type = "enum"
+output_power_unit.enum_options = ["W", "kW", "MW"]
+output_power_unit.default = "kW"
+output_power_unit.ui = '{"display": "unit"}'
+
+[[components]]
+id = "fuel_converter"
+type = "converter"
+inflow = "hydrogen"
+outflow = "natural_gas"
+lossflow = "waste_heat"
+constant_efficiency = 1.0
+max_outflow.param = "output_power"
+rate_unit = "kW"
+

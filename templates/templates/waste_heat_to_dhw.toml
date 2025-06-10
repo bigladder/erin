@@ -1,0 +1,44 @@
+type = "template"
+name = "waste_heat_to_dhw"
+equipment_type_name = "Waste Heat Recovery"
+category = "Power Generation"
+description = "Waste heat recovery for heating water"
+mean_time_between_failures_in_hours = 876000.0
+mean_time_to_repair_in_hours = 48.0
+first_cost_in_usd_per_size = 10.0
+size_param = "output_power"
+size_param_unit = "kW"
+annual_maintenance_cost_in_usd_per_size = 0.1
+can_use_custom_profile = false
+num_inflows = 1
+num_outflows = 1
+connections = [
+  ["<0>", "heat_recovery:IN(0)", "waste_heat", '{"portName": "Waste Heat Inflow"}'],
+  ["heat_recovery:OUT(0)", "<0>", "hot_water", '{"portName": "Hot Water Outflow"}'],
+]
+
+[parameters.required]
+
+[parameters.optional]
+output_power.type = "number"
+output_power.constraints = [">0"]
+output_power.default = 10000.0
+output_power.ui = '{"unit": "output_power_unit", "label": "Max Output Power", "display": "input"}'
+output_power_unit.type = "enum"
+output_power_unit.enum_options = ["W", "kW", "MW"]
+output_power_unit.default = "kW"
+output_power_unit.ui = '{"display": "unit"}'
+heat_recovery_efficiency.type = "frac"
+heat_recovery_efficiency.default = 0.60
+heat_recovery_efficiency.ui = '{"label": "Heat Recovery Efficiency", "display": "input"}'
+
+[[components]]
+id = "heat_recovery"
+type = "converter"
+inflow = "waste_heat"
+outflow = "hot_water"
+lossflow = "waste_heat"
+constant_efficiency.param = "heat_recovery_efficiency"
+max_outflow.param = "output_power"
+rate_unit = "kW"
+

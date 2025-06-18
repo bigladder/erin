@@ -4511,6 +4511,36 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
             case ComponentType::schedule_based_source_type:
             {
                 sos.inflow_kJ += (actualFlow_W / W_per_kW) * dt_s;
+                // NOTE: WASTE ports (which occur for spillage/ullage/waste in
+                // renewable generation) are not on port 0 so only take port 0 to
+                // skip reporting WASTE spillage/ullage/waste.
+                if (m.connection[connId].from_port == 0)
+                {
+                    size_t compId = m.connection[connId].from_component_id;
+                    double outflowAchieved_kJ = (actualFlow_W / W_per_kW) * dt_s;
+                    double outflowRequest_kJ = (requestedFlow_W / W_per_kW) * dt_s;
+                    bool foundFuelInput = false;
+                    for (FuelInputForComp& fip : sos.fuel_input_for_components)
+                    {
+                        if (fip.component_id == compId && fip.flow_type_id == flowTypeId)
+                        {
+                            foundFuelInput = true;
+                            fip.requested_kJ += outflowRequest_kJ;
+                            fip.achieved_kJ += outflowAchieved_kJ;
+                            break;
+                        }
+                    }
+                    if (!foundFuelInput)
+                    {
+                        FuelInputForComp fip {
+                            .component_id = compId,
+                            .flow_type_id = flowTypeId,
+                            .requested_kJ = outflowAchieved_kJ,
+                            .achieved_kJ = outflowRequest_kJ,
+                        };
+                        sos.fuel_input_for_components.push_back(std::move(fip));
+                    }
+                }
             }
             break;
             case ComponentType::environment_source_type:
@@ -4617,6 +4647,7 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
                     {
                         foundLoadNotServedForComp = true;
                         lns.load_not_served_kJ += loadNotServed_kJ;
+                        lns.load_requested_kJ += outflowRequest_kJ;
                         break;
                     }
                 }
@@ -4626,6 +4657,7 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
                         .component_id = compId,
                         .flow_type_id = flowTypeId,
                         .load_not_served_kJ = loadNotServed_kJ,
+                        .load_requested_kJ = outflowRequest_kJ,
                     };
                     sos.load_not_served_for_components.push_back(std::move(lns));
                 }
@@ -4834,6 +4866,28 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
             std::move(sos.load_not_served_for_components[lns_idx]));
     }
     sos.load_not_served_for_components = std::move(newLoadNotServedForComponents);
+    std::vector<std::string> fuelSourceFlowTypeNames;
+    fuelSourceFlowTypeNames.reserve(sos.fuel_input_for_components.size());
+    for (FuelInputForComp const& fip : sos.fuel_input_for_components)
+    {
+        std::string sourceName = m.component.tag[fip.component_id];
+        std::string flowName = flowDict.flow_type[fip.flow_type_id];
+        std::string sortTag = sourceName + "/" + flowName;
+        fuelSourceFlowTypeNames.push_back(std::move(sortTag));
+    }
+    std::vector<size_t> fuelSourceFlowTypeNames_idx(fuelSourceFlowTypeNames.size());
+    std::iota(fuelSourceFlowTypeNames_idx.begin(), fuelSourceFlowTypeNames_idx.end(), 0);
+    std::sort(fuelSourceFlowTypeNames_idx.begin(),
+              fuelSourceFlowTypeNames_idx.end(),
+              [&](size_t a, size_t b) -> bool
+              { return fuelSourceFlowTypeNames[a] < fuelSourceFlowTypeNames[b]; });
+    std::vector<FuelInputForComp> newFuelInputForComponents;
+    newFuelInputForComponents.reserve(sos.fuel_input_for_components.size());
+    for (size_t fip_idx : fuelSourceFlowTypeNames_idx)
+    {
+        newFuelInputForComponents.push_back(std::move(sos.fuel_input_for_components[fip_idx]));
+    }
+    sos.fuel_input_for_components = std::move(newFuelInputForComponents);
     return sos;
 }
 

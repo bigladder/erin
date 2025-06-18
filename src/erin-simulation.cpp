@@ -2271,6 +2271,18 @@ void WriteStatisticsToFile(Simulation const& s,
             std::string const& tag = s.the_model.component.tag[lnsByComp.component_id];
             stats << ",load not served (kJ) for " << tag << " [flow: " << flowType << "]";
         }
+        for (auto const& lnsByComp : occurrenceStats[0].load_not_served_for_components)
+        {
+            std::string const& flowType = s.flow_type_map.flow_type[lnsByComp.flow_type_id];
+            std::string const& tag = s.the_model.component.tag[lnsByComp.component_id];
+            stats << ",load requested (kJ) for " << tag << " [flow: " << flowType << "]";
+        }
+        for (auto const& fuelInputByComp : occurrenceStats[0].fuel_input_for_components)
+        {
+            std::string const& flowType = s.flow_type_map.flow_type[fuelInputByComp.flow_type_id];
+            std::string const& tag = s.the_model.component.tag[fuelInputByComp.component_id];
+            stats << ",fuel input (kJ) for " << tag << " [flow: " << flowType << "]";
+        }
     }
     std::set<size_t> componentsToSkip;
     for (size_t i : compOrder)
@@ -2425,7 +2437,15 @@ void WriteStatisticsToFile(Simulation const& s,
         }
         for (auto const& lnsByComp : os.load_not_served_for_components)
         {
-            stats << "," << lnsByComp.load_not_served_kJ;
+            stats << "," << double_to_string(lnsByComp.load_not_served_kJ, 0);
+        }
+        for (auto const& lnsByComp : os.load_not_served_for_components)
+        {
+            stats << "," << double_to_string(lnsByComp.load_requested_kJ, 0);
+        }
+        for (auto const& fipByComp : os.fuel_input_for_components)
+        {
+            stats << "," << double_to_string(fipByComp.achieved_kJ, 0);
         }
         for (size_t i : compOrder)
         {

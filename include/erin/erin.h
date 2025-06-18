@@ -133,11 +133,20 @@ struct StatsByLoadAndFlowType
     StatsByFlowType stats;
 };
 
+struct FuelInputForComp
+{
+    size_t component_id;
+    size_t flow_type_id;
+    double requested_kJ = 0.0;
+    double achieved_kJ = 0.0;
+};
+
 struct LoadNotServedForComp
 {
     size_t component_id;
     size_t flow_type_id;
     double load_not_served_kJ = 0.0;
+    double load_requested_kJ = 0.0;
 };
 
 struct ScenarioOccurrenceStats
@@ -179,6 +188,11 @@ struct ScenarioOccurrenceStats
     std::vector<StatsByLoadAndFlowType> load_and_flow_type_stats;
     // NOTE: sorted in alphabetical order by [componentTag, flowType]
     std::vector<LoadNotServedForComp> load_not_served_for_components;
+    // NOTE: sorted in alphabetical order by [componentTag, flowType]
+    // Fuel input for components is the source energy coming into the
+    // modeling domain. For example, for an electric utility, it would
+    // be the electrical energy delivered via the "source" component.
+    std::vector<FuelInputForComp> fuel_input_for_components;
 };
 
 struct ConstantLoad

@@ -4885,8 +4885,7 @@ ModelResults_CalculateScenarioOccurrenceStats(size_t scenarioId,
     newFuelInputForComponents.reserve(sos.fuel_input_for_components.size());
     for (size_t fip_idx : fuelSourceFlowTypeNames_idx)
     {
-        newFuelInputForComponents.push_back(
-            std::move(sos.fuel_input_for_components[fip_idx]));
+        newFuelInputForComponents.push_back(std::move(sos.fuel_input_for_components[fip_idx]));
     }
     sos.fuel_input_for_components = std::move(newFuelInputForComponents);
     return sos;

@@ -1,0 +1,90 @@
+type = "converter"
+name = "mygenset"
+equipment_type_name = "MyGenset"
+category = "Power Generation"
+description = "Diesel genset example"
+mean_time_between_failures_in_hours = 70932.0
+mean_time_to_repair_in_hours = 18.28
+first_cost_in_usd_per_size = 0.0
+annual_maintenance_cost_in_usd_per_size = 0.0
+inflow_category_name = "Upstream Fuel"
+outflow_category_name = "Downstream Electricity"
+can_use_custom_profile = false
+
+connections = [
+  ["<0>", "*", "Diesel", "{\"portName\": \"Diesel Fuel\"}"],
+  ["*", "<0>", "Electricity", "{\"portName\": \"Generated Electricity\"}"],
+  ["*", "<1>", "Waste Heat", "{\"portName\": \"Waste Heat\"}"],
+]
+
+[parameters.required]
+inflow.type = "string"
+inflow.ui = "{\"display\": \"read\"}"
+inflow.default = "Diesel"
+inflow.erinProp = true
+
+outflow.type = "string"
+outflow.ui = "{\"display\": \"read\"}"
+outflow.default = "Electricity"
+outflow.erinProp = true
+
+constant_efficiency.type = "frac"
+constant_efficiency.ui = "{\"display\": \"input\"}"
+constant_efficiency.default = "0.28"
+constant_efficiency.erinProp = true
+
+annual_hours.type = "double"
+annual_hours.ui = "{\"display\": \"input\"}"
+annual_hours.default = "16"
+annual_hours.erinProp = false
+
+capacity_unit.type = "enum"
+capacity_unit.ui = "{\"display\": \"unit\"}"
+capacity_unit.default = "kW"
+capacity_unit.enum_options = ["kW", "MW"]
+capacity_unit.erinProp = false
+
+install_date.type = "date"
+install_date.ui = "{\"display\": \"input\"}"
+install_date.default = "2024-07-26"
+install_date.erinProp = false
+
+install_cost.type = "double"
+install_cost.ui = "{\"unit\": \"install_cost_unit\", \"display\": \"input\"}"
+install_cost.default = "600"
+install_cost.erinProp = false
+
+install_cost_unit.type = "enum"
+install_cost_unit.ui = "{\"display\": \"unit\"}"
+install_cost_unit.default = "$/kW"
+install_cost_unit.enum_options = ["$/kW", "$/MW"]
+install_cost_unit.erinProp = false
+
+annual_om.type = "double"
+annual_om.ui = "{\"unit\": \"annual_om_unit\", \"label\": \"Annual O&M\", \"title\": \"Annual Operations & Maintenance cost in $ per size, per year\", \"display\": \"input\"}"
+annual_om.default = "15"
+annual_om.erinProp = false
+
+annual_om_unit.type = "date"
+annual_om_unit.ui = "{\"display\": \"unit\"}"
+annual_om_unit.default = "$/kW/year"
+annual_om_unit.enum_options = ["$/kW/year", "$/MW/year"]
+annual_om_unit.erinProp = false
+
+life_of_service.type = "double"
+life_of_service.ui = "{\"label\": \"Life of Service (years)\", \"display\": \"input\"}"
+life_of_service.default = "20"
+life_of_service.erinProp = false
+
+[parameters.optional]
+lossflow.type = "string"
+lossflow.ui = "{\"display\": \"read\"}"
+lossflow.default = "Waste Heat"
+lossflow.erinProp = true
+
+capacity.type = "double"
+capacity.ui = "{\"unit\": \"capacity_unit\", \"display\": \"input\"}"
+capacity.default = "500"
+capacity.constraints = [">0"]
+capacity.erinProp = false
+
